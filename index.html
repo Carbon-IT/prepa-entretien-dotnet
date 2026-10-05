@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prépa entretien .NET</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&family=Carlito:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : bandeau charbon avec logo + parcours en hexagones, puis colonne de navigation collante et questions en accordéon.
+   Palette : charte Carbon 2023 (charbon #282B2A, rouge #E53F49, vert #00BB7E, bleu #5B98D2, blanc #FDFDFD). */
+:root {
+  --ink: #282B2A;
+  --red: #E53F49;
+  --green: #00BB7E;
+  --blue: #5B98D2;
+  --bg: #FFFFFF;
+  color-scheme: light;
+  --surface: #FFFFFF;
+  --fg: #282B2A;
+  --muted: #5F6462;
+  --line: #E3E3E0;
+  --soft: #F2F2F0;
+  --hero-bg: #282B2A;
+  --hero-fg: #FDFDFD;
+  --hero-muted: #B9BDBB;
+  --code-bg: #232625;
+  --code-fg: #E9ECEA;
+  --green-soft: #E3F7EF;
+  --red-soft: #FCE8E9;
+  --blue-soft: #E7F0FA;
+  --green-text: #00805A;
+  --red-text: #C42731;
+  --blue-text: #2F6FAE;
+  --font-display: "Figtree", "Larsseit", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Carlito", "Calibri", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+code, pre { font-family: var(--font-mono); }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 4px; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; }
+
+/* ---------- Bandeau ---------- */
+.hero { background: var(--hero-bg); color: var(--hero-fg); position: relative; overflow: hidden; }
+.hero .wrap { padding-block: 34px 40px; position: relative; z-index: 1; }
+.hero-hex { position: absolute; right: -60px; top: -40px; width: 340px; height: 340px; opacity: .9; pointer-events: none; }
+.logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.logo { height: 30px; width: auto; filter: brightness(0) invert(1); }
+.logo-sep { width: 1px; height: 22px; background: var(--hero-muted); opacity: .5; }
+.logo-tag { font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--hero-muted); }
+.hero h1 { font-size: clamp(32px, 5vw, 50px); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; margin-top: 26px; max-width: 16ch; }
+.hero h1 span { color: var(--green); }
+.hero p.intro { color: var(--hero-muted); max-width: 62ch; margin: 14px 0 0; font-size: 18px; }
+
+.steps { list-style: none; padding: 0; margin: 30px 0 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; counter-reset: step; }
+.step { display: flex; flex-direction: column; gap: 8px; min-width: 0; position: relative; }
+.step:not(:last-child)::after { content: ""; position: absolute; top: 21px; left: 50px; right: -6px; height: 2px; background: repeating-linear-gradient(90deg, var(--hero-muted) 0 6px, transparent 6px 12px); opacity: .45; }
+.step .hex { width: 44px; height: 44px; display: grid; place-items: center; position: relative; font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+.step .hex svg { position: absolute; inset: 0; }
+.step .hex b { position: relative; }
+.step strong { font-family: var(--font-display); font-size: 16px; line-height: 1.2; }
+.step small { color: var(--hero-muted); font-size: 14.5px; line-height: 1.35; }
+.step.carbon .hex { color: var(--green); }
+.step.client .hex { color: var(--red); }
+.legend { display: flex; gap: 18px; margin-top: 18px; font-size: 14px; color: var(--hero-muted); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+/* ---------- Barre d'outils ---------- */
+.toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.toolbar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding-block: 12px; }
+.search { flex: 1 1 240px; min-width: 0; position: relative; }
+.search input { width: 100%; font: inherit; font-size: 16px; padding: 9px 12px 9px 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip, .btn { font: inherit; font-family: var(--font-display); font-size: 14px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 7px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn { border-radius: 8px; }
+.btn:hover, .chip:hover { border-color: var(--muted); }
+.btn.primary { background: var(--green); border-color: var(--green); color: #0B2A1F; }
+.tools-right { display: flex; gap: 6px; flex-wrap: wrap; }
+.progress { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 1 1 100%; }
+.bar { flex: 1; height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; display: flex; max-width: 420px; }
+.bar .ok { background: var(--green); }
+.bar .todo { background: var(--red); }
+
+/* ---------- Mise en page principale ---------- */
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 40px; padding-block: 34px 80px; }
+nav.toc { position: sticky; top: 150px; align-self: start; font-size: 15px; }
+nav.toc h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 6px; color: var(--fg); text-decoration: none; }
+nav.toc a:hover { background: var(--soft); }
+nav.toc a span { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+
+main { min-width: 0; display: grid; gap: 48px; }
+.disclaimer { display: flex; gap: 16px; align-items: flex-start; background: var(--green-soft); border: 1px solid color-mix(in srgb, var(--green) 45%, transparent); border-radius: var(--radius); padding: 20px 24px; }
+.disclaimer svg { flex: none; width: 34px; height: 34px; color: var(--green-text); margin-top: 2px; }
+.disclaimer div { min-width: 0; display: grid; gap: 8px; }
+.disclaimer h2 { font-size: 20px; color: var(--green-text); }
+.disclaimer p { margin: 0; max-width: 72ch; }
+.context { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 18px 28px; }
+.context h2 { grid-column: 1 / -1; font-size: 20px; }
+.context div { min-width: 0; }
+.context h3 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.context p { margin: 0; font-size: 16px; }
+
+section.block { display: grid; gap: 14px; scroll-margin-top: 150px; }
+.block-head { display: flex; align-items: flex-start; gap: 14px; }
+.block-head .hexmark { flex: none; width: 34px; height: 34px; margin-top: 2px; }
+.block-head h2 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+.block-head p { margin: 4px 0 0; color: var(--muted); max-width: 68ch; }
+.block-head > div { min-width: 0; }
+
+details.q { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); transition: border-color .15s; }
+details.q[open] { border-color: color-mix(in srgb, var(--fg) 30%, var(--line)); }
+details.q summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 15px 18px; }
+details.q summary::-webkit-details-marker { display: none; }
+.state { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--line); margin-top: 7px; }
+details.q.is-ok .state { background: var(--green); border-color: var(--green); }
+details.q.is-todo .state { background: var(--red); border-color: var(--red); }
+.q-text { font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.35; }
+.q-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.tag { font-family: var(--font-display); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tag.hot { background: var(--red-soft); color: var(--red-text); }
+.chev { width: 18px; height: 18px; color: var(--muted); transition: transform .2s; margin-top: 2px; }
+details.q[open] .chev { transform: rotate(180deg); }
+
+.a { padding: 0 18px 18px 44px; display: grid; gap: 12px; min-width: 0; }
+.a > * { margin: 0; max-width: 78ch; }
+.a p.lead { font-size: 17.5px; }
+.a ul, .a ol { padding-left: 20px; display: grid; gap: 4px; }
+.a code { font-size: .86em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+.a pre { max-width: 100%; overflow-x: auto; background: var(--code-bg); color: var(--code-fg); padding: 14px 16px; border-radius: 8px; font-size: 13.5px; line-height: 1.55; }
+.a pre code { background: none; padding: 0; font-size: inherit; }
+.a pre .c { color: #8D9591; font-style: italic; }
+.a pre .k { color: #5FD4A8; }
+.a pre .s { color: #F2A3A8; }
+.note { border-radius: 8px; padding: 10px 14px; font-size: 16px; }
+.note strong { font-family: var(--font-display); display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 2px; }
+.note.trap { background: var(--red-soft); }
+.note.trap strong { color: var(--red-text); }
+.note.info { background: var(--blue-soft); }
+.note.info strong { color: var(--blue-text); }
+.note.tip { background: var(--green-soft); }
+.note.tip strong { color: var(--green-text); }
+.table-wrap { overflow-x: auto; max-width: 100%; }
+.a table { border-collapse: collapse; font-size: 15px; min-width: 460px; }
+.a th, .a td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.a th { font-family: var(--font-display); font-size: 13px; color: var(--muted); }
+.mark { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 6px; border-top: 1px dashed var(--line); max-width: none !important; }
+.mark button { font: inherit; font-family: var(--font-display); font-weight: 600; font-size: 14px; padding: 6px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.mark button[data-mark="ok"][aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #0B2A1F; }
+.mark button[data-mark="todo"][aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #FFFFFF; }
+.examples { margin: 0; padding: 0; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.examples li { padding: 12px 18px 12px 42px; position: relative; font-family: var(--font-display); font-weight: 600; font-size: 16.5px; line-height: 1.4; }
+.examples li + li { border-top: 1px solid var(--line); }
+.examples li::before { content: ""; position: absolute; left: 18px; top: 18px; width: 9px; height: 9px; border: 2px solid var(--green); border-radius: 2px; transform: rotate(45deg); }
+.empty { text-align: center; color: var(--muted); padding: 40px 0; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 18px; }
+
+@media (max-width: 920px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  nav.toc { display: none; }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .step { flex-direction: row; align-items: flex-start; gap: 14px; }
+  .step > div { display: flex; flex-direction: column; min-width: 0; }
+  .step:not(:last-child)::after { display: none; }
+  .hero-hex { width: 220px; height: 220px; right: -80px; }
+}
+@media (max-width: 560px) {
+  details.q summary { grid-template-columns: 12px minmax(0, 1fr) 18px; padding: 14px; }
+  .q-meta { grid-column: 2 / 3; grid-row: 2; justify-content: flex-start; }
+  .chev { grid-column: 3; grid-row: 1; }
+  .a { padding: 0 14px 16px 14px; }
+  .block-head h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="hero-hex" viewBox="0 0 100 100" aria-hidden="true">
+    <polygon points="50,6 88,28 88,72 50,94 12,72 12,28" fill="none" stroke="#00BB7E" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="50,26 71,38 71,62 50,74 29,62 29,38" fill="none" stroke="#FDFDFD" stroke-opacity=".12" stroke-width="3" stroke-linejoin="round"/>
+  </svg>
+  <div class="wrap">
+    <div class="logo-row">
+      <img class="logo" alt="Carbon" src="data:image/png;base64,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">
+      <span class="logo-sep" aria-hidden="true"></span>
+      <span class="logo-tag">Préparation candidat · .NET</span>
+    </div>
+    <h1>Entraîne-toi à l'entretien technique <span>.NET</span></h1>
+    <p class="intro">Les questions ci-dessous couvrent les thèmes classiques d'un entretien technique .NET. Lis la question, formule ta réponse à voix haute, puis déplie pour comparer. Marque chaque question « Je maîtrise » ou « À revoir » pour suivre ta progression.</p>
+
+    <ol class="steps" aria-label="Déroulé du processus de recrutement">
+      <li class="step carbon"><span class="hex"><svg viewBox="0 0 44 44" aria-hidden="true"><polygon points="22,3 39,12.5 39,31.5 22,41 5,31.5 5,12.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><b>1</b></span><div><strong>Test technique</strong><small>Une API .NET à faire évoluer : corrections de bugs, règles métier, nouvel endpoint, tests.</small></div></li>
+      <li class="step carbon"><span class="hex"><svg viewBox="0 0 44 44" aria-hidden="true"><polygon points="22,3 39,12.5 39,31.5 22,41 5,31.5 5,12.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><b>2</b></span><div><strong>Review Carbon</strong><small>Relecture de ton rendu et retours avant envoi.</small></div></li>
+      <li class="step carbon"><span class="hex"><svg viewBox="0 0 44 44" aria-hidden="true"><polygon points="22,3 39,12.5 39,31.5 22,41 5,31.5 5,12.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><b>3</b></span><div><strong>Envoi au client</strong><small>Ton code est transmis à l'équipe technique du client.</small></div></li>
+      <li class="step client"><span class="hex"><svg viewBox="0 0 44 44" aria-hidden="true"><polygon points="22,3 39,12.5 39,31.5 22,41 5,31.5 5,12.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><b>4</b></span><div><strong>Entretien soft skills</strong><small>Parcours, motivation, façon de travailler en équipe.</small></div></li>
+      <li class="step client"><span class="hex"><svg viewBox="0 0 44 44" aria-hidden="true"><polygon points="22,3 39,12.5 39,31.5 22,41 5,31.5 5,12.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg><b>5</b></span><div><strong>Entretien technique</strong><small>Parcours, review de ton exercice en partage d'écran, SQL sans IDE.</small></div></li>
+    </ol>
+    <div class="legend"><span><i style="background:#00BB7E"></i>Étape avec Carbon</span><span><i style="background:#E53F49"></i>Étape chez le client</span></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <label class="search" for="q-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q-search" type="search" placeholder="Rechercher : CancellationToken, HAVING, Outbox…" autocomplete="off">
+    </label>
+    <div class="chips" role="group" aria-label="Filtrer les questions">
+      <button class="chip" data-filter="all" aria-pressed="true">Toutes</button>
+      <button class="chip" data-filter="hot" aria-pressed="false">Questions clés</button>
+      <button class="chip" data-filter="todo" aria-pressed="false">À revoir</button>
+      <button class="chip" data-filter="new" aria-pressed="false">Pas encore vues</button>
+    </div>
+    <div class="tools-right">
+      <button class="btn primary" id="random">Question au hasard</button>
+      <button class="btn" id="expand">Tout déplier</button>
+      <button class="btn" id="collapse">Tout replier</button>
+    </div>
+    <div class="progress" aria-live="polite">
+      <div class="bar" aria-hidden="true"><span class="ok" id="bar-ok"></span><span class="todo" id="bar-todo"></span></div>
+      <span id="progress-text">0 maîtrisée · 0 à revoir</span>
+      <button class="btn" id="reset" style="margin-left:auto;padding:4px 10px;font-size:13px">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Sections">
+    <h2>Sections</h2>
+    <ol id="toc"></ol>
+  </nav>
+
+  <main id="main">
+    <aside class="disclaimer" aria-label="Avertissement">
+      <svg viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M17 10v9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="24" r="1.8" fill="currentColor"/></svg>
+      <div>
+        <h2>À lire avant de commencer</h2>
+        <p>Les réponses proposées ici ne sont pas à réciter par cœur. Elles donnent des pistes et des repères pour structurer ta réflexion. Ce qui compte, c'est ta façon de raisonner, ta capacité à justifier un choix et ton recul sur tes expériences.</p>
+        <p>Approprie-toi chaque réponse : reformule-la avec tes mots, relie-la à des situations que tu as vécues, et accepte de dire « je ne sais pas, mais voici comment je raisonnerais ». Une réponse apprise se repère vite, surtout quand l'interlocuteur relance. L'objectif de cette page est de te faire entrer dans la philosophie de l'entretien technique, pas de te fournir un script.</p>
+      </div>
+    </aside>
+
+    <!-- ============ 1. Parcours ============ -->
+    <section class="block static" id="parcours" data-title="Parcours & environnement">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#00BB7E" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Parcours &amp; environnement technique</h2><p>Des exemples de questions pour démarrer l'échange sur ton parcours. À toi de préparer tes réponses à partir de ton expérience.</p></div>
+      </div>
+
+      <ul class="examples">
+        <li>Depuis combien de temps fais-tu du développement .NET, et sur quels types de projets ?</li>
+        <li>Quelle expérience as-tu de .NET Framework et de .NET moderne ?</li>
+        <li>As-tu déjà travaillé avec des Web Services SOAP ou WCF ?</li>
+        <li>As-tu travaillé sur des applications à forte charge ? Quels problèmes de performance, de concurrence ou de scalabilité as-tu rencontrés ?</li>
+        <li>Quelles bases de données as-tu utilisées, et dans quel contexte ?</li>
+        <li>Peux-tu présenter un projet dans lequel SQL tenait une place importante ?</li>
+        <li>Comment accèdes-tu aux données : ORM comme Entity Framework, procédures stockées, requêtes SQL ?</li>
+        <li>Sur quels environnements as-tu déployé tes applications : serveurs, cloud, conteneurs ?</li>
+        <li>As-tu participé à une migration vers le cloud ? Quel était ton rôle ?</li>
+      </ul>
+      <div class="note tip examples-tip"><strong>Conseil</strong>Prépare pour chacune un exemple concret tiré de tes missions, avec des ordres de grandeur précis (années, volumétrie, req/s, taille d'équipe). Attends-toi à des relances dès qu'une réponse reste vague.</div>
+    </section>
+
+    <!-- ============ 2. Review de l'exercice ============ -->
+    <section class="block" id="review" data-title="Questions .NET">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#E53F49" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Questions .NET</h2><p>Pendant la review, tu ouvres ton rendu et tu partages ton écran : garde le projet prêt à compiler sur ton poste. Les questions partent souvent de ton code pour aller vers des notions plus générales.</p></div>
+      </div>
+
+      <details class="q" data-id="logger">
+        <summary><span class="state"></span><span class="q-text">Comment tracer l'entrée et la sortie de chaque méthode ou de chaque requête sans dupliquer le code de log partout ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Le logging est une préoccupation transverse. On le sort du code métier pour le placer à un seul endroit du pipeline.</p>
+          <ul>
+            <li><strong>Middleware ASP.NET Core</strong> : log de chaque requête HTTP (méthode, route, statut, durée). Existe déjà : <code>app.UseHttpLogging()</code> ou <code>UseSerilogRequestLogging()</code>.</li>
+            <li><strong>Action filter</strong> (<code>IAsyncActionFilter</code>) : log au niveau des actions de contrôleur, avec accès aux arguments.</li>
+            <li><strong>Pipeline Behavior MediatR</strong> (si le projet utilise MediatR) : enveloppe chaque handler, comme un middleware.</li>
+            <li><strong>Décorateur</strong> sur l'interface d'un service (<code>LoggingRentalService : IRentalService</code>), enregistré avec Scrutor <code>services.Decorate&lt;…&gt;()</code>.</li>
+          </ul>
+<pre><code><span class="k">public sealed class</span> RequestLoggingMiddleware(RequestDelegate next, ILogger&lt;RequestLoggingMiddleware&gt; logger)
+{
+    <span class="k">public async</span> Task InvokeAsync(HttpContext context)
+    {
+        <span class="k">var</span> sw = Stopwatch.StartNew();
+        <span class="k">await</span> next(context);
+        logger.LogInformation(<span class="s">"{Method} {Path} → {StatusCode} en {Elapsed} ms"</span>,
+            context.Request.Method, context.Request.Path,
+            context.Response.StatusCode, sw.ElapsedMilliseconds);
+    }
+}</code></pre>
+          <div class="note trap"><strong>Piège</strong>Utilise des messages structurés (<code>"{MovieId}"</code>) et non de l'interpolation (<code>$"{movieId}"</code>) : sinon les propriétés ne sont plus filtrables dans Datadog et le message est construit même si le niveau de log est désactivé.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="ct" data-hot>
+        <summary><span class="state"></span><span class="q-text">À quoi sert un <code>CancellationToken</code> dans une API ASP.NET Core ? Suffit-il de l'ajouter en paramètre d'une méthode ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Un CancellationToken permet d'annuler proprement un traitement en cours, par exemple quand le client HTTP ferme la connexion ou quand un timeout est atteint. Il ne sert que s'il est propagé jusqu'aux opérations asynchrones.</p>
+          <ul>
+            <li>Dans une action de contrôleur, ASP.NET Core lie automatiquement le paramètre à <code>HttpContext.RequestAborted</code>.</li>
+            <li>Il faut le passer à toute la chaîne : service → repository → <code>ToListAsync(ct)</code>, <code>HttpClient.GetAsync(url, ct)</code>, <code>Task.Delay(…, ct)</code>. Sinon il est inutile.</li>
+            <li>Bénéfice : on libère la connexion SQL et le thread dès que le client abandonne, au lieu de finir une requête coûteuse que personne ne lira. Sous forte charge, ça compte.</li>
+            <li>Dans une boucle longue : <code>cancellationToken.ThrowIfCancellationRequested()</code>.</li>
+            <li><strong>Sur une écriture</strong> (ajout d'un film) : on vérifie le token avant de commencer et on le passe aux appels asynchrones de lecture (contrôle de doublon). Une fois l'écriture validée en base, on ne cherche plus à annuler : l'opération est faite, autant renvoyer la réponse.</li>
+          </ul>
+<pre><code>[HttpGet(<span class="s">"movies"</span>)]
+<span class="k">public async</span> Task&lt;IActionResult&gt; GetAllMovies(CancellationToken cancellationToken)
+{
+    <span class="k">var</span> movies = <span class="k">await</span> _rentalService.GetAllMoviesAsync(cancellationToken);
+    <span class="k">return</span> Ok(movies);
+}
+
+<span class="c">// Repository EF Core</span>
+<span class="k">public</span> Task&lt;List&lt;Movie&gt;&gt; GetAllAsync(CancellationToken ct) =&gt;
+    _db.Movies.AsNoTracking().ToListAsync(ct);</code></pre>
+          <div class="note trap"><strong>Piège</strong>Ajouter le paramètre ne suffit pas. Si la méthode est synchrone ou travaille en mémoire (comme le repository de l'exercice), il ne sert à rien : il faut rendre la chaîne asynchrone jusqu'à l'I/O pour qu'il ait un effet. C'est la nuance attendue.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="exception-mw">
+        <summary><span class="state"></span><span class="q-text">Qu'est-ce qu'un middleware en ASP.NET Core ? À quoi sert un middleware de gestion des exceptions ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Un middleware est un maillon du pipeline HTTP : il reçoit la requête, peut agir avant et après l'appel au suivant (<code>await next(context)</code>), ou court-circuiter la chaîne. L'ordre d'enregistrement dans <code>Program.cs</code> est l'ordre d'exécution.</p>
+          <p>Un middleware de gestion des exceptions, placé en tête du pipeline, centralise la transformation des exceptions en réponses HTTP cohérentes : plus besoin de <code>try/catch</code> dans chaque action, le log est fait une seule fois et aucune stack trace ne fuit vers le client.</p>
+          <ul>
+            <li>Mappe les exceptions métier vers les bons statuts : <code>DuplicateMovieException</code> → 409 Conflict, <code>InvalidMovieTitleException</code> → 400, non trouvé → 404, le reste → 500.</li>
+            <li>Répond au format standard <code>ProblemDetails</code> (RFC 9457) : <code>type</code>, <code>title</code>, <code>status</code>, <code>detail</code>, <code>traceId</code>.</li>
+            <li>En .NET 8 : <code>IExceptionHandler</code> + <code>services.AddProblemDetails()</code> + <code>app.UseExceptionHandler()</code>.</li>
+          </ul>
+<pre><code><span class="k">public sealed class</span> RentalExceptionHandler(ILogger&lt;RentalExceptionHandler&gt; logger) : IExceptionHandler
+{
+    <span class="k">public async</span> ValueTask&lt;<span class="k">bool</span>&gt; TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken ct)
+    {
+        <span class="k">var</span> (status, title) = ex <span class="k">switch</span>
+        {
+            DuplicateMovieException    =&gt; (StatusCodes.Status409Conflict, <span class="s">"Film déjà existant"</span>),
+            InvalidMovieTitleException =&gt; (StatusCodes.Status400BadRequest, <span class="s">"Titre invalide"</span>),
+            _                         =&gt; (StatusCodes.Status500InternalServerError, <span class="s">"Erreur interne"</span>)
+        };
+        <span class="k">if</span> (status == 500) logger.LogError(ex, <span class="s">"Erreur non gérée"</span>);
+
+        ctx.Response.StatusCode = status;
+        <span class="k">await</span> ctx.Response.WriteAsJsonAsync(<span class="k">new</span> ProblemDetails { Status = status, Title = title }, ct);
+        <span class="k">return true</span>;
+    }
+}</code></pre>
+          <div class="note trap"><strong>Piège</strong>Des exceptions pour le contrôle de flux métier, c'est discutable. Sois prêt à évoquer l'alternative du pattern Result (<code>Result&lt;T&gt;</code>, <code>OneOf</code>, <code>ErrorOr</code>).</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 3. Concurrence & passage à l'échelle ============ -->
+    <section class="block" id="scale" data-title="Thread safety & montée en charge">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#5B98D2" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Thread safety, repository et montée en charge</h2><p>On part d'un repository qui stocke ses données dans une liste en mémoire, puis on imagine une vraie API en production.</p></div>
+      </div>
+
+      <details class="q" data-id="threadsafe" data-hot>
+        <summary><span class="state"></span><span class="q-text">Un repository stocke ses données dans une <code>List&lt;T&gt;</code> et est enregistré en Singleton. Est-il thread-safe ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Non. Le repository est enregistré en <code>Singleton</code> : la même <code>List&lt;Movie&gt;</code> est partagée par toutes les requêtes HTTP, qui s'exécutent en parallèle.</p>
+          <ol>
+            <li><code>List&lt;T&gt;</code> n'est pas thread-safe : deux <code>Add</code> simultanés peuvent corrompre la liste ou perdre un élément.</li>
+            <li><strong>Check-then-act</strong> : si on vérifie les doublons (<code>Any(...)</code>) avant d'ajouter, les deux étapes ne sont pas atomiques. Deux requêtes identiques passent le contrôle en même temps et le film est ajouté deux fois.</li>
+            <li><strong>Génération d'ID</strong> du type <code>Max(m =&gt; m.Id) + 1</code> : deux requêtes calculent le même ID.</li>
+            <li><code>GetAll()</code> renvoie <code>AsReadOnly()</code>, une simple vue sur la liste vivante. Énumérer pendant un ajout lève <code>InvalidOperationException: Collection was modified</code>.</li>
+          </ol>
+          <div class="note tip"><strong>Méthode pour répondre</strong>Commence par la durée de vie DI (Singleton = état partagé), puis cite la race condition précise. C'est ce raisonnement qui est évalué.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="threadsafe-fix">
+        <summary><span class="state"></span><span class="q-text">Comment rendre un repository en mémoire thread-safe ? Qu'est-ce qui est réellement protégé ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Un <code>lock</code> autour de l'ajout et de la lecture : l'ensemble « vérifier, générer l'ID, ajouter » devient atomique et la collection interne n'est jamais exposée.</p>
+<pre><code><span class="k">public sealed class</span> InMemoryMovieRepository : IMovieRepository
+{
+    <span class="k">private readonly</span> List&lt;Movie&gt; _movies = [];
+    <span class="k">private readonly object</span> _sync = <span class="k">new</span>();
+
+    <span class="k">public</span> IReadOnlyCollection&lt;Movie&gt; GetAll()
+    {
+        <span class="k">lock</span> (_sync) <span class="k">return</span> _movies.ToList(); <span class="c">// copie : pas de lecture pendant une écriture</span>
+    }
+
+    <span class="k">public</span> Movie Add(<span class="k">string</span> title, <span class="k">string</span> director)
+    {
+        <span class="k">lock</span> (_sync)
+        {
+            <span class="k">if</span> (_movies.Any(m =&gt; m.Title == title &amp;&amp; m.Director == director))
+                <span class="k">throw new</span> DuplicateMovieException();
+
+            <span class="k">var</span> id = _movies.Count == 0 ? 1 : _movies.Max(m =&gt; m.Id) + 1;
+            <span class="k">var</span> movie = <span class="k">new</span> Movie(id, title, <span class="k">true</span>, director);
+            _movies.Add(movie);
+            <span class="k">return</span> movie;
+        }
+    }
+}</code></pre>
+          <ul>
+            <li>Le <code>lock</code> garantit qu'un seul thread à la fois exécute le bloc : la vérification du doublon, le calcul de l'ID et l'ajout deviennent une seule opération atomique.</li>
+            <li>Les lectures passent aussi par le <code>lock</code> et renvoient une copie, pour ne jamais énumérer la liste pendant qu'un autre thread y ajoute un élément.</li>
+            <li>On verrouille sur un objet privé dédié (<code>_sync</code>), jamais sur <code>this</code> ni sur la liste exposée.</li>
+            <li>On garde la section critique courte : pas d'appel réseau ni d'I/O à l'intérieur. On ne peut pas non plus faire d'<code>await</code> dans un <code>lock</code>.</li>
+          </ul>
+          <p><strong>Ce que le <code>lock</code> protège exactement</strong> : uniquement le code placé à l'intérieur d'un bloc qui verrouille <em>le même objet</em>. Trois cas où la méthode reste non thread-safe malgré le <code>lock</code> :</p>
+          <ul>
+            <li><strong>L'objet de verrou n'est pas partagé.</strong> Un <code>_sync</code> déclaré dans un service enregistré en <code>Scoped</code> ou <code>Transient</code> est différent à chaque requête : chaque requête a son propre verrou, qui ne bloque personne. Le verrou doit vivre au même niveau que les données (repository Singleton) ou être <code>static</code>.</li>
+            <li><strong>Une partie de l'accès reste hors du verrou</strong> : si <code>GetAll</code> lit la liste sans <code>lock</code> pendant qu'un ajout a lieu, l'énumération peut planter.</li>
+            <li><strong>La vérification et l'ajout sont dans deux verrous séparés</strong> : chaque étape est protégée, mais deux requêtes peuvent s'intercaler entre les deux. C'est toute la séquence qui doit être dans le même bloc.</li>
+          </ul>
+          <div class="note trap"><strong>Piège</strong>Un <code>lock</code> ne protège qu'un seul processus. Avec plusieurs instances de l'API, il ne sert plus à rien : c'est la base de données qui doit garantir l'unicité (question suivante).</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="multi-instance" data-hot>
+        <summary><span class="state"></span><span class="q-text">Une API qui garde ses données en mémoire doit passer sur plusieurs instances. Quelles évolutions faut-il prévoir ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Chaque instance aurait sa propre liste : les données divergent et sont perdues au redémarrage. Il faut rendre l'API sans état et déplacer l'état et les garanties d'unicité vers la base.</p>
+          <div class="note tip"><strong>Comment utiliser cette liste</strong>Personne n'attend que tu cites tous ces points. Ce sont des pistes à évoquer : choisis-en quelques-unes, en commençant par la persistance et l'unicité, et appuie-les autant que possible sur ton expérience (« sur mon projet précédent, on avait… »). Une piste illustrée par un cas réel vaut mieux qu'une liste récitée.</div>
+          <ol>
+            <li><strong>Persistance</strong> : SQL Server via EF Core ou Dapper, repository en <code>Scoped</code> (un <code>DbContext</code> par requête).</li>
+            <li><strong>ID</strong> générés par la base (<code>IDENTITY</code> ou <code>SEQUENCE</code>), plus de <code>Max + 1</code>.</li>
+            <li><strong>Unicité</strong> garantie par un index unique <code>(DirectorId, Title)</code>. On intercepte l'erreur SQL 2601/2627 et on renvoie 409. Le contrôle applicatif reste utile pour un message clair, mais la base fait foi.</li>
+            <li><strong>Concurrence</strong> : verrouillage optimiste avec <code>rowversion</code> sur les mises à jour (ex. location d'un film disponible).</li>
+            <li><strong>Async</strong> de bout en bout + <code>CancellationToken</code>.</li>
+            <li><strong>Cache</strong> : pas de cache mémoire local incohérent entre instances. Utiliser un cache distribué (Redis) avec invalidation, ou accepter une expiration courte.</li>
+            <li><strong>Idempotence</strong> des POST (clé d'idempotence) pour gérer les retries du load balancer ou du client.</li>
+            <li><strong>Exploitabilité</strong> : health checks (<code>/health</code>) pour les probes Kubernetes, configuration externalisée, Correlation ID, logs centralisés.</li>
+            <li>Verrou distribué (<code>sp_getapplock</code>, Redis) seulement si un traitement doit vraiment être exclusif entre instances.</li>
+          </ol>
+          <div class="note trap"><strong>Détail à repérer</strong>Regarde la durée de vie de chaque repository dans l'injection de dépendances. Un repository en mémoire enregistré en <code>Scoped</code> est recréé à chaque requête : ses données disparaissent d'une requête à l'autre. Savoir expliquer les durées de vie (Singleton, Scoped, Transient) et la « captive dependency » est attendu.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="getall" data-hot>
+        <summary><span class="state"></span><span class="q-text">Pour vérifier qu'un élément existe déjà, faut-il charger toutes les données ? Quelles alternatives ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Non. Avec 300 millions de films, charger toute la table pour vérifier un doublon ou calculer un ID ferait exploser la mémoire, le réseau et le temps de réponse. On délègue le filtre à la base avec une requête ciblée.</p>
+<pre><code><span class="c">// Approche naïve : tout charger puis filtrer en mémoire</span>
+<span class="k">var</span> allMovies = _movieRepository.GetAll();
+<span class="k">if</span> (allMovies.Any(m =&gt; m.Title == title &amp;&amp; m.Director == director)) ...
+
+<span class="c">// Mieux : une requête EXISTS côté SQL</span>
+<span class="k">public</span> Task&lt;<span class="k">bool</span>&gt; ExistsAsync(<span class="k">string</span> title, <span class="k">int</span> directorId, CancellationToken ct) =&gt;
+    _db.Movies.AnyAsync(m =&gt; m.Title == title &amp;&amp; m.DirectorId == directorId, ct);</code></pre>
+          <ul>
+            <li><strong>Paginer puis boucler ne règle rien</strong> : on ne charge plus tout d'un coup, mais on enchaîne des centaines de milliers de requêtes pour parcourir la table et tout passe quand même sur le réseau. Le problème n'est pas la taille du lot, c'est de rapatrier des données dont on n'a pas besoin.</li>
+            <li><strong>La bonne approche</strong> : poser la question exacte à la base. « Existe-t-il un film avec ce titre et ce réalisateur ? » se traduit par un <code>EXISTS</code> qui renvoie un booléen en une seule requête.</li>
+            <li>La pagination sert à <em>afficher</em> une liste à un utilisateur (<code>OFFSET … FETCH</code>, ou pagination par clé pour les gros volumes), pas à faire une vérification.</li>
+            <li>Un index sur <code>(DirectorId, Title)</code> rend le <code>EXISTS</code> instantané.</li>
+            <li>Éviter de faire fuiter <code>IQueryable</code> hors du repository : exposer des méthodes à intention claire.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="q" data-id="validation-sql">
+        <summary><span class="state"></span><span class="q-text">Avec une base SQL Server volumineuse, comment organiser les validations avant un ajout (valeurs obligatoires, doublons) ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Du moins cher au plus cher : d'abord les contrôles en mémoire, puis une requête ciblée, et la base comme dernier garde-fou.</p>
+          <ol>
+            <li><strong>Valeurs obligatoires, en mémoire</strong> : non nulles, pas uniquement des espaces, longueur minimale. Aucun accès à la base : si la requête est invalide, on répond 400 tout de suite.</li>
+            <li><strong>Doublon, requête ciblée</strong> : un <code>EXISTS</code> sur titre et réalisateur, appuyé sur un index. Il permet de renvoyer un message clair (409).</li>
+            <li><strong>Contrainte d'unicité en base</strong> : index unique <code>(DirectorId, Title)</code>. Entre le <code>EXISTS</code> et l'<code>INSERT</code>, une autre requête peut insérer le même film. Seule la base garantit l'unicité : on intercepte l'erreur 2601/2627 et on renvoie aussi 409.</li>
+          </ol>
+<pre><code><span class="c">-- Vérification ciblée (index sur DirectorId, Title)</span>
+<span class="k">SELECT CASE WHEN EXISTS</span> (
+    <span class="k">SELECT</span> 1 <span class="k">FROM</span> dbo.Movie <span class="k">WHERE</span> DirectorId = @DirectorId <span class="k">AND</span> Title = @Title
+) <span class="k">THEN</span> 1 <span class="k">ELSE</span> 0 <span class="k">END</span>;
+
+<span class="c">-- Garde-fou ultime</span>
+<span class="k">CREATE UNIQUE INDEX</span> UX_Movie_Director_Title <span class="k">ON</span> dbo.Movie (DirectorId, Title);</code></pre>
+          <ul>
+            <li>Variante assumée : ne pas faire le <code>EXISTS</code> et tenter directement l'<code>INSERT</code>, en traduisant la violation de contrainte en 409. Une seule requête, et pas de fenêtre de concurrence.</li>
+            <li>Penser à la normalisation : faut-il considérer « Movie 1 » et « movie 1 » comme identiques ? La collation de la colonne (sensible ou non à la casse) répond à la question côté base.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="q" data-id="repo-sql" data-hot>
+        <summary><span class="state"></span><span class="q-text">Comment faire évoluer un repository en mémoire vers une vraie persistance ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">L'interface reste dans le Domain, l'implémentation SQL arrive dans l'Infrastructure. Le reste du code ne change presque pas : c'est l'intérêt du pattern.</p>
+          <ul>
+            <li>Nouvelle implémentation <code>SqlMovieRepository : IMovieRepository</code>, enregistrée en <code>Scoped</code> à la place de l'implémentation en mémoire.</li>
+            <li>Signatures asynchrones avec <code>CancellationToken</code> : <code>Task&lt;Movie?&gt; GetByIdAsync(int id, CancellationToken ct)</code>.</li>
+            <li>Méthodes à intention claire (<code>ExistsAsync</code>, <code>GetPageAsync</code>) plutôt qu'un <code>GetAll</code> générique.</li>
+            <li>L'ID n'est plus fourni par le service : c'est la base qui le génère, le repository le renvoie après l'insert.</li>
+            <li>Gestion des transactions quand plusieurs écritures doivent être atomiques (Unit of Work ; <code>DbContext.SaveChangesAsync</code> en est déjà un).</li>
+            <li>Mapping entité de domaine ↔ modèle de persistance si l'entité a des propriétés en lecture seule (EF Core sait mapper des champs privés et des constructeurs).</li>
+          </ul>
+          <div class="note tip"><strong>Débat classique</strong>« EF Core est déjà un repository et une Unit of Work, faut-il en rajouter un ? » Avoir un avis argumenté (testabilité, isolation du Domain, requêtes spécifiques) est apprécié.</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 4. Modélisation ============ -->
+    <section class="block" id="modelisation" data-title="Modélisation de la base">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#00BB7E" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Modélisation de la base de données</h2><p>On imagine que les données doivent être persistées dans une base relationnelle de type SQL Server.</p></div>
+      </div>
+
+      <details class="q" data-id="tables">
+        <summary><span class="state"></span><span class="q-text">Quelles tables et quelles colonnes prévoir pour une plateforme de location de films ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Trois tables au minimum : <code>Customer</code>, <code>Movie</code> et une table de locations <code>Rental</code> qui relie les deux. Une table <code>Director</code> est un plus.</p>
+<pre><code><span class="k">CREATE TABLE</span> dbo.Director (
+    Id    <span class="k">INT IDENTITY</span>(1,1) <span class="k">CONSTRAINT</span> PK_Director <span class="k">PRIMARY KEY</span>,
+    Name  <span class="k">NVARCHAR</span>(200) <span class="k">NOT NULL</span>
+);
+
+<span class="k">CREATE TABLE</span> dbo.Movie (
+    Id        <span class="k">INT IDENTITY</span>(1,1) <span class="k">CONSTRAINT</span> PK_Movie <span class="k">PRIMARY KEY</span>,
+    Title     <span class="k">NVARCHAR</span>(200) <span class="k">NOT NULL</span>,
+    DirectorId  <span class="k">INT NOT NULL CONSTRAINT</span> FK_Movie_Director <span class="k">REFERENCES</span> dbo.Director(Id),
+    CreatedAt <span class="k">DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME</span>(),
+    <span class="k">CONSTRAINT</span> UQ_Movie_Director_Title <span class="k">UNIQUE</span> (DirectorId, Title)
+);
+
+<span class="k">CREATE TABLE</span> dbo.Customer (
+    Id          <span class="k">INT IDENTITY</span>(1,1) <span class="k">CONSTRAINT</span> PK_Customer <span class="k">PRIMARY KEY</span>,
+    Name        <span class="k">NVARCHAR</span>(200) <span class="k">NOT NULL</span>,
+    DateOfBirth <span class="k">DATE NOT NULL</span>
+);
+
+<span class="k">CREATE TABLE</span> dbo.Rental (
+    Id         <span class="k">BIGINT IDENTITY</span>(1,1) <span class="k">CONSTRAINT</span> PK_Rental <span class="k">PRIMARY KEY</span>,
+    CustomerId <span class="k">INT NOT NULL CONSTRAINT</span> FK_Rental_Customer <span class="k">REFERENCES</span> dbo.Customer(Id),
+    MovieId     <span class="k">INT NOT NULL CONSTRAINT</span> FK_Rental_Movie <span class="k">REFERENCES</span> dbo.Movie(Id),
+    RentedAt <span class="k">DATETIME2 NOT NULL</span>,
+    DueAt      <span class="k">DATETIME2 NULL</span>,
+    ReturnedAt <span class="k">DATETIME2 NULL</span>   <span class="c">-- NULL = location en cours</span>
+);
+
+<span class="k">CREATE INDEX</span> IX_Rental_MovieId     <span class="k">ON</span> dbo.Rental (MovieId);
+<span class="k">CREATE INDEX</span> IX_Rental_CustomerId <span class="k">ON</span> dbo.Rental (CustomerId);</code></pre>
+          <ul>
+            <li>Les clés étrangères ne sont pas indexées automatiquement dans SQL Server : on crée les index soi-même.</li>
+            <li><code>IsAvailable</code> peut être déduit (aucune location avec <code>ReturnedAt IS NULL</code>) plutôt que stocké, ce qui évite les incohérences. Si on le stocke pour la performance, il faut le maintenir dans la même transaction.</li>          </ul>
+        </div>
+      </details>
+
+      <details class="q" data-id="relation">
+        <summary><span class="state"></span><span class="q-text">Comment modéliser la relation entre un client et les films qu'il loue ? Quelles informations stocker ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">C'est une relation plusieurs-à-plusieurs, portée par une table d'association qui est aussi un historique : une ligne par location.</p>
+          <ul>
+            <li><code>CustomerId</code> et <code>MovieId</code> en clés étrangères.</li>
+            <li>Les dates : <code>RentedAt</code>, <code>DueAt</code> (date de retour prévue), <code>ReturnedAt</code> (nullable).</li>
+            <li>Une clé primaire propre (<code>Id</code>) et non la clé composite <code>(CustomerId, MovieId)</code> : un même client peut louer le même film plusieurs fois.</li>
+            <li>Éventuellement : statut, pénalité de retard, agent ou canal de location.</li>
+          </ul>
+          <div class="note trap"><strong>Piège</strong>Côté code, les locations sont souvent modélisées comme une collection dans <code>Customer</code>. En base, on ne stocke pas de liste dans une colonne : on normalise dans une table dédiée.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="ids">
+        <summary><span class="state"></span><span class="q-text">ID interne auto-incrémenté ou identifiant public : que choisis-tu et pourquoi ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Les deux : un ID interne <code>INT IDENTITY</code> pour les jointures et l'index clustered, et un identifiant public (GUID) exposé dans l'API.</p>
+          <ul>
+            <li><strong>ID interne entier</strong> : compact (4 ou 8 octets), séquentiel, idéal comme clé clustered et pour les jointures.</li>
+            <li><strong>Identifiant public</strong> : n'expose pas le volume de données ni un ID devinable (<code>/movies/42</code> → on essaie <code>/movies/43</code>). Il permet aussi de générer l'identifiant côté client ou d'un autre système.</li>
+            <li>Un GUID aléatoire (<code>NEWID()</code>) en clé clustered fragmente l'index. Préférer <code>NEWSEQUENTIALID()</code> ou garder le GUID en colonne non clustered avec un index unique.</li>
+          </ul>
+        </div>
+      </details>
+      <details class="q" data-id="id-generation">
+        <summary><span class="state"></span><span class="q-text">Si la base de données ne fournit pas d'auto-incrément, comment générer les identifiants ? Quelles solutions envisagerais-tu ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Plusieurs solutions existent ; l'important est de citer leurs compromis et d'écarter le <code>MAX(Id) + 1</code>, qui n'est pas sûr en concurrence.</p>
+          <div class="table-wrap"><table>
+            <tr><th>Solution</th><th>Principe</th><th>Compromis</th></tr>
+            <tr><td>GUID / UUID</td><td>Généré côté application (<code>Guid.NewGuid()</code>), unique sans coordination</td><td>16 octets, non séquentiel : fragmente un index clustered. Préférer une version ordonnée dans le temps (UUID v7, <code>Guid.CreateVersion7()</code> en .NET 9)</td></tr>
+            <tr><td>Séquence</td><td>Objet <code>SEQUENCE</code> de la base, interrogé avant l'insert (<code>NEXT VALUE FOR</code>)</td><td>Un aller-retour par ID, sauf à réserver des plages</td></tr>
+            <tr><td>HiLo</td><td>L'application réserve une plage d'ID (ex. 100) auprès de la base, puis les distribue en mémoire (<code>UseHiLo()</code> avec EF Core)</td><td>Peu d'allers-retours ; des trous dans la numérotation</td></tr>
+            <tr><td>Table de compteurs</td><td>Une ligne par entité, incrémentée de façon atomique : <code>UPDATE … SET @id = Value = Value + 1</code></td><td>Simple, mais point de contention si beaucoup d'insertions</td></tr>
+            <tr><td>Compteur externe</td><td><code>INCR</code> Redis, atomique</td><td>Une dépendance de plus à exploiter</td></tr>
+            <tr><td>Snowflake</td><td>ID 64 bits composé de l'horodatage, d'un identifiant de machine et d'un compteur local</td><td>Trié dans le temps, sans coordination ; dépend de l'horloge des machines</td></tr>
+          </table></div>
+          <div class="note trap"><strong>Piège</strong><code>SELECT MAX(Id) + 1</code> puis <code>INSERT</code> : deux requêtes simultanées obtiennent le même ID. C'est le même problème de « vérifier puis agir » que pour les doublons.</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 5. SQL ============ -->
+    <section class="block" id="sql" data-title="Exercices SQL">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#E53F49" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Exercices SQL sans IDE</h2><p>Requêtes à écrire sans IDE ni exécution. Modèle : <code>Customer(Id, Name, DateOfBirth NOT NULL)</code>, <code>Director(Id, Name)</code>, <code>Movie(Id, Title, DirectorId)</code>, <code>Rentals(CustomerId, MovieId, RentedAt)</code>. Chaque ligne de Rentals est une location : un film loué trois fois apparaît trois fois.</p></div>
+      </div>
+
+      <details class="q" data-id="top10" data-hot>
+        <summary><span class="state"></span><span class="q-text">Écris une requête qui renvoie les 5 réalisateurs dont les films cumulent le plus de locations, avec ce nombre de locations.</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Deux jointures (réalisateur → films → locations), regroupement par réalisateur, comptage, tri décroissant, <code>TOP (5)</code>.</p>
+<pre><code><span class="k">SELECT TOP</span> (5)
+       d.Id,
+       d.Name,
+       <span class="k">COUNT</span>(*) <span class="k">AS</span> NbLocations
+<span class="k">FROM</span> dbo.Director d
+<span class="k">JOIN</span> dbo.Movie m   <span class="k">ON</span> m.DirectorId = d.Id
+<span class="k">JOIN</span> dbo.Rentals r <span class="k">ON</span> r.MovieId = m.Id
+<span class="k">GROUP BY</span> d.Id, d.Name
+<span class="k">ORDER BY</span> NbLocations <span class="k">DESC</span>;</code></pre>
+          <ul>
+            <li><strong>Comment compter ?</strong> Après les deux jointures, il y a une ligne par location. <code>COUNT(*)</code> sur chaque groupe « réalisateur » donne le total de ses locations, tous films confondus. <code>COUNT(1)</code> est strictement équivalent.</li>
+            <li><strong>Comment ordonner ?</strong> <code>ORDER BY NbLocations DESC</code>. L'alias du <code>SELECT</code> est utilisable dans l'<code>ORDER BY</code>, car celui-ci est évalué après.</li>
+            <li>Toute colonne du <code>SELECT</code> qui n'est pas agrégée doit figurer dans le <code>GROUP BY</code> : ici <code>d.Id</code> et <code>d.Name</code>. Regrouper aussi par film donnerait un total par film, pas par réalisateur.</li>
+            <li>Ex æquo au 5ᵉ rang : <code>SELECT TOP (5) WITH TIES</code> les inclut.</li>
+            <li>Pour inclure les réalisateurs sans aucune location : <code>LEFT JOIN</code> sur les deux tables et <code>COUNT(r.MovieId)</code>, qui ne compte pas les <code>NULL</code>.</li>
+          </ul>
+          <div class="note trap"><strong>Erreurs fréquentes</strong>Oublier le <code>GROUP BY</code>, regrouper au mauvais niveau (par film au lieu de par réalisateur), ou utiliser un alias qui n'existe pas (<code>dr.Name</code> au lieu de <code>d.Name</code>). Sans IDE, relis tes alias.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="orderby-sub">
+        <summary><span class="state"></span><span class="q-text">Peut-on utiliser un <code>ORDER BY</code> dans une sous-requête ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">En SQL Server, non, sauf si la sous-requête contient aussi <code>TOP</code>, <code>OFFSET … FETCH</code> ou <code>FOR XML</code>. Sinon : erreur 1033.</p>
+          <ul>
+            <li>Raison : une sous-requête (ou une vue, une CTE) est un ensemble, donc sans ordre. Seul l'<code>ORDER BY</code> de la requête la plus externe garantit l'ordre du résultat.</li>
+            <li>Avec <code>TOP</code>, l'<code>ORDER BY</code> est accepté car il sert à choisir quelles lignes garder, pas à ordonner le résultat final.</li>
+          </ul>
+<pre><code><span class="c">-- Refusé (erreur 1033)</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> (<span class="k">SELECT</span> MovieId <span class="k">FROM</span> dbo.Rentals <span class="k">ORDER BY</span> MovieId) t;
+
+<span class="c">-- Accepté : le ORDER BY sert au TOP</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> (<span class="k">SELECT TOP</span> (5) MovieId <span class="k">FROM</span> dbo.Rentals <span class="k">ORDER BY</span> RentedAt <span class="k">DESC</span>) t;</code></pre>
+        </div>
+      </details>
+
+      <details class="q" data-id="youngest" data-hot>
+        <summary><span class="state"></span><span class="q-text">Écris une requête qui renvoie l'ID et le nom du client le plus âgé ayant loué au moins 3 films différents.</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">On regroupe les locations par client, on garde ceux qui ont loué au moins 3 films distincts avec <code>HAVING COUNT(DISTINCT …)</code>, puis on trie par date de naissance croissante : le plus âgé est celui né le plus tôt.</p>
+<pre><code><span class="k">SELECT TOP</span> (1)
+       c.Id,
+       c.Name
+<span class="k">FROM</span> dbo.Customer c
+<span class="k">JOIN</span> dbo.Rentals r <span class="k">ON</span> r.CustomerId = c.Id
+<span class="k">GROUP BY</span> c.Id, c.Name, c.DateOfBirth
+<span class="k">HAVING COUNT</span>(<span class="k">DISTINCT</span> r.MovieId) &gt;= 3
+<span class="k">ORDER BY</span> c.DateOfBirth <span class="k">ASC</span>;</code></pre>
+          <p>Variante avec une CTE, souvent plus lisible à l'oral :</p>
+<pre><code><span class="k">WITH</span> Eligibles <span class="k">AS</span> (
+    <span class="k">SELECT</span> CustomerId
+    <span class="k">FROM</span> dbo.Rentals
+    <span class="k">GROUP BY</span> CustomerId
+    <span class="k">HAVING COUNT</span>(<span class="k">DISTINCT</span> MovieId) &gt;= 3
+)
+<span class="k">SELECT TOP</span> (1) <span class="k">WITH TIES</span> c.Id, c.Name
+<span class="k">FROM</span> dbo.Customer c
+<span class="k">JOIN</span> Eligibles e <span class="k">ON</span> e.CustomerId = c.Id
+<span class="k">ORDER BY</span> c.DateOfBirth;</code></pre>
+          <div class="note trap"><strong>Piège n°1</strong>Plus âgé = date de naissance la plus ancienne = <code>MIN(DateOfBirth)</code> ou <code>ORDER BY DateOfBirth ASC</code>. Inverser le tri renvoie le plus jeune : c'est une erreur fréquente, relis toujours le sens du tri.</div>
+          <div class="note trap"><strong>Piège n°2</strong>« 3 films différents » n'est pas « 3 locations » : un client qui a loué trois fois le même film ne doit pas sortir. <code>COUNT(*)</code> compterait les locations ; il faut <code>COUNT(DISTINCT r.MovieId)</code>.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="where-having">
+        <summary><span class="state"></span><span class="q-text">Quelle est la différence entre <code>WHERE</code> et <code>HAVING</code> ? Dans quel ordre une requête est-elle évaluée ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead"><code>WHERE</code> filtre les lignes avant le regroupement. <code>HAVING</code> filtre les groupes après, et c'est le seul endroit où on peut filtrer sur un agrégat (<code>COUNT</code>, <code>SUM</code>, <code>MAX</code>…).</p>
+          <p>Ordre logique d'évaluation d'une requête, à connaître par cœur :</p>
+          <div class="table-wrap"><table>
+            <tr><th>Étape</th><th>Clause</th><th>Rôle</th></tr>
+            <tr><td>1</td><td><code>FROM</code> / <code>JOIN</code></td><td>Construire l'ensemble de lignes</td></tr>
+            <tr><td>2</td><td><code>WHERE</code></td><td>Filtrer les lignes (pas d'agrégat possible)</td></tr>
+            <tr><td>3</td><td><code>GROUP BY</code></td><td>Former les groupes</td></tr>
+            <tr><td>4</td><td><code>HAVING</code></td><td>Filtrer les groupes (agrégats autorisés)</td></tr>
+            <tr><td>5</td><td><code>SELECT</code></td><td>Calculer les colonnes et les alias</td></tr>
+            <tr><td>6</td><td><code>ORDER BY</code></td><td>Trier (les alias du SELECT sont visibles)</td></tr>
+            <tr><td>7</td><td><code>TOP</code> / <code>OFFSET</code></td><td>Limiter le résultat</td></tr>
+          </table></div>
+<pre><code><span class="c">-- Locations depuis 2024 (WHERE), clients avec au moins 5 locations (HAVING)</span>
+<span class="k">SELECT</span> CustomerId, <span class="k">COUNT</span>(*) <span class="k">AS</span> Nb
+<span class="k">FROM</span> dbo.Rentals
+<span class="k">WHERE</span> RentedAt &gt;= <span class="s">'2024-01-01'</span>
+<span class="k">GROUP BY</span> CustomerId
+<span class="k">HAVING COUNT</span>(*) &gt;= 5;</code></pre>
+        </div>
+      </details>
+
+      <details class="q" data-id="max-where">
+        <summary><span class="state"></span><span class="q-text">Peut-on utiliser une fonction d'agrégat comme <code>MIN()</code> ou <code>MAX()</code> dans un <code>WHERE</code> ? Sinon, comment faire ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Non. Un agrégat ne peut pas apparaître dans un <code>WHERE</code> (erreur 147), puisque le <code>WHERE</code> est évalué avant le regroupement. Il faut soit trier avec <code>TOP (1)</code>, soit calculer le <code>MIN</code> ou le <code>MAX</code> dans une sous-requête.</p>
+<pre><code><span class="c">-- Ne compile pas</span>
+<span class="k">SELECT</span> c.Id, c.Name <span class="k">FROM</span> dbo.Customer c
+<span class="k">WHERE</span> c.DateOfBirth = <span class="k">MIN</span>(c.DateOfBirth);
+
+<span class="c">-- Réécriture avec une sous-requête scalaire</span>
+<span class="k">WITH</span> Eligibles <span class="k">AS</span> (
+    <span class="k">SELECT</span> c.Id, c.Name, c.DateOfBirth
+    <span class="k">FROM</span> dbo.Customer c
+    <span class="k">JOIN</span> dbo.Rentals r <span class="k">ON</span> r.CustomerId = c.Id
+    <span class="k">GROUP BY</span> c.Id, c.Name, c.DateOfBirth
+    <span class="k">HAVING COUNT</span>(<span class="k">DISTINCT</span> r.MovieId) &gt;= 3
+)
+<span class="k">SELECT</span> Id, Name
+<span class="k">FROM</span> Eligibles
+<span class="k">WHERE</span> DateOfBirth = (<span class="k">SELECT MIN</span>(DateOfBirth) <span class="k">FROM</span> Eligibles);</code></pre>
+          <p>Autre option : <code>ROW_NUMBER() OVER (ORDER BY DateOfBirth)</code> puis filtrer sur <code>rn = 1</code>. La version sous-requête renvoie naturellement les ex æquo.</p>
+        </div>
+      </details>
+
+      <details class="q" data-id="index">
+        <summary><span class="state"></span><span class="q-text">Qu'est-ce qu'un index ? Quels sont ses avantages et ses inconvénients ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Un index est une structure triée (un arbre B+ dans SQL Server) qui permet de retrouver des lignes sans parcourir toute la table, comme l'index d'un film. Il accélère les lectures mais a un coût en écriture et en stockage.</p>
+          <div class="table-wrap"><table>
+            <tr><th>Type</th><th>Principe</th></tr>
+            <tr><td>Clustered</td><td>Les données de la table sont physiquement triées selon cette clé. Un seul par table, souvent la clé primaire.</td></tr>
+            <tr><td>Non-clustered</td><td>Structure séparée qui contient la clé indexée et un pointeur vers la ligne. Plusieurs possibles par table.</td></tr>
+            <tr><td>Couvrant (<code>INCLUDE</code>)</td><td>Ajoute des colonnes au niveau feuille pour que la requête soit servie sans retourner lire la table (pas de « key lookup »).</td></tr>
+            <tr><td>Unique</td><td>Garantit l'unicité des valeurs, en plus d'accélérer la recherche.</td></tr>
+            <tr><td>Filtré</td><td>N'indexe qu'une partie des lignes (<code>WHERE ReturnedAt IS NULL</code>).</td></tr>
+          </table></div>
+          <div class="table-wrap"><table>
+            <tr><th>Avantages</th><th>Inconvénients</th></tr>
+            <tr><td>Recherche rapide (seek au lieu d'un scan complet) sur <code>WHERE</code>, <code>JOIN</code>, <code>ORDER BY</code>, <code>GROUP BY</code></td><td>Chaque <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> doit aussi mettre à jour tous les index concernés : écritures plus lentes</td></tr>
+            <tr><td>Évite des tris coûteux quand l'ordre de l'index correspond au <code>ORDER BY</code></td><td>Espace disque et mémoire supplémentaires</td></tr>
+            <tr><td>Garantit l'unicité (index unique)</td><td>Fragmentation avec le temps : maintenance nécessaire (rebuild, reorganize, statistiques)</td></tr>
+            <tr><td>Réduit les verrous et la contention en lisant moins de lignes</td><td>Trop d'index ou des index inutilisés : coût sans bénéfice, et l'optimiseur peut mal choisir</td></tr>
+          </table></div>
+<pre><code><span class="c">-- Accélère les comptages de locations par film (jointure et regroupement sur MovieId)</span>
+<span class="k">CREATE NONCLUSTERED INDEX</span> IX_Rentals_MovieId
+    <span class="k">ON</span> dbo.Rentals (MovieId);
+
+<span class="c">-- Index couvrant pour les locations d'un client triés par date</span>
+<span class="k">CREATE NONCLUSTERED INDEX</span> IX_Rentals_CustomerId_RentedAt
+    <span class="k">ON</span> dbo.Rentals (CustomerId, RentedAt <span class="k">DESC</span>)
+    <span class="k">INCLUDE</span> (MovieId);</code></pre>
+          <ul>
+            <li><strong>Ordre des colonnes</strong> dans un index composite : l'index <code>(CustomerId, RentedAt)</code> sert pour un filtre sur <code>CustomerId</code>, pas pour un filtre sur <code>RentedAt</code> seul.</li>
+            <li><strong>Requêtes non SARGable</strong> : une fonction sur la colonne empêche l'utilisation de l'index. <code>WHERE YEAR(RentedAt) = 2024</code> force un scan ; <code>WHERE RentedAt &gt;= '2024-01-01' AND RentedAt &lt; '2025-01-01'</code> permet un seek.</li>
+            <li>Les clés étrangères ne sont pas indexées automatiquement dans SQL Server.</li>
+            <li>Pour vérifier : le plan d'exécution (Index Seek vs Index Scan / Table Scan, Key Lookup).</li>
+          </ul>
+          <div class="note tip"><strong>À retenir</strong>Une table très lue et peu écrite supporte bien plusieurs index. Une table qui reçoit beaucoup d'écritures (logs, historiques) doit en avoir peu et bien choisis.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="procs">
+        <summary><span class="state"></span><span class="q-text">Sais-tu lire et écrire une procédure stockée ? Comment transformer une requête en procédure ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Dans beaucoup de SI, une partie de la logique métier est portée par des procédures stockées. Il faut connaître la syntaxe de base, les paramètres, les transactions et la gestion d'erreurs.</p>
+<pre><code><span class="k">CREATE OR ALTER PROCEDURE</span> dbo.usp_GetTopDirectors
+    @Top <span class="k">INT</span> = 5
+<span class="k">AS</span>
+<span class="k">BEGIN</span>
+    <span class="k">SET NOCOUNT ON</span>;
+
+    <span class="k">SELECT TOP</span> (@Top) d.Id, d.Name, <span class="k">COUNT</span>(*) <span class="k">AS</span> NbLocations
+    <span class="k">FROM</span> dbo.Director d
+    <span class="k">JOIN</span> dbo.Movie m   <span class="k">ON</span> m.DirectorId = d.Id
+    <span class="k">JOIN</span> dbo.Rentals r <span class="k">ON</span> r.MovieId = m.Id
+    <span class="k">GROUP BY</span> d.Id, d.Name
+    <span class="k">ORDER BY</span> NbLocations <span class="k">DESC</span>;
+<span class="k">END</span>;
+<span class="k">GO</span>
+
+<span class="c">-- Procédure d'écriture avec transaction et gestion d'erreur</span>
+<span class="k">CREATE OR ALTER PROCEDURE</span> dbo.usp_RentMovie
+    @CustomerId <span class="k">INT</span>, @MovieId <span class="k">INT</span>
+<span class="k">AS</span>
+<span class="k">BEGIN</span>
+    <span class="k">SET NOCOUNT ON</span>;
+    <span class="k">SET XACT_ABORT ON</span>;
+    <span class="k">BEGIN TRY</span>
+        <span class="k">BEGIN TRANSACTION</span>;
+
+        <span class="k">IF EXISTS</span> (<span class="k">SELECT</span> 1 <span class="k">FROM</span> dbo.Rentals <span class="k">WITH</span> (UPDLOCK, HOLDLOCK)
+                   <span class="k">WHERE</span> MovieId = @MovieId <span class="k">AND</span> ReturnedAt <span class="k">IS NULL</span>)
+            <span class="k">THROW</span> 50001, <span class="s">'Film déjà loué'</span>, 1;
+
+        <span class="k">INSERT INTO</span> dbo.Rentals (CustomerId, MovieId, RentedAt)
+        <span class="k">VALUES</span> (@CustomerId, @MovieId, <span class="k">SYSUTCDATETIME</span>());
+
+        <span class="k">COMMIT</span>;
+    <span class="k">END TRY</span>
+    <span class="k">BEGIN CATCH</span>
+        <span class="k">IF</span> @@TRANCOUNT &gt; 0 <span class="k">ROLLBACK</span>;
+        <span class="k">THROW</span>;
+    <span class="k">END CATCH</span>
+<span class="k">END</span>;</code></pre>
+          <ul>
+            <li><code>SET NOCOUNT ON</code> : supprime les messages « n rows affected », moins de trafic réseau.</li>
+            <li><code>SET XACT_ABORT ON</code> : toute erreur annule la transaction entière.</li>
+            <li><code>UPDLOCK, HOLDLOCK</code> : empêche deux locations simultanées du même film (même problème de check-then-act qu'en C#).</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 6. Architecture asynchrone ============ -->
+    <section class="block" id="async" data-title="Message brokers">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#5B98D2" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Message brokers &amp; architecture asynchrone</h2><p>Comment plusieurs API communiquent de façon fiable.</p></div>
+      </div>
+
+      <details class="q" data-id="brokers" data-hot>
+        <summary><span class="state"></span><span class="q-text">À quoi sert un message broker (Kafka, RabbitMQ) ? Dans quels cas l'utiliser ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Un broker découple un producteur de ses consommateurs : l'appelant publie un message et n'attend pas que le traitement soit fait.</p>
+          <ul>
+            <li><strong>Traitement asynchrone</strong> : envoi d'e-mails, génération de factures PDF, notifications.</li>
+            <li><strong>Intégration entre domaines</strong> : « commande validée » → stock, facturation, logistique et fidélité réagissent chacun de leur côté.</li>
+            <li><strong>Absorber les pics</strong> : la file stocke les messages et les consommateurs traitent à leur rythme (soldes, Black Friday).</li>
+            <li><strong>Résilience</strong> : si un consommateur est arrêté, les messages attendent. Retries et dead-letter queue pour les messages en échec.</li>
+          </ul>
+          <div class="table-wrap"><table>
+            <tr><th></th><th>RabbitMQ</th><th>Kafka</th></tr>
+            <tr><td>Modèle</td><td>File de messages : exchange → routage → queue</td><td>Journal distribué : topic découpé en partitions</td></tr>
+            <tr><td>Après lecture</td><td>Message supprimé après acquittement</td><td>Message conservé (rétention), relecture possible</td></tr>
+            <tr><td>Ordre</td><td>Par queue</td><td>Garanti par partition (via la clé du message)</td></tr>
+            <tr><td>Points forts</td><td>Routage fin, simplicité, faible latence</td><td>Très gros débit, event sourcing, rejouer l'historique</td></tr>
+          </table></div>
+          <p>Côté Azure : Service Bus (proche de RabbitMQ) et Event Hubs (proche de Kafka). En .NET : MassTransit, NServiceBus, Wolverine.</p>
+        </div>
+      </details>
+
+      <details class="q" data-id="outbox" data-hot>
+        <summary><span class="state"></span><span class="q-text">Que sont les patterns Inbox et Outbox ? Quel problème résolvent-ils ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Ils résolvent le problème de la double écriture : on ne peut pas écrire en base et publier sur le broker de façon atomique. Outbox garantit l'envoi côté producteur, Inbox garantit un traitement unique côté consommateur.</p>
+          <p><strong>Le problème</strong> : je sauvegarde la commande puis je publie <code>OrderCreated</code>. Si l'application plante entre les deux, la commande existe mais personne n'est prévenu. Si je publie d'abord et que la sauvegarde échoue, j'ai annoncé une commande qui n'existe pas.</p>
+          <ul>
+            <li><strong>Outbox</strong> (producteur) : dans la même transaction SQL, j'écris la commande et une ligne dans une table <code>OutboxMessage</code>. Un worker en arrière-plan lit cette table, publie sur le broker, puis marque la ligne comme envoyée. On obtient une livraison « au moins une fois ».</li>
+            <li><strong>Inbox</strong> (consommateur) : comme un message peut arriver deux fois, le consommateur enregistre l'ID du message dans une table <code>InboxMessage</code>, dans la même transaction que son traitement. Si l'ID existe déjà, il ignore le message. Le traitement devient idempotent.</li>
+          </ul>
+<pre><code><span class="k">CREATE TABLE</span> dbo.OutboxMessage (
+    Id          <span class="k">UNIQUEIDENTIFIER PRIMARY KEY</span>,
+    Type        <span class="k">NVARCHAR</span>(200) <span class="k">NOT NULL</span>,
+    Payload     <span class="k">NVARCHAR</span>(<span class="k">MAX</span>) <span class="k">NOT NULL</span>,
+    OccurredAt  <span class="k">DATETIME2 NOT NULL</span>,
+    ProcessedAt <span class="k">DATETIME2 NULL</span>
+);
+
+<span class="k">CREATE TABLE</span> dbo.InboxMessage (
+    MessageId   <span class="k">UNIQUEIDENTIFIER PRIMARY KEY</span>,  <span class="c">-- l'unicité bloque le double traitement</span>
+    ProcessedAt <span class="k">DATETIME2 NOT NULL</span>
+);</code></pre>
+          <div class="note tip"><strong>À retenir</strong>Outbox + Inbox = effet « exactement une fois » en pratique, alors que le transport ne garantit que « au moins une fois ». MassTransit et NServiceBus les proposent clé en main.</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 7. Design patterns ============ -->
+    <section class="block" id="patterns" data-title="Design patterns">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#00BB7E" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Design patterns</h2><p>Mise en situation sur l'API de location de films.</p></div>
+      </div>
+
+      <details class="q" data-id="strategy" data-hot>
+        <summary><span class="state"></span><span class="q-text">Selon leur catégorie (Comédie, Documentaire…), les films sont stockés dans des sources différentes : SQL Server, une autre base, un fichier Excel. Quel pattern utiliser pour que le reste de l'application ne dépende pas de la source ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Pattern Strategy, appuyé sur l'abstraction du repository : une interface unique, une implémentation par source, et un composant qui choisit la bonne selon la catégorie. Le service ne connaît que l'interface.</p>
+<pre><code><span class="k">public interface</span> IMovieStore
+{
+    <span class="k">bool</span> CanHandle(<span class="k">string</span> category);
+    Task&lt;<span class="k">bool</span>&gt; ExistsAsync(<span class="k">string</span> title, <span class="k">string</span> director, CancellationToken ct);
+    Task&lt;Movie&gt; AddAsync(Movie movie, CancellationToken ct);
+}
+
+<span class="k">public sealed class</span> SqlServerMovieStore : IMovieStore
+{
+    <span class="k">public bool</span> CanHandle(<span class="k">string</span> category) =&gt; category == <span class="s">"Comédie"</span>;
+    <span class="c">// ... accès SQL Server</span>
+}
+
+<span class="k">public sealed class</span> ExcelMovieStore : IMovieStore
+{
+    <span class="k">public bool</span> CanHandle(<span class="k">string</span> category) =&gt; category == <span class="s">"Documentaire"</span>;
+    <span class="c">// ... lecture / écriture d'un fichier Excel (ClosedXML)</span>
+}
+
+<span class="k">public sealed class</span> MovieStoreResolver(IEnumerable&lt;IMovieStore&gt; stores)
+{
+    <span class="k">public</span> IMovieStore For(<span class="k">string</span> category) =&gt;
+        stores.FirstOrDefault(s =&gt; s.CanHandle(category))
+        ?? <span class="k">throw new</span> NotSupportedException(<span class="s">$"Aucune source pour la catégorie {category}"</span>);
+}
+
+<span class="c">// Le service ne connaît aucune source concrète</span>
+<span class="k">public async</span> Task&lt;Movie&gt; AddMovieAsync(Movie movie, CancellationToken ct) =&gt;
+    <span class="k">await</span> _resolver.For(movie.Category).AddAsync(movie, ct);
+
+<span class="c">// Program.cs</span>
+services.AddScoped&lt;IMovieStore, SqlServerMovieStore&gt;();
+services.AddScoped&lt;IMovieStore, ExcelMovieStore&gt;();
+services.AddScoped&lt;MovieStoreResolver&gt;();</code></pre>
+          <ul>
+            <li><strong>Inversion de dépendance</strong> : le Domain définit l'interface, l'Infrastructure fournit les implémentations. Changer de source ne touche ni au service ni au contrôleur.</li>
+            <li>Ajouter une source = ajouter une classe, sans modifier le code existant (principe ouvert/fermé).</li>
+            <li>La correspondance catégorie → source peut venir de la configuration (<code>appsettings.json</code>) plutôt que d'être codée en dur.</li>
+            <li>Alternative .NET 8 : <strong>keyed services</strong>, <code>services.AddKeyedScoped&lt;IMovieStore, SqlServerMovieStore&gt;("Comédie")</code> puis <code>GetRequiredKeyedService&lt;IMovieStore&gt;(category)</code>.</li>
+            <li>Autres patterns à citer si on te pousse : Factory (création de l'implémentation), Adapter (faire ressembler un fichier Excel à un repository), Composite (une façade qui route vers les sources), Decorator (cache ou log autour d'une source).</li>
+          </ul>
+          <div class="note trap"><strong>Piège</strong>Un <code>if/switch</code> sur la catégorie dans le service fonctionne, mais il fait dépendre le service de toutes les sources. On attend un pattern nommé et l'argument d'extensibilité.</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 8. Live coding ============ -->
+    <section class="block" id="live" data-title="Live coding">
+      <div class="block-head">
+        <svg class="hexmark" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="#E53F49" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><h2>Live coding : endpoint de location</h2><p>Tu codes en partage d'écran sur l'API de location de films, avec les données en mémoire. Parle à voix haute : le raisonnement compte autant que le code produit.</p></div>
+      </div>
+
+      <details class="q" data-id="borrow-endpoint">
+        <summary><span class="state"></span><span class="q-text">Comment implémenter un endpoint qui permet à un client de louer un film ? Que renvoyer, et avec quel code HTTP ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Un <code>POST</code>, car on crée une ressource « location ». La réponse la plus juste est <code>201 Created</code> avec la location créée dans le corps et son adresse dans l'en-tête <code>Location</code>.</p>
+<pre><code><span class="k">public sealed record</span> RentMovieRequest(<span class="k">int</span> CustomerId, <span class="k">int</span> MovieId);
+<span class="k">public sealed record</span> RentalResponse(<span class="k">int</span> CustomerId, <span class="k">int</span> MovieId, DateTime RentedAt);
+
+[HttpPost(<span class="s">"rentals"</span>)]
+[ProducesResponseType(<span class="k">typeof</span>(RentalResponse), StatusCodes.Status201Created)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+[ProducesResponseType(StatusCodes.Status409Conflict)]
+<span class="k">public</span> IActionResult RentMovie([FromBody] RentMovieRequest request)
+{
+    <span class="k">var</span> rental = _rentalService.RentMovie(request.CustomerId, request.MovieId);
+    <span class="k">var</span> response = <span class="k">new</span> RentalResponse(rental.CustomerId, rental.MovieId, rental.RentedAt);
+
+    <span class="k">return</span> CreatedAtAction(nameof(GetCustomerRentals), <span class="k">new</span> { customerId = request.CustomerId }, response);
+}</code></pre>
+          <ul>
+            <li><strong>Route</strong> : <code>POST /api/rentals</code> avec le corps <code>{ customerId, movieId }</code>, ou <code>POST /api/customers/{customerId}/rentals</code> avec <code>{ movieId }</code>. La seconde rend explicite que la location appartient au client.</li>
+            <li><strong>Service</strong> : vérifier que le client existe, que le film existe, qu'il est disponible, puis enregistrer la location et marquer le film comme indisponible.</li>
+            <li><strong>Codes HTTP</strong> : 201 en cas de succès ; 400 si la requête est mal formée ; 404 si le client ou le film n'existe pas ; 409 si le film est déjà loué.</li>
+            <li>Renvoyer un DTO de réponse, jamais l'entité de domaine directement.</li>
+            <li>Si les entités sont immuables (propriétés en lecture seule), on ne modifie pas l'objet : on en crée une nouvelle version ou on ajoute une méthode métier explicite (<code>movie.MarkAsRented()</code>).</li>
+          </ul>
+          <div class="note tip"><strong>Réponses acceptables</strong><code>200 OK</code> avec la location dans le corps, ou <code>204 No Content</code>, se défendent aussi. Ce qui compte, c'est de justifier ton choix : 201 dit explicitement qu'une ressource a été créée.</div>
+        </div>
+      </details>
+
+      <details class="q" data-id="borrow-404">
+        <summary><span class="state"></span><span class="q-text">Que renvoyer si l'identifiant de client fourni ne correspond à aucun client ? Quel code HTTP et pourquoi ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead"><code>404 Not Found</code>, avec un corps <code>ProblemDetails</code> qui précise que le client 42 n'existe pas. Surtout pas une 500 : ce n'est pas une panne du serveur, c'est une donnée fournie par l'appelant qui ne correspond à rien.</p>
+<pre><code><span class="c">// Service</span>
+<span class="k">var</span> customer = _customerRepository.GetById(customerId)
+    ?? <span class="k">throw new</span> CustomerNotFoundException(customerId);
+
+<span class="c">// Réponse envoyée par le middleware d'exceptions</span>
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+
+{
+  <span class="s">"title"</span>: <span class="s">"Client introuvable"</span>,
+  <span class="s">"status"</span>: 404,
+  <span class="s">"detail"</span>: <span class="s">"Aucun client avec l'identifiant 42."</span>
+}</code></pre>
+          <ul>
+            <li><strong>Si l'ID est dans l'URL</strong> (<code>/customers/42/rentals</code>) : 404 ne fait pas débat, la ressource demandée n'existe pas.</li>
+            <li><strong>Si l'ID est dans le corps</strong> : 404 reste courant. Certains préfèrent <code>422 Unprocessable Entity</code> (la requête est bien formée mais ses données ne sont pas exploitables) ou <code>400 Bad Request</code>. Les trois se défendent si tu argumentes et que l'API reste cohérente.</li>
+            <li>Ne pas confondre avec le film déjà loué : là, client et film existent, c'est l'état du film qui empêche l'opération, donc <code>409 Conflict</code>.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="q" data-id="borrow-threadsafe" data-hot>
+        <summary><span class="state"></span><span class="q-text">Une location enchaîne plusieurs opérations : vérifier le client, le film et sa disponibilité, enregistrer la location, mettre à jour le film. Comment garantir que deux requêtes ne louent pas le même film en même temps ?</span><span class="q-meta"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="a">
+          <p class="lead">Toute la séquence « vérifier la disponibilité puis louer » doit être atomique. En mémoire, un seul <code>lock</code> partagé autour de l'ensemble ; avec une base, une transaction et une garantie portée par la base.</p>
+          <p><strong>Données en mémoire</strong> :</p>
+<pre><code><span class="k">private static readonly object</span> RentalLock = <span class="k">new</span>(); <span class="c">// partagé par toutes les requêtes</span>
+
+<span class="k">public</span> Rental RentMovie(<span class="k">int</span> customerId, <span class="k">int</span> movieId)
+{
+    <span class="k">lock</span> (RentalLock)
+    {
+        <span class="k">var</span> customer = _customers.GetById(customerId) ?? <span class="k">throw new</span> CustomerNotFoundException(customerId);
+        <span class="k">var</span> movie = _movies.GetById(movieId) ?? <span class="k">throw new</span> MovieNotFoundException(movieId);
+        <span class="k">if</span> (!movie.IsAvailable) <span class="k">throw new</span> MovieNotAvailableException(movieId);
+
+        <span class="k">var</span> rental = <span class="k">new</span> Rental(customer.Id, movie.Id, DateTime.UtcNow);
+        _rentals.Add(rental);
+        _movies.MarkAsRented(movie.Id);
+        <span class="k">return</span> rental;
+    }
+}</code></pre>
+          <ul>
+            <li>Le verrou doit couvrir <em>toute</em> la séquence. Verrouiller chaque étape séparément laisse deux requêtes passer le contrôle de disponibilité en même temps.</li>
+            <li>Il doit être partagé par toutes les requêtes : <code>static</code> ou porté par un composant Singleton, pas par un service Scoped.</li>
+            <li>Toutes les écritures sur les films et les locations doivent passer par ce même verrou.</li>
+          </ul>
+          <p><strong>Avec SQL Server</strong>, le <code>lock</code> ne suffit plus dès qu'il y a plusieurs instances. Pistes à évoquer :</p>
+          <ul>
+            <li><strong>Mise à jour conditionnelle</strong> : <code>UPDATE dbo.Movie SET IsAvailable = 0 WHERE Id = @MovieId AND IsAvailable = 1</code>, puis vérifier le nombre de lignes modifiées. Zéro ligne : quelqu'un a loué le film entre-temps → 409. L'instruction est atomique.</li>
+            <li><strong>Index unique filtré</strong> : <code>CREATE UNIQUE INDEX UX_ActiveRental ON dbo.Rental (MovieId) WHERE ReturnedAt IS NULL</code>. La base refuse une seconde location en cours sur le même film, quoi qu'il arrive côté application.</li>
+            <li><strong>Transaction</strong> qui regroupe l'insertion de la location et la mise à jour du film, éventuellement avec <code>UPDLOCK, HOLDLOCK</code> sur la lecture (voir la procédure <code>usp_RentMovie</code> dans la section SQL).</li>
+            <li><strong>Verrouillage optimiste</strong> : une colonne <code>rowversion</code> sur le film ; EF Core lève <code>DbUpdateConcurrencyException</code> si la ligne a changé depuis la lecture.</li>
+          </ul>
+          <div class="note tip"><strong>Comment répondre</strong>Commence par la version en mémoire (c'est le contexte du live coding), puis montre que tu sais qu'elle ne tient pas à plusieurs instances et cite une ou deux pistes côté base.</div>
+        </div>
+      </details>
+    </section>
+
+    <p class="empty" id="empty" hidden>Aucune question ne correspond. Modifie ta recherche ou ton filtre.</p>
+
+    <footer>
+      Les réponses sont des pistes de préparation rédigées par Carbon : adapte-les à ton expérience réelle. Ta progression est enregistrée dans ce navigateur uniquement.
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  var KEY = "carbon-dotnet-prep-v1";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var questions = Array.prototype.slice.call(document.querySelectorAll("details.q"));
+  var sections = Array.prototype.slice.call(document.querySelectorAll("section.block"));
+  var filter = "all";
+
+  // Badges + boutons de suivi
+  questions.forEach(function (q) {
+    var meta = q.querySelector(".q-meta");
+    if (q.hasAttribute("data-hot")) {
+      var hot = document.createElement("span");
+      hot.className = "tag hot"; hot.textContent = "Clé";
+      hot.title = "Fait partie des questions les plus discriminantes";
+      meta.appendChild(hot);
+    }
+
+    var mark = document.createElement("div");
+    mark.className = "mark";
+    mark.innerHTML = '<button type="button" data-mark="ok" aria-pressed="false">Je maîtrise</button><button type="button" data-mark="todo" aria-pressed="false">À revoir</button>';
+    q.querySelector(".a").appendChild(mark);
+    mark.addEventListener("click", function (ev) {
+      var b = ev.target.closest("button"); if (!b) return;
+      var id = q.getAttribute("data-id"), v = b.getAttribute("data-mark");
+      if (state[id] === v) delete state[id]; else state[id] = v;
+      save(); render();
+    });
+  });
+
+  // Sommaire
+  var toc = document.getElementById("toc");
+  sections.forEach(function (s) {
+    var li = document.createElement("li");
+    li.innerHTML = '<a href="#' + s.id + '">' + s.getAttribute("data-title") + ' <span data-count-for="' + s.id + '"></span></a>';
+    toc.appendChild(li);
+  });
+
+  function norm(t) { return t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  var search = document.getElementById("q-search");
+
+  function render() {
+    var term = norm(search.value.trim());
+    var ok = 0, todo = 0, visible = 0;
+    questions.forEach(function (q) {
+      var s = state[q.getAttribute("data-id")];
+      q.classList.toggle("is-ok", s === "ok");
+      q.classList.toggle("is-todo", s === "todo");
+      q.querySelectorAll(".mark button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-mark") === s)); });
+      if (s === "ok") ok++; if (s === "todo") todo++;
+      var match = !term || norm(q.textContent).indexOf(term) !== -1;
+      if (filter === "hot") match = match && q.hasAttribute("data-hot");
+      if (filter === "todo") match = match && s === "todo";
+      if (filter === "new") match = match && !s;
+      q.hidden = !match;
+      if (match) visible++;
+    });
+    sections.forEach(function (sec) {
+      var qs = sec.querySelectorAll("details.q");
+      var shown = 0, done = 0;
+      var el = toc.querySelector('[data-count-for="' + sec.id + '"]');
+      if (sec.classList.contains("static")) {
+        sec.hidden = !!term || filter !== "all";
+        if (el) el.textContent = "";
+        return;
+      }
+      qs.forEach(function (q) { if (!q.hidden) shown++; if (state[q.getAttribute("data-id")] === "ok") done++; });
+      sec.hidden = shown === 0;
+      if (el) el.textContent = done + "/" + qs.length;
+    });
+    document.getElementById("empty").hidden = visible !== 0;
+    var total = questions.length;
+    document.getElementById("bar-ok").style.width = (ok / total * 100) + "%";
+    document.getElementById("bar-todo").style.width = (todo / total * 100) + "%";
+    document.getElementById("progress-text").textContent =
+      ok + " maîtrisée" + (ok > 1 ? "s" : "") + " · " + todo + " à revoir · " + total + " questions";
+  }
+
+  search.addEventListener("input", render);
+  document.querySelectorAll(".chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      filter = chip.getAttribute("data-filter");
+      document.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(c === chip)); });
+      render();
+    });
+  });
+  document.getElementById("expand").addEventListener("click", function () { questions.forEach(function (q) { if (!q.hidden) q.open = true; }); });
+  document.getElementById("collapse").addEventListener("click", function () { questions.forEach(function (q) { q.open = false; }); });
+  document.getElementById("reset").addEventListener("click", function () { state = {}; save(); render(); });
+  document.getElementById("random").addEventListener("click", function () {
+    var pool = questions.filter(function (q) { return state[q.getAttribute("data-id")] !== "ok"; });
+    if (!pool.length) pool = questions;
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    filter = "all"; search.value = "";
+    document.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(c.getAttribute("data-filter") === "all")); });
+    render();
+    questions.forEach(function (q) { q.open = false; });
+    pick.scrollIntoView({ block: "center" });
+    pick.querySelector("summary").focus();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
