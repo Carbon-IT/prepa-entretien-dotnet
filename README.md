@@ -21,6 +21,19 @@ Elle regroupe les thèmes classiques de ces entretiens sous forme de questions d
 
 Les exemples s'appuient sur un domaine fictif : une plateforme de location de films (`Movie`, `Director`, `Customer`, `Rental`).
 
+### Page « Questions ouvertes »
+
+Une seconde page, `questions-ouvertes.html`, regroupe des questions complémentaires. Elle n'est pas liée depuis `index.html` : on la transmet au candidat par son URL (`https://carbon-it.github.io/prepa-entretien-dotnet/questions-ouvertes.html`).
+
+| Section | Thèmes abordés |
+|---|---|
+| Fondamentaux .NET | Durées de vie de l'injection de dépendances (Singleton, Scoped, Transient), ORM, pattern Unit of Work |
+| Qualité, tests et architecture | Mesure et outils de performance, tests unitaires vs tests d'intégration, SonarQube, Clean Architecture |
+| Observabilité | Propagation du contexte de trace (`traceparent`) à travers un bus de messages |
+| Cas pratique Agile | Animation de l'équipe, suivi de son code jusqu'en production, animateur sans Scrum Master, responsabilité en cas de problème |
+
+Sa progression est enregistrée séparément de celle de `index.html`.
+
 ## Fonctionnalités
 
 - Recherche plein texte (insensible aux accents)
@@ -32,11 +45,12 @@ Les exemples s'appuient sur un domaine fictif : une plateforme de location de fi
 
 ```
 .
-├── index.html   # La page complète : HTML, CSS, JavaScript et logo intégrés
+├── index.html               # La page principale : HTML, CSS, JavaScript et logo intégrés
+├── questions-ouvertes.html  # Questions complémentaires, non liée depuis index.html
 └── README.md
 ```
 
-La page est autonome : aucune dépendance à installer, aucun build. Seules les polices (Figtree, Carlito, JetBrains Mono) sont chargées depuis Google Fonts.
+Chaque page est autonome : aucune dépendance à installer, aucun build. Seules les polices (Figtree, Carlito, JetBrains Mono) sont chargées depuis Google Fonts.
 
 ## Consulter la page en local
 
@@ -52,7 +66,7 @@ Chaque push sur `main` met la page à jour automatiquement.
 
 ## Modifier le contenu
 
-Tout se trouve dans `index.html`.
+Tout se trouve dans `index.html` (ou `questions-ouvertes.html` pour la seconde page). Les deux pages partagent la même structure : les consignes ci-dessous s'appliquent aux deux. Un `data-id` doit être unique au sein d'une page.
 
 - **Ajouter une question** : copier un bloc `<details class="q" data-id="…">` existant dans la section voulue et lui donner un `data-id` unique. Ce `data-id` sert de clé pour la progression des candidats : ne pas le modifier sur une question existante, sinon la progression associée est perdue.
 - **Marquer une question comme clé** : ajouter l'attribut `data-hot` sur la balise `<details>`.
