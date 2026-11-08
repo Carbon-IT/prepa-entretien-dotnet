@@ -431,7 +431,7 @@ ul.bul li { margin: .2rem 0; }
         <li><a href="#bases">Trois notions à séparer</a></li><li><a href="#glossaire">Glossaire</a></li><li><a href="#threads">Le thread</a></li><li><a href="#pool">Simulateur de starvation</a></li><li><a href="#sm">await étape par étape</a></li><li><a href="#whenall">WhenAll</a></li><li><a href="#bounded">Concurrence bornée</a></li><li><a href="#exceptions">Exceptions</a></li><li><a href="#anti">Mauvaises pratiques</a></li><li><a href="#qcm-base">QCM de base</a></li>
       </ul></div>
       <div><h3><a href="#avance">2 · Notions avancées</a></h3><ul>
-        <li><a href="#heap">Heap et DI après await</a></li><li><a href="#asynclocal">ThreadStatic et AsyncLocal</a></li><li><a href="#configureawait">ConfigureAwait</a></li><li><a href="#deadlock">Deadlock avec .Result</a></li><li><a href="#asyncvoid">async void</a></li><li><a href="#background">Tâches de fond</a></li><li><a href="#race">Race condition</a></li><li><a href="#elision">Élision</a></li><li><a href="#qcm-avance">QCM avancé</a></li>
+        <li><a href="#heap">Heap et DI après await</a></li><li><a href="#asynclocal">ThreadStatic et AsyncLocal</a></li><li><a href="#configureawait">ConfigureAwait</a></li><li><a href="#deadlock">Deadlock avec .Result</a></li><li><a href="#asyncvoid">async void</a></li><li><a href="#background">Tâches de fond</a></li><li><a href="#race">Race condition</a></li><li><a href="#elision">Élision</a></li><li><a href="#valuetask">Task et ValueTask</a></li><li><a href="#qcm-avance">QCM avancé</a></li>
       </ul></div>
       <div><h3><a href="#profond">3 · Notions profondes</a></h3><ul>
         <li><a href="#threadsys">Le thread dans le système</a></li><li><a href="#os">Simulateur threads et cœurs</a></li><li><a href="#tpinside">ThreadPool interne</a></li><li><a href="#ws">Vol de travail</a></li><li><a href="#injection">Injection et conteneurs</a></li><li><a href="#asyncvoid-internals">async void : code généré</a></li><li><a href="#interlocked">Interlocked et cache CPU</a></li><li><a href="#qcm-profond">QCM profond</a></li>
@@ -441,7 +441,7 @@ ul.bul li { margin: .2rem 0; }
 
   <div class="tabs" role="tablist" aria-label="Niveau">
     <button type="button" role="tab" id="tab-btn-base" aria-controls="base" aria-selected="true"><span class="long">Notions de base</span><span class="short">Base</span> <span class="pill count" title="Sections">9</span></button>
-    <button type="button" role="tab" id="tab-btn-avance" aria-controls="avance" aria-selected="false"><span class="long">Notions avancées</span><span class="short">Avancé</span> <span class="pill count" title="Sections">8</span></button>
+    <button type="button" role="tab" id="tab-btn-avance" aria-controls="avance" aria-selected="false"><span class="long">Notions avancées</span><span class="short">Avancé</span> <span class="pill count" title="Sections">9</span></button>
     <button type="button" role="tab" id="tab-btn-profond" aria-controls="profond" aria-selected="false"><span class="long">Notions profondes</span><span class="short">Profond</span> <span class="pill count" title="Sections">7</span></button>
   </div>
 
@@ -992,6 +992,42 @@ public Task<string> ReadAsync()
 // Élision acceptable : simple transmission, sans using, sans try, sans code après
 public Task<User> GetAsync(int id) => GetAsync(id, CancellationToken.None);
 </script>
+    </section>
+
+    <section id="valuetask" class="stack">
+      <h2><code>Task</code> et <code>ValueTask</code></h2>
+      <p class="intro">Une Task est un objet sur le heap. Chaque appel à une méthode async crée donc une allocation. <code>ValueTask</code> évite cette allocation quand le résultat est déjà disponible.</p>
+<script type="text/x-csharp">
+public ValueTask<User> GetUserAsync(int id)
+{
+    if (_cache.TryGetValue(id, out var user))
+        return ValueTask.FromResult(user);           // chemin rapide : aucune allocation
+    return new ValueTask<User>(LoadUserAsync(id));   // chemin lent : enveloppe une Task
+}
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Critère</th><th><code>Task</code></th><th><code>ValueTask</code></th></tr></thead>
+        <tbody>
+          <tr><td>Nature</td><td class="secondary">Classe, sur le heap</td><td class="secondary">Struct. Contient un résultat, une Task ou un objet réutilisable.</td></tr>
+          <tr><td>Résultat déjà disponible</td><td class="secondary">Une allocation (sauf résultats en cache, par exemple <code>Task.CompletedTask</code>)</td><td class="secondary">Aucune allocation</td></tr>
+          <tr><td>Nombre d'<code>await</code></td><td class="secondary">Autant que nécessaire</td><td class="secondary">Un seul</td></tr>
+          <tr><td><code>WhenAll</code>, <code>.Result</code>, stockage dans un champ</td><td class="secondary">Autorisés</td><td class="secondary">Interdits. Appelez d'abord <code>.AsTask()</code>.</td></tr>
+          <tr><td>Usage</td><td class="secondary">Par défaut</td><td class="secondary">Chemin critique, résultat souvent synchrone, gain mesuré</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Règle : une seule consommation.</strong> Une ValueTask peut utiliser un objet réutilisé (<code>IValueTaskSource</code>). Après le premier <code>await</code>, cet objet peut servir à une autre opération. Un deuxième <code>await</code>, un <code>.Result</code> ou un <code>WhenAll</code> sur la même ValueTask donne un comportement indéfini : mauvais résultat, exception ou blocage.</p></div>
+<script type="text/x-csharp">
+// Incorrect : deux consommations de la même ValueTask
+var vt = GetUserAsync(1);
+var a = await vt;
+var b = await vt;                  // comportement indéfini
+
+// Correct : une Task si plusieurs consommations sont nécessaires
+var task = GetUserAsync(1).AsTask();
+var c = await task;
+var d = await task;                // autorisé sur une Task
+</script>
+      <div class="msg info"><p><strong>À retenir.</strong> Utilisez <code>Task</code> par défaut. Utilisez <code>ValueTask</code> seulement sur un chemin critique, quand le résultat est souvent disponible tout de suite et qu'une mesure montre le gain. Exemples dans .NET : <code>Stream.ReadAsync</code>, <code>Channel.Reader.ReadAsync</code>.</p></div>
     </section>
 
     <section id="qcm-avance" class="stack">
