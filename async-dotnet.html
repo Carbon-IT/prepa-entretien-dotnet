@@ -1005,6 +1005,25 @@ public ValueTask<User> GetUserAsync(int id)
     return new ValueTask<User>(LoadUserAsync(id));   // chemin lent : enveloppe une Task
 }
 </script>
+      <h3 class="sub">Contenu de la struct</h3>
+      <p>Une ValueTask est une petite struct. Son champ <code>_obj</code> indique lequel des trois cas s'applique.</p>
+<script type="text/x-csharp">
+readonly struct ValueTask<T>          // version simplifiée
+{
+    object? _obj;    // null, une Task<T> ou un IValueTaskSource<T>
+    T       _result; // utilisé quand _obj vaut null
+    short   _token;  // numéro de version, utilisé avec un IValueTaskSource
+}
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Cas</th><th><code>_obj</code></th><th>Exemple</th></tr></thead>
+        <tbody>
+          <tr><td>1. Résultat déjà disponible</td><td class="secondary"><code>null</code>. La valeur est dans <code>_result</code>.</td><td class="secondary">Le cache : <code>ValueTask.FromResult(user)</code></td></tr>
+          <tr><td>2. Enveloppe une Task</td><td class="secondary">Une <code>Task&lt;T&gt;</code></td><td class="secondary">Le chemin lent : <code>new ValueTask&lt;User&gt;(LoadUserAsync(id))</code></td></tr>
+          <tr><td>3. Source réutilisable</td><td class="secondary">Un <code>IValueTaskSource&lt;T&gt;</code></td><td class="secondary"><code>Socket.ReceiveAsync</code>, <code>Channel.Reader.ReadAsync</code></td></tr>
+        </tbody>
+      </table></div>
+      <p><code>IValueTaskSource</code> est une interface. Elle offre les mêmes services qu'une Task : un état, une continuation, un résultat. Une Task terminée reste terminée pour toujours. Un <code>IValueTaskSource</code> se remet à zéro après la lecture du résultat et sert à l'opération suivante. Il n'y a aucune allocation, même pour une vraie opération asynchrone. Ces sources sont internes au framework : vous ne les écrivez presque jamais.</p>
       <div class="table-wrap"><table class="table dense">
         <thead><tr><th>Critère</th><th><code>Task</code></th><th><code>ValueTask</code></th></tr></thead>
         <tbody>
@@ -1027,6 +1046,29 @@ var task = GetUserAsync(1).AsTask();
 var c = await task;
 var d = await task;                // autorisé sur une Task
 </script>
+      <h3 class="sub">Image : un ticket de vestiaire</h3>
+      <p>Une Task est un reçu. Vous pouvez le relire autant de fois que vous voulez. Une ValueTask est un ticket de vestiaire. Le ticket en papier est la struct : il est copié puis jeté. Le crochet est l'objet réutilisé sur le heap. Après la remise du manteau, le crochet sert au client suivant. Un deuxième passage avec le même ticket donne une erreur, ou le manteau d'un autre client.</p>
+<pre>
+ValueTask (struct, copiée)          Heap
+┌─────────────────────┐            ┌─────────────────────────────┐
+│ _obj  ─────────────────────────▶ │ IValueTaskSource du Socket  │
+│ _token = 7          │            │ version actuelle : 7        │
+└─────────────────────┘            └─────────────────────────────┘
+
+1. await vt  → résultat lu, la source se remet à zéro et passe en version 8
+2. await vt  → le token 7 ne correspond plus : InvalidOperationException,
+               ou le résultat d'une autre opération
+</pre>
+      <p>La struct n'est donc pas réutilisée. Elle est dépilée comme toute struct. Ce qui est réutilisé, c'est l'objet vers lequel elle pointe. Dans les cas 1 et 2, un deuxième <code>await</code> fonctionnerait. Mais l'appelant ne sait pas quel cas il reçoit : la règle s'applique toujours.</p>
+      <h3 class="sub">ValueTask dans EF Core</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Méthode</th><th>Retour</th><th>Raison</th></tr></thead>
+        <tbody>
+          <tr><td><code>FindAsync</code></td><td class="secondary"><code>ValueTask&lt;T?&gt;</code></td><td class="secondary">Elle cherche d'abord dans le change tracker. Si l'entité y est, le résultat est immédiat, sans requête SQL.</td></tr>
+          <tr><td><code>AddAsync</code></td><td class="secondary"><code>ValueTask&lt;EntityEntry&gt;</code></td><td class="secondary">Elle termine tout de suite, sauf avec certains générateurs de clé (HiLo).</td></tr>
+          <tr><td><code>ToListAsync</code>, <code>FirstOrDefaultAsync</code>, <code>SaveChangesAsync</code></td><td class="secondary"><code>Task&lt;T&gt;</code></td><td class="secondary">Elles vont presque toujours en base. Une ValueTask n'apporterait rien.</td></tr>
+        </tbody>
+      </table></div>
       <div class="msg info"><p><strong>À retenir.</strong> Utilisez <code>Task</code> par défaut. Utilisez <code>ValueTask</code> seulement sur un chemin critique, quand le résultat est souvent disponible tout de suite et qu'une mesure montre le gain. Exemples dans .NET : <code>Stream.ReadAsync</code>, <code>Channel.Reader.ReadAsync</code>.</p></div>
     </section>
 
@@ -1171,6 +1213,79 @@ Console.WriteLine($"threads={ThreadPool.ThreadCount} en attente={ThreadPool.Pend
         <div class="zone"><h3>Journal</h3><div class="log" id="wsLog"></div></div>
       </div>
       <div class="msg info"><p><strong>LIFO dans la file locale.</strong> La tâche la plus récente utilise souvent les données que le worker vient de lire. Ces données sont encore dans le cache du cœur.</p><p><strong>Vol par l'autre extrémité.</strong> Le voleur et le propriétaire ne prennent pas la même tâche. Ils n'ont presque jamais besoin de verrou.</p></div>
+
+      <h3 class="sub">Image : une cuisine de restaurant</h3>
+      <p>Les commandes des clients arrivent au passe. Chaque cuisinier a sa pile de préparations sur son plan de travail. Il finit d'abord ce qu'il vient de lancer. Quand son plan est vide, il va au passe. Si le passe est vide, il va chez un collègue débordé. Il prend une préparation en bas de la pile du collègue, sans le gêner.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Cuisine</th><th>ThreadPool</th></tr></thead>
+        <tbody>
+          <tr><td>Le passe, où arrivent les commandes</td><td class="secondary">La file globale (FIFO). Elle reçoit le travail venu de l'extérieur du pool : requêtes HTTP, timers, <code>Main</code>.</td></tr>
+          <tr><td>La pile d'un cuisinier</td><td class="secondary">La file locale d'un worker. Elle reçoit les <code>Task.Run</code> et les continuations créés par ce worker.</td></tr>
+          <tr><td>Finir la dernière préparation lancée</td><td class="secondary">LIFO : la tâche la plus récente, ses données sont encore dans le cache du cœur.</td></tr>
+          <tr><td>Prendre en bas de la pile d'un collègue</td><td class="secondary">Le vol : la tâche la plus ancienne d'un autre worker, par l'autre extrémité.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 class="sub">Exemple : un endpoint d'API</h3>
+      <p>L'endpoint lit une commande en base, appelle deux API et calcule le prix de chaque ligne. <code>Log</code> affiche le thread de chaque étape.</p>
+<script type="text/x-csharp">
+app.MapGet("/commandes/{id}/recap", async (int id, AppDbContext db, IHttpClientFactory http) =>
+{
+    Log("① début de la requête");
+
+    // ② Base de données : attente I/O
+    var commande = await db.Commandes.Include(c => c.Lignes).FirstAsync(c => c.Id == id);
+    Log("③ après la base");
+
+    // ④ Deux appels HTTP en parallèle
+    var client        = http.CreateClient();
+    var stockTask     = client.GetFromJsonAsync<Stock>($"https://stock/api/{id}");
+    var livraisonTask = client.GetFromJsonAsync<Livraison>($"https://livraison/api/{id}");
+    await Task.WhenAll(stockTask, livraisonTask);
+    Log("⑤ après les appels HTTP");
+
+    // ⑥ Calcul CPU découpé : une Task par ligne
+    var calculs = commande.Lignes.Select(l => Task.Run(() => CalculerPrix(l))).ToArray();
+    var prix    = await Task.WhenAll(calculs);
+    Log("⑦ après les calculs");
+
+    return Results.Ok(new { commande.Id, Total = prix.Sum() });
+});
+
+static decimal CalculerPrix(Ligne l)
+{
+    Log($"   calcul ligne {l.Numero}");
+    Thread.Sleep(100);                 // simule un calcul CPU
+    return l.Quantite * l.PrixUnitaire;
+}
+
+static void Log(string etape) =>
+    Console.WriteLine($"{etape,-28} thread {Environment.CurrentManagedThreadId}");
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Étape</th><th>Ce qui se passe</th><th>File utilisée</th></tr></thead>
+        <tbody>
+          <tr><td>① Requête reçue</td><td class="secondary">Kestrel lit la requête. Il place son traitement dans le pool. Le premier worker libre la prend, par exemple W1.</td><td class="secondary">Globale</td></tr>
+          <tr><td>② <code>await FirstAsync</code></td><td class="secondary">EF envoie le SQL. Aucun thread n'attend la réponse. W1 retourne au pool et sert d'autres requêtes.</td><td class="secondary">Aucune : une I/O est en cours</td></tr>
+          <tr><td>③ Réponse de la base</td><td class="secondary">La suite de la méthode repart dans le pool. Un worker libre la reprend, par exemple W3. Le numéro de thread change souvent.</td><td class="secondary">Le pool</td></tr>
+          <tr><td>④ Deux <code>GetFromJsonAsync</code></td><td class="secondary">Appeler une méthode async ne met rien en file. Chaque appel s'exécute jusqu'à l'envoi de la requête HTTP, puis rend une Task. W3 est libéré au <code>await</code>.</td><td class="secondary">Aucune</td></tr>
+          <tr><td>⑤ Réponses reçues</td><td class="secondary">La continuation repart sur un worker libre, par exemple W2.</td><td class="secondary">Le pool</td></tr>
+          <tr><td>⑥ 4 <code>Task.Run</code></td><td class="secondary">W2 est un worker du pool. Les 4 tâches vont sur sa file locale : L1 en bas, L4 en haut. Au <code>await</code>, W2 prend L4 (LIFO). W1 et W4 sont libres : ils volent L1 puis L2 par le bas.</td><td class="secondary">Locale de W2, puis vol</td></tr>
+        </tbody>
+      </table></div>
+<pre>
+① début de la requête        thread 7
+③ après la base              thread 12
+⑤ après les appels HTTP      thread 9
+   calcul ligne 4            thread 9    ← W2 prend le haut de sa file (LIFO)
+   calcul ligne 1            thread 7    ← vol par le bas
+   calcul ligne 2            thread 15   ← vol par le bas
+   calcul ligne 3            thread 9
+⑦ après les calculs          thread 15
+</pre>
+      <p>Les 4 calculs de 100 ms durent environ 200 ms au lieu de 400. Sans le vol, W2 ferait les 4 calculs seul pendant que W1 et W4 attendent. L'ordre d'exécution n'est pas l'ordre de création : ne comptez jamais sur l'ordre des <code>Task.Run</code>.</p>
+      <div class="msg warning"><p><strong>Remplacez ② par un appel synchrone</strong> (<code>First(...)</code> ou <code>FirstAsync(...).Result</code>). W1 reste bloqué pendant la requête SQL. Avec 200 requêtes simultanées, tous les workers sont bloqués. Les nouvelles requêtes restent dans la file globale. Le pool ajoute des threads lentement. C'est la <a href="#pool">starvation</a>.</p></div>
+      <div class="msg info"><p><strong>Task.Run dans un endpoint.</strong> Utilisez-le seulement pour découper un vrai calcul CPU en plusieurs morceaux, comme au ⑥. Un seul <code>await Task.Run(...)</code> libère un worker pour en occuper un autre : aucun gain. Pour une I/O, <code>await</code> suffit.</p></div>
     </section>
 
     <section id="injection" class="stack">
@@ -1186,7 +1301,18 @@ Console.WriteLine($"threads={ThreadPool.ThreadCount} en attente={ThreadPool.Pend
       </div>
 
       <h3 class="sub">Conteneur Kubernetes</h3>
-      <p class="prose">.NET lit la limite CPU du conteneur. Il arrondit cette limite à l'entier supérieur. Le résultat donne <code>ProcessorCount</code>, donc le minimum de workers.</p>
+      <p class="prose">Un nœud Kubernetes est une machine. Plusieurs pods partagent ses cœurs. <code>resources.limits.cpu</code> fixe la part maximale d'un conteneur.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Valeur</th><th>Signification</th></tr></thead>
+        <tbody>
+          <tr><td><code>1000m</code> ou <code>1</code></td><td class="secondary">1 cœur complet</td></tr>
+          <tr><td><code>500m</code></td><td class="secondary">La moitié d'un cœur</td></tr>
+          <tr><td><code>100m</code></td><td class="secondary">10 % d'un cœur</td></tr>
+          <tr><td><code>2500m</code></td><td class="secondary">2,5 cœurs</td></tr>
+        </tbody>
+      </table></div>
+      <p class="prose">L'unité est le millicœur (<code>m</code>) : <code>1000m</code> = 1 cœur. La limite est un temps de calcul, pas un nombre de cœurs. Linux découpe le temps en tranches de 100 ms. Avec <code>100m</code>, le conteneur a droit à 10 ms de CPU par tranche, tous threads confondus. Quand il a tout consommé, Linux le met en pause jusqu'à la tranche suivante. C'est le throttling : la latence augmente, alors que le graphe CPU paraît calme.</p>
+      <p class="prose">.NET lit la limite CPU du conteneur. Il arrondit cette limite à l'entier supérieur, avec un minimum de 1. Le résultat donne <code>ProcessorCount</code>, donc le minimum de workers.</p>
       <div class="panel stack">
         <div class="toolbar">
           <div class="field"><label for="k8sCpu"><code>resources.limits.cpu</code> : <span class="val" id="k8sCpuO"></span></label><input type="range" id="k8sCpu" min="100" max="8000" step="100" value="500"></div>
@@ -1642,7 +1768,7 @@ const Tabs=(()=>{
 
   const cpu=$('#k8sCpu'), nl=$('#k8sNoLimit');
   function k8s(){
-    $('#k8sCpuO').textContent=nl.checked?'aucune':cpu.value+'m';
+    $('#k8sCpuO').textContent=nl.checked?'aucune':`${cpu.value}m (${(cpu.value/1000).toLocaleString('fr-FR')} cœur${cpu.value>=2000?'s':''})`;
     cpu.disabled=nl.checked;
     const pc=nl.checked?32:Math.max(1,Math.ceil(+cpu.value/1000));
     $('#k8sPc').textContent=pc; $('#k8sMin').textContent=pc;
