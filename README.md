@@ -34,6 +34,10 @@ Une seconde page, `questions-ouvertes.html`, regroupe des questions complémenta
 
 Sa progression est enregistrée séparément de celle de `index.html`.
 
+### Page « Async et threads .NET »
+
+Une troisième page, `async-dotnet.html`, est une formation interactive sur l'asynchronisme, les threads et le parallélisme en .NET, destinée aux consultants. Elle a trois niveaux (notions de base, avancées, profondes), avec des simulateurs, des exemples de code et un QCM par niveau. Elle n'est pas liée depuis `index.html` : on la transmet par son URL (`https://carbon-it.github.io/prepa-entretien-dotnet/async-dotnet.html`).
+
 ## Fonctionnalités
 
 - Recherche plein texte (insensible aux accents)
@@ -45,12 +49,15 @@ Sa progression est enregistrée séparément de celle de `index.html`.
 
 ```
 .
-├── index.html               # La page principale : HTML, CSS, JavaScript et logo intégrés
+├── index.html               # La page principale : HTML, CSS et JavaScript intégrés
 ├── questions-ouvertes.html  # Questions complémentaires, non liée depuis index.html
+├── async-dotnet.html        # Formation async et threads .NET, non liée depuis index.html
 └── README.md
 ```
 
-Chaque page est autonome : aucune dépendance à installer, aucun build. Seules les polices (Figtree, Carlito, JetBrains Mono) sont chargées depuis Google Fonts.
+Chaque page est autonome : aucune dépendance à installer, aucun build. Seule la police Carlito est chargée depuis Google Fonts.
+
+Les trois pages suivent le Carbon Design System v1.0 : un bloc `<style id="carbon-ds">` copié du design system, puis un bloc `<style id="page">` pour les composants propres à la page, qui n'utilise que les tokens du design system. Un sélecteur Auto / Clair / Sombre dans la barre du haut règle le thème.
 
 ## Consulter la page en local
 
@@ -71,7 +78,7 @@ Tout se trouve dans `index.html` (ou `questions-ouvertes.html` pour la seconde p
 - **Ajouter une question** : copier un bloc `<details class="q" data-id="…">` existant dans la section voulue et lui donner un `data-id` unique. Ce `data-id` sert de clé pour la progression des candidats : ne pas le modifier sur une question existante, sinon la progression associée est perdue.
 - **Marquer une question comme clé** : ajouter l'attribut `data-hot` sur la balise `<details>`.
 - **Ajouter une section** : copier un bloc `<section class="block" id="…" data-title="…">`. Le sommaire latéral se génère automatiquement à partir de `data-title`.
-- **Charte graphique** : les couleurs Carbon sont définies dans le bloc `:root` en tête du `<style>`.
+- **Charte graphique** : les couleurs sont les tokens du bloc `<style id="carbon-ds">`. Pour mettre à jour le design system, remplacer ce bloc par la nouvelle version ; ne pas y ajouter de styles propres à la page.
 
 ## Confidentialité
 

@@ -1,0 +1,2163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Async et threads .NET</title>
+<meta name="description" content="Formation interactive sur l'asynchronisme, les threads et le parallélisme en .NET, en trois niveaux, avec simulateurs et QCM.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap">
+
+<!--
+  Design : Carbon Design System v1.0 (design-system/carbon-design-system.html).
+  - <style id="carbon-ds"> : copie du bloc du design system (composants utilisés par cette page).
+  - <style id="page">      : adaptations pour les composants absents du design system.
+                              Elles utilisent seulement les tokens du design system.
+  Rédaction : règles ASD-STE100 appliquées au français.
+-->
+
+<style id="carbon-ds">
+:root {
+  --ground: #f3f4f4; --surface: #fdfdfd; --surface-sunk: #ebebeb;
+  --ink: #282b2a; --ink-soft: #666867; --ink-faint: #9b9c9c;
+  --rule: #dbdbdb; --rule-soft: #ececec; --control-edge: #8a8c8b;
+  --red: #e53f49; --green: #00bb7e; --blue: #5b98d2;
+  --red-ink: #bd2f39; --green-ink: #007049; --blue-ink: #386a9b;
+  --red-wash: #fbeaeb; --green-wash: #e4f6f0; --blue-wash: #edf3f9;
+  --action: #d4353f; --on-action: #fdfdfd;
+  --band: #282b2a; --band-ink: #fdfdfd; --band-soft: #b9bab9; --band-rule: #535554; --band-red: #ff6b73;
+  --shadow: 0 1px 2px rgba(40, 43, 42, .07), 0 10px 28px -18px rgba(40, 43, 42, .28);
+  --shadow-overlay: 0 2px 6px rgba(40, 43, 42, .12), 0 24px 60px -24px rgba(40, 43, 42, .45);
+  --scrim: rgba(40, 43, 42, .45);
+  --font: "Calibri", "Carlito", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r-xs: 3px; --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; --r-2xl: 14px; --r-pill: 999px;
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.25rem; --s-6: 1.5rem; --s-7: 2.25rem; --s-8: 3rem;
+  --w-content: 56rem; --w-wide: 76rem;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+    --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+    --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+    --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+    --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+    --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+    --action: #d4353f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+    --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+    --scrim: rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+  --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+  --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+  --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+  --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+  --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+  --action: #d4353f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+  --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+  --scrim: rgba(0, 0, 0, .6);
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+h1 { font-weight: 700; font-size: clamp(2.1rem, 5.4vw, 3rem); letter-spacing: -.018em; line-height: 1.06; text-wrap: balance; margin: 0; }
+h2 { font-weight: 700; font-size: 1.35rem; letter-spacing: -.008em; line-height: 1.25; margin: 0 0 1rem; }
+h3 { font-weight: 700; font-size: 1rem; line-height: 1.35; margin: 0 0 .3rem; }
+a { color: var(--green-ink); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+code, kbd { font-family: var(--mono); font-size: .85em; background: var(--surface-sunk); padding: .1em .34em; border-radius: var(--r-xs); overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin: 0; }
+.lede { max-width: 40rem; margin: 0; font-size: 1.075rem; }
+.muted { color: var(--ink-soft); }
+.hexmark { display: block; fill: currentColor; }
+.accent-rule { display: flex; height: 3px; width: 100%; border-radius: 2px; overflow: hidden; }
+.accent-rule i { display: block; height: 100%; }
+.accent-rule i:nth-child(1) { background: var(--red); flex: 0 0 3.5rem; }
+.accent-rule i:nth-child(2) { background: var(--green); flex: 0 0 1.5rem; }
+.accent-rule i:nth-child(3) { background: var(--blue); flex: 0 0 .75rem; }
+.accent-rule i:nth-child(4) { background: var(--band-rule); flex: 1 1 0; }
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--ground) 90%, transparent); backdrop-filter: saturate(140%) blur(10px); border-bottom: 1px solid var(--rule); }
+.topbar-inner { max-width: var(--w-content); margin: 0 auto; padding: .55rem 1.5rem; display: flex; align-items: center; gap: 1.1rem; }
+.topbar.wide .topbar-inner { max-width: var(--w-wide); }
+.brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1rem; letter-spacing: -.005em; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand .hexmark { width: 20px; color: var(--ink); }
+.navlinks { display: flex; align-items: center; gap: 1.1rem; margin-left: auto; font-size: .9rem; }
+.navlinks a:not(.nav-cta) { color: var(--ink-soft); text-decoration: none; }
+.navlinks a:not(.nav-cta):hover { color: var(--ink); text-decoration: underline; text-underline-offset: .2em; }
+.navlinks a[aria-current="page"] { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: .45em; }
+.nav-cta { padding: .3rem .85rem; border-radius: var(--r-pill); background: var(--action); color: var(--on-action); font-weight: 700; text-decoration: none; font-size: .875rem; white-space: nowrap; }
+.nav-cta:hover { filter: brightness(1.07); }
+@media (max-width: 40rem) { .navlinks a:not(.nav-cta) { display: none; } }
+.wrap { max-width: var(--w-content); margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+.wrap.wide { max-width: var(--w-wide); }
+section { scroll-margin-top: 4.5rem; }
+.stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.band { position: relative; overflow: hidden; background: var(--band); color: var(--band-ink); border: 1px solid var(--band-rule); border-radius: var(--r-2xl); padding: 2.25rem 2.25rem 1.9rem; }
+.band-watermark { position: absolute; right: -3.5rem; top: 50%; transform: translateY(-50%); width: 17rem; color: var(--band-ink); opacity: .05; pointer-events: none; }
+.band-head { position: relative; display: flex; align-items: flex-start; gap: 1.4rem; }
+.band-titles { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.band .eyebrow { color: var(--band-red); }
+.band .lede { color: var(--band-soft); }
+.band .accent-rule { margin-top: 1.75rem; }
+.band-actions { position: relative; margin-left: auto; display: flex; gap: var(--s-2); align-self: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; font: inherit; font-weight: 700; font-size: 1rem; line-height: 1.2; padding: .7rem 1.25rem; border-radius: var(--r-md); border: 1px solid transparent; background: var(--action); color: var(--on-action); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.btn:hover { filter: brightness(1.07); }
+.btn.sm { font-size: .875rem; padding: .4rem .8rem; }
+.btn.secondary { background: var(--surface); color: var(--ink); border-color: var(--control-edge); }
+.btn.secondary:hover { filter: none; background: var(--surface-sunk); }
+.btn.ghost { background: transparent; color: var(--ink-soft); }
+.btn.ghost:hover { filter: none; background: var(--surface-sunk); color: var(--ink); }
+.band .btn.secondary { background: transparent; color: var(--band-ink); border-color: var(--band-soft); }
+.band .btn.secondary:hover { background: rgba(253, 253, 253, .08); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; filter: none; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 1.25rem 1.4rem; }
+.panel.raised { border-radius: var(--r-xl); padding: 1.35rem 1.5rem; box-shadow: var(--shadow); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.tile { background: var(--surface); padding: 1rem 1.1rem; border-top: 3px solid transparent; }
+.tile.red { border-top-color: var(--red); }
+.tile.green { border-top-color: var(--green); }
+.tile.blue { border-top-color: var(--blue); }
+.tile.neutral { border-top-color: var(--rule); }
+.tile p { margin: 0; color: var(--ink-soft); font-size: .925rem; }
+.tile .value { font-size: 2.1rem; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--ink); margin: .2rem 0 .15rem; }
+.tile .eyebrow { color: var(--ink-soft); letter-spacing: .12em; }
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.steps > li { counter-increment: step; background: var(--surface); padding: 1.15rem 1.3rem 1.25rem 3.5rem; position: relative; }
+.steps > li::before { content: counter(step); position: absolute; left: 1.15rem; top: 1.1rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--ink); color: var(--ground); font-weight: 700; font-size: .875rem; display: flex; align-items: center; justify-content: center; }
+.steps p { margin: .35rem 0 0; color: var(--ink-soft); }
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.list > li { display: flex; align-items: center; gap: var(--s-3); padding: .75rem 1.1rem; border-top: 1px solid var(--rule-soft); }
+.list > li:first-child { border-top: 0; }
+.list > li .meta { margin-left: auto; color: var(--ink-soft); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.disclosure { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 0 1.3rem; }
+.disclosure > summary { cursor: pointer; padding: 1rem 0; font-weight: 700; font-size: 1.05rem; list-style-position: inside; }
+.disclosure > summary::marker { color: var(--red); }
+.disclosure-body { padding: .2rem 0 .9rem; border-top: 1px solid var(--rule-soft); color: var(--ink-soft); }
+.msg { margin: 0; padding: .65rem .9rem; border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: .925rem; line-height: 1.45; background: var(--surface-sunk); border-left: 3px solid var(--control-edge); color: var(--ink-soft); }
+.msg p { margin: 0; }
+.msg p + p { margin-top: .5rem; }
+.msg strong { color: var(--ink); }
+.msg.info { background: var(--blue-wash); border-left-color: var(--blue); }
+.msg.success { background: var(--blue-wash); border-left-color: var(--green); }
+.msg.warning { background: var(--red-wash); border-left-color: var(--red); }
+.msg.warning strong { color: var(--red-ink); }
+.pill { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .55rem; border-radius: var(--r-pill); font-size: .78rem; font-weight: 700; line-height: 1.5; white-space: nowrap; background: var(--surface-sunk); color: var(--ink-soft); }
+.pill.red { background: var(--red-wash); color: var(--red-ink); }
+.pill.green { background: var(--green-wash); color: var(--green-ink); }
+.pill.blue { background: var(--blue-wash); color: var(--blue-ink); }
+.pill.count { min-width: 1.5rem; justify-content: center; padding: .05rem .45rem; font-variant-numeric: tabular-nums; }
+.status { display: inline-flex; align-items: center; gap: .45rem; font-size: .925rem; white-space: nowrap; color: var(--ink); }
+.status svg { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; overflow: visible; }
+.status .edge { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linejoin: round; }
+.status .fill { fill: var(--ink); }
+.status[data-state="todo"] .fill { display: none; }
+.status[data-state="alert"] .fill { display: none; }
+.status[data-state="alert"] .edge { stroke: var(--red); }
+.status[data-state="alert"] .label { color: var(--red-ink); font-weight: 700; }
+.status[data-state="progress"] .fill { clip-path: inset(50% 0 0 0); }
+.status[data-state="done"] .fill { fill: var(--green); }
+.status[data-state="done"] .edge { stroke: var(--green-ink); }
+.status[data-state="past"] .fill { fill: var(--ink-faint); }
+.status[data-state="past"] .edge { stroke: var(--ink-faint); }
+.status[data-state="past"] .label { color: var(--ink-soft); }
+.status[data-state="cancelled"] .fill { display: none; }
+.status[data-state="cancelled"] .edge { stroke: var(--ink-faint); }
+.status[data-state="cancelled"] .label { color: var(--ink-soft); text-decoration: line-through; }
+.field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.field > label, .field > .label { font-size: .875rem; font-weight: 700; color: var(--ink); }
+.input, .select { width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .55rem .75rem; min-height: 2.6rem; }
+.select { appearance: none; padding-right: 2.2rem; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%); background-position: calc(100% - 1.05rem) 52%, calc(100% - .75rem) 52%; background-size: .32rem .32rem; background-repeat: no-repeat; }
+.input:hover, .select:hover { border-color: var(--ink-soft); }
+.input:focus, .select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 30%, transparent); }
+.field .hint { font-size: .825rem; color: var(--ink-soft); }
+.check { display: inline-flex; align-items: center; gap: .5rem; font-size: .95rem; cursor: pointer; }
+.check input { width: 1.05rem; height: 1.05rem; accent-color: var(--ink); margin: 0; }
+.segmented { display: inline-flex; background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: 2px; gap: 2px; }
+.segmented button { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--ink-soft); padding: .35rem .8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.segmented button:hover { color: var(--ink); background: var(--surface-sunk); }
+.segmented button[aria-pressed="true"] { background: var(--ink); color: var(--ground); font-weight: 700; }
+.toolbar { display: flex; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap; }
+.toolbar .field { min-width: 12rem; }
+.toolbar .spacer { flex: 1; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); }
+.table { width: 100%; border-collapse: collapse; font-size: .925rem; }
+.table th, .table td { text-align: left; vertical-align: top; padding: .7rem .85rem; border-bottom: 1px solid var(--rule-soft); }
+.table th { font-weight: 700; font-size: .75rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .09em; white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+.table td.secondary { color: var(--ink-soft); }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table.dense th, .table.dense td { padding: .5rem .75rem; vertical-align: middle; }
+.table tr.is-alert td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--s-4); align-items: start; }
+.column { background: var(--surface-sunk); border-radius: var(--r-lg); padding: .75rem; display: flex; flex-direction: column; gap: .6rem; }
+.column-head { display: flex; align-items: center; gap: .5rem; padding: .15rem .25rem .35rem; }
+.column-head h3 { margin: 0; font-size: .95rem; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: .8rem .95rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .3rem; }
+.card h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.card .meta { font-size: .85rem; color: var(--ink-soft); }
+.card.is-alert { border-left: 3px solid var(--red); }
+.footer { border-top: 1px solid var(--rule); padding-top: 1.4rem; font-size: .875rem; color: var(--ink-soft); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.footer-brand { display: flex; align-items: center; gap: .5rem; }
+.footer-brand .hexmark { width: 16px; color: var(--red); }
+</style>
+
+<style id="page">
+/* ─── Adaptations : composants absents du design system. Tokens du design system uniquement. ─── */
+[hidden] { display: none !important; }
+section { scroll-margin-top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + 1rem); }
+
+/* Onglets de niveau : même règle que le lien actif de la barre (texte --ink gras, trait rouge) */
+.tabs { position: sticky; top: var(--topbar-h, 3.65rem); z-index: 9; display: flex; gap: 1.75rem; background: var(--ground); border-bottom: 1px solid var(--rule); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-top: -1.5rem; }
+.tabs .short { display: none; }
+.tabs button { font: inherit; font-size: 1rem; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: .75rem 0 .65rem; color: var(--ink-soft); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: .5rem; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--red); }
+.tabpanel { display: flex; flex-direction: column; gap: 3rem; }
+.tabpanel:focus-visible { outline: none; }
+
+/* Code : même rendu que le bloc .code de la documentation du design system (fond --band) */
+pre { margin: 0; background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: 1rem 1.1rem; overflow: auto; font-family: var(--mono); font-size: .8rem; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: inherit; }
+/* Coloration : valeurs « encre sombre » du design system, lisibles sur --band dans les deux thèmes */
+.k { color: var(--band-red); } .t { color: #8dbae3; } .s { color: #23c490; } .c { color: var(--band-soft); font-style: italic; }
+
+/* Code ligne par ligne, avec la ligne courante en évidence */
+.codelines { background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: .6rem 0; font-family: var(--mono); font-size: .8rem; line-height: 1.6; overflow-x: auto; }
+.codelines div { padding: 0 1.1rem; white-space: pre; border-left: 3px solid transparent; }
+.codelines div.cur { background: rgba(110, 164, 215, .22); border-left-color: var(--blue); }
+.codelines div.paused { background: rgba(253, 253, 253, .06); border-left-color: var(--band-soft); }
+.codelines .ln { color: var(--band-soft); display: inline-block; width: 1.6rem; user-select: none; opacity: .7; }
+
+/* En-tête de niveau : surtitre + filet tricolore (usage autorisé du filet seul) */
+.part { display: flex; flex-direction: column; gap: .5rem; }
+.part .eyebrow { color: var(--red-ink); }
+.part h2 { font-size: clamp(1.6rem, 3.4vw, 2rem); letter-spacing: -.018em; margin: 0; }
+.part .lede { color: var(--ink-soft); }
+
+/* Sommaire */
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-4); }
+.toc ul { list-style: none; margin: .3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .2rem; font-size: .925rem; }
+.toc a { color: var(--ink-soft); text-decoration: none; }
+.toc a:hover { color: var(--ink); text-decoration: underline; }
+.toc h3 a { color: var(--ink); }
+
+/* Texte de section */
+.intro { margin: 0; color: var(--ink-soft); max-width: 48rem; }
+.sub { margin: 1.25rem 0 .5rem; }
+.prose { margin: 0; max-width: 52rem; }
+.prose + .prose { margin-top: .6rem; }
+ul.bul { margin: 0; padding-left: 1.2rem; }
+ul.bul li { margin: .2rem 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--s-4); }
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+@media (max-width: 52rem) { .split { grid-template-columns: minmax(0, 1fr); } }
+.tile pre { margin-top: .5rem; }
+.tile h3 { margin-bottom: .3rem; }
+
+/* Curseur (input range) : mêmes règles qu'un champ, libellé au-dessus */
+.field input[type="range"] { width: 100%; accent-color: var(--ink); margin: .35rem 0 0; }
+.field .val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Barre de pas pour les démonstrations pas à pas */
+.stepbar { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.stepbar .count { margin-left: auto; font-size: .875rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.note { min-height: 4.2rem; }
+
+/* Liste clé / valeur */
+.kv > li { justify-content: space-between; font-size: .925rem; }
+.kv > li > span:first-child { color: var(--ink-soft); }
+
+/* Workers du ThreadPool (simulateur) : tuile compacte à filet coloré */
+.threads { display: flex; flex-wrap: wrap; gap: 4px; }
+.th { width: 3.6rem; padding: .3rem .2rem; border-radius: var(--r-sm); background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--rule); font-size: .72rem; line-height: 1.25; text-align: center; color: var(--ink-soft); }
+.th b { display: block; color: var(--ink); }
+.th.cpu { background: var(--blue-wash); border-top-color: var(--blue); }
+.th.block { background: var(--red-wash); border-top-color: var(--red); }
+.th.new { box-shadow: 0 0 0 2px var(--blue); }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; min-height: .7rem; }
+.dot { width: .62rem; height: .62rem; border-radius: 50%; background: var(--ink-faint); }
+.dot.io { background: var(--green); }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .825rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+.zone h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-soft); margin-bottom: .5rem; }
+
+/* Ordonnanceur : une ligne par cœur, une case par tranche de temps */
+.corerow { display: flex; align-items: center; gap: .6rem; margin: 3px 0; }
+.corerow .lbl { width: 3.6rem; flex: 0 0 auto; font-size: .825rem; color: var(--ink-soft); }
+.cells { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.cell { flex: 1 1 0; min-width: 0; height: 1.5rem; border-radius: 3px; background: var(--surface-sunk); font-size: .65rem; font-weight: 700; color: var(--blue-ink); display: grid; place-items: center; overflow: hidden; }
+.cell.busy { background: var(--blue-wash); }
+.cell.sw { box-shadow: inset 3px 0 0 var(--red); }
+
+/* Barres de durée (Gantt, frises) */
+.gantt { display: flex; flex-direction: column; gap: .45rem; }
+.grow { display: flex; align-items: center; gap: .7rem; }
+.grow .lbl { width: 8.5rem; flex: 0 0 auto; font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); }
+.track { position: relative; flex: 1; height: 1.35rem; background: var(--surface-sunk); border-radius: var(--r-sm); overflow: hidden; }
+.track .bar { position: absolute; top: 0; height: 100%; background: var(--blue-wash); }
+.track .fill { position: absolute; top: 0; height: 100%; background: var(--blue); }
+.track .fill.total { background: var(--ink); }
+.segs { display: flex; flex: 1; height: 1.5rem; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-sunk); }
+.sg { height: 100%; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; color: var(--ink); }
+.sg.cpu { background: var(--blue-wash); box-shadow: inset 0 -3px 0 var(--blue); }
+.sg.ok { background: var(--green-wash); box-shadow: inset 0 -3px 0 var(--green); }
+.sg.bad { background: var(--red-wash); box-shadow: inset 0 -3px 0 var(--red); color: var(--red-ink); }
+.sg.free { color: var(--ink-soft); font-weight: 400; }
+.lanes { display: flex; flex-direction: column; gap: 2px; }
+.lane { position: relative; height: .55rem; background: var(--surface-sunk); border-radius: 2px; }
+.lane .job { position: absolute; top: 0; height: 100%; border-radius: 2px; background: var(--blue); }
+.lane .job.slow { background: var(--red); }
+
+/* Graphique SVG */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-soft); font-family: var(--font); font-size: 12px; }
+
+/* Vol de travail : files de tâches */
+.deque { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 2rem; padding: .3rem; border: 1px dashed var(--rule); border-radius: var(--r-sm); }
+.log { font-family: var(--mono); font-size: .8rem; display: flex; flex-direction: column; gap: .15rem; }
+.log div:first-child { color: var(--ink); font-weight: 700; }
+.log div { color: var(--ink-soft); }
+
+/* Objet en mémoire (pile et heap) : carte du kanban, avec repère pour le nouvel objet */
+.card.hot { box-shadow: var(--shadow), inset 3px 0 0 var(--blue); }
+.card.dead { opacity: .55; text-decoration: line-through; box-shadow: none; }
+.card.mono { font-family: var(--mono); font-size: .78rem; box-shadow: none; padding: .45rem .6rem; }
+.column .empty-note { font-size: .85rem; font-style: italic; color: var(--ink-soft); padding: .2rem .25rem; }
+
+/* Race condition et cache CPU */
+.ops { font-family: var(--mono); font-size: .82rem; display: flex; flex-direction: column; gap: 2px; }
+.ops div { padding: .2rem .45rem; border-radius: var(--r-xs); color: var(--ink-soft); }
+.ops div.done { text-decoration: line-through; }
+.ops div.next { background: var(--blue-wash); color: var(--ink); font-weight: 700; }
+.race { display: grid; grid-template-columns: minmax(0, 1fr) 11rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+@media (max-width: 44rem) { .race { grid-template-columns: minmax(0, 1fr); } }
+.mesi { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.mesi .full { grid-column: 1 / -1; }
+.cycle { display: flex; align-items: center; justify-content: center; gap: .6rem; flex-wrap: wrap; }
+.cycle .arr { color: var(--ink-faint); font-size: 1.2rem; }
+.cycle.on .arr { color: var(--red); }
+
+/* QCM : choix de réponse */
+.choice { display: block; width: 100%; text-align: left; font: inherit; font-size: .95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .6rem .8rem; cursor: pointer; }
+.choice:hover { background: var(--surface-sunk); }
+.choice.right { background: var(--green-wash); border-color: var(--green-ink); font-weight: 700; }
+.choice.wrong { background: var(--red-wash); border-color: var(--red-ink); }
+.q .expl { display: none; }
+.q.answered .expl { display: block; }
+.qhead { position: sticky; top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + .5rem); z-index: 2; }
+.meter { height: 6px; background: var(--surface-sunk); border-radius: var(--r-pill); overflow: hidden; flex: 1; min-width: 8rem; }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
+.ste { font-size: .825rem; }
+
+/* Petits écrans : règles reprises de la documentation du design system */
+.segmented.wrap { flex-wrap: wrap; }
+@media (max-width: 40rem) {
+  .band-head { flex-direction: column; }
+  .band-actions { margin-left: 0; align-self: flex-start; }
+  .band { padding: 1.6rem 1.4rem 1.5rem; }
+  .navlinks .segmented { display: none; }
+  .wrap { padding: 1.5rem 1rem 4rem; }
+  .tabs { gap: 1.2rem; }
+  .tabs .long { display: none; }
+  .tabs .short { display: inline; }
+  .qhead { position: static; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="carbon-hex" viewBox="0 0 768 840">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M369.5-0.5C378.5-0.5 387.5-0.5 396.5-0.5 421.557 2.18892 445.224 9.68892 467.5 22 537.5 62.6667 607.5 103.333 677.5 144 732.606 175.967 762.606 223.801 767.5 287.5 767.5 375.5 767.5 463.5 767.5 551.5 763.555 611.233 736.555 657.4 686.5 690 611.833 733.333 537.167 776.667 462.5 820 442.246 830.477 420.913 836.977 398.5 839.5 388.167 839.5 377.833 839.5 367.5 839.5 343.091 836.753 320.091 829.253 298.5 817 226.33 774.748 153.997 732.748 81.5 691 34.1078 661.067 6.77449 618.233-0.5 562.5-0.5 467.5-0.5 372.5-0.5 277.5 7.56046 217.532 37.8938 172.698 90.5 143 160.5 102.333 230.5 61.6667 300.5 21 322.212 9.25979 345.212 2.09313 369.5-0.5ZM376.5 89.5C393.288 88.7804 408.955 92.6137 423.5 101 495.67 143.252 568.003 185.252 640.5 227 661.1 240.677 673.267 259.843 677 284.5 677.667 374.5 677.667 464.5 677 554.5 673.178 580.671 660.011 600.505 637.5 614 567.5 654.667 497.5 695.333 427.5 736 399.572 753.199 371.239 753.866 342.5 738 269.167 695.333 195.833 652.667 122.5 610 102.63 595.097 91.4637 575.263 89 550.5 88.3333 463.167 88.3333 375.833 89 288.5 92.0014 261.521 104.835 240.688 127.5 226 199.997 184.252 272.33 142.252 344.5 100 354.682 94.6301 365.349 91.1301 376.5 89.5Z"/>
+  </symbol>
+</svg>
+
+<nav class="topbar wide">
+  <div class="topbar-inner">
+    <a class="brand" href="#haut">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      Async et threads .NET
+    </a>
+    <div class="navlinks">
+      <a href="#base" data-nav="base">Base</a>
+      <a href="#avance" data-nav="avance">Avancé</a>
+      <a href="#profond" data-nav="profond">Profond</a>
+      <span class="segmented" role="group" aria-label="Thème">
+        <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-theme-set="light" aria-pressed="false">Clair</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Sombre</button>
+      </span>
+      <a class="nav-cta" href="#qcm-base" id="ctaQcm">QCM</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap wide" id="haut">
+
+  <div class="band">
+    <svg class="hexmark band-watermark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+    <div class="band-head">
+      <div class="band-titles">
+        <p class="eyebrow">Carbon IT · Formation .NET</p>
+        <h1>Asynchronisme, threads et parallélisme en .NET</h1>
+        <p class="lede">La formation a trois niveaux : notions de base, notions avancées et notions profondes. Chaque niveau contient des simulateurs, des exemples de code et un QCM.</p>
+      </div>
+      <div class="band-actions">
+        <a class="btn secondary sm" href="#qcm-base">Aller au QCM</a>
+        <a class="btn sm" href="#base">Commencer</a>
+      </div>
+    </div>
+    <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <section class="panel raised stack" aria-labelledby="usage">
+    <h2 id="usage" style="margin:0">Utiliser cette page</h2>
+    <ol class="steps">
+      <li><h3>Choisissez un niveau</h3><p>Commencez par l'onglet « Notions de base ». Passez au niveau suivant quand le QCM de l'onglet donne au moins 80 %.</p></li>
+      <li><h3>Utilisez les simulateurs</h3><p>Changez les réglages. Cliquez sur « Suivant » pour avancer d'une étape. Lisez le message sous chaque simulateur.</p></li>
+      <li><h3>Faites le QCM de l'onglet</h3><p>Chaque réponse affiche une explication. Pour un score inférieur à 80 %, refaites les simulateurs des thèmes en erreur.</p></li>
+    </ol>
+    <div class="toc" aria-label="Sommaire">
+      <div><h3><a href="#base">1 · Notions de base</a></h3><ul>
+        <li><a href="#bases">Trois notions à séparer</a></li><li><a href="#glossaire">Glossaire</a></li><li><a href="#threads">Le thread</a></li><li><a href="#pool">Simulateur de starvation</a></li><li><a href="#sm">await étape par étape</a></li><li><a href="#whenall">WhenAll</a></li><li><a href="#bounded">Concurrence bornée</a></li><li><a href="#exceptions">Exceptions</a></li><li><a href="#anti">Mauvaises pratiques</a></li><li><a href="#qcm-base">QCM de base</a></li>
+      </ul></div>
+      <div><h3><a href="#avance">2 · Notions avancées</a></h3><ul>
+        <li><a href="#heap">Heap et DI après await</a></li><li><a href="#asynclocal">ThreadStatic et AsyncLocal</a></li><li><a href="#configureawait">ConfigureAwait</a></li><li><a href="#deadlock">Deadlock avec .Result</a></li><li><a href="#asyncvoid">async void</a></li><li><a href="#background">Tâches de fond</a></li><li><a href="#race">Race condition</a></li><li><a href="#elision">Élision</a></li><li><a href="#qcm-avance">QCM avancé</a></li>
+      </ul></div>
+      <div><h3><a href="#profond">3 · Notions profondes</a></h3><ul>
+        <li><a href="#threadsys">Le thread dans le système</a></li><li><a href="#os">Simulateur threads et cœurs</a></li><li><a href="#tpinside">ThreadPool interne</a></li><li><a href="#ws">Vol de travail</a></li><li><a href="#injection">Injection et conteneurs</a></li><li><a href="#asyncvoid-internals">async void : code généré</a></li><li><a href="#interlocked">Interlocked et cache CPU</a></li><li><a href="#qcm-profond">QCM profond</a></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Niveau">
+    <button type="button" role="tab" id="tab-btn-base" aria-controls="base" aria-selected="true"><span class="long">Notions de base</span><span class="short">Base</span> <span class="pill count" title="Sections">9</span></button>
+    <button type="button" role="tab" id="tab-btn-avance" aria-controls="avance" aria-selected="false"><span class="long">Notions avancées</span><span class="short">Avancé</span> <span class="pill count" title="Sections">8</span></button>
+    <button type="button" role="tab" id="tab-btn-profond" aria-controls="profond" aria-selected="false"><span class="long">Notions profondes</span><span class="short">Profond</span> <span class="pill count" title="Sections">7</span></button>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS DE BASE ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="base" aria-labelledby="tab-btn-base" tabindex="-1">
+    <div class="part">
+      <p class="eyebrow">Niveau 1</p>
+      <h2>Notions de base</h2>
+      <p class="lede">Ces notions suffisent pour écrire du code async correct. Elles expliquent async, await et Task, et les erreurs fréquentes.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="bases" class="stack">
+      <h2>Trois notions à séparer</h2>
+      <p class="intro">L'asynchronisme libère un thread. Le parallélisme utilise plusieurs threads.</p>
+      <div class="tiles">
+        <div class="tile red"><p class="eyebrow">I/O-bound</p><h3>Asynchronisme</h3><p>Le thread n'attend pas la fin d'une I/O. Pendant un appel à une base de données ou à une API HTTP, le thread retourne au ThreadPool. Outils : <code>async</code>, <code>await</code>, <code>Task</code>.</p></div>
+        <div class="tile green"><p class="eyebrow">CPU-bound</p><h3>Parallélisme</h3><p>Plusieurs calculs s'exécutent en même temps sur plusieurs cœurs. Outils : <code>Parallel</code>, PLINQ, <code>Task.Run</code> hors serveur web.</p></div>
+        <div class="tile blue"><p class="eyebrow">Les deux</p><h3>Concurrence</h3><p>Plusieurs opérations sont en cours au même moment. Elles s'exécutent en même temps ou à tour de rôle.</p></div>
+      </div>
+      <div class="msg info"><p><strong>À retenir.</strong> Une Task représente une opération. Une Task n'est pas un thread. L'instruction <code>await</code> ne bloque pas le thread. L'asynchronisme augmente le débit d'un serveur. Le parallélisme réduit la durée d'un calcul.</p></div>
+    </section>
+
+    <section id="glossaire" class="stack">
+      <h2>Glossaire</h2>
+      <p class="intro">Cette page utilise ces termes avec ce sens uniquement.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+        <tbody>
+          <tr><td><b>Thread</b></td><td class="secondary">Unité d'exécution du système d'exploitation. Un thread exécute du code et lit ou modifie des objets.</td></tr>
+          <tr><td><b>Cœur</b></td><td class="secondary">Unité de calcul du processeur. Un cœur exécute un seul thread à la fois. Cette page compte les cœurs logiques.</td></tr>
+          <tr><td><b>ThreadPool</b></td><td class="secondary">Ensemble de threads réutilisables. Chaque process .NET a un seul ThreadPool.</td></tr>
+          <tr><td><b>Worker</b></td><td class="secondary">Thread du ThreadPool.</td></tr>
+          <tr><td><b>Task</b></td><td class="secondary">Objet qui représente une opération. La Task contient l'état, le résultat ou l'exception de l'opération.</td></tr>
+          <tr><td><b>I/O</b></td><td class="secondary">Opération d'entrée ou de sortie : base de données, HTTP, fichier, socket.</td></tr>
+          <tr><td><b>Bloquer</b></td><td class="secondary">Arrêter un thread jusqu'à la fin d'une opération. Un thread bloqué ne fait pas d'autre travail.</td></tr>
+          <tr><td><b>Suspendre</b></td><td class="secondary">Arrêter une méthode async à un <code>await</code>. Le thread est libéré.</td></tr>
+          <tr><td><b>Starvation</b></td><td class="secondary">Manque de workers libres dans le ThreadPool. Les workers sont bloqués et la file de travail grandit. La latence augmente, le CPU reste bas. Voir le <a href="#pool">simulateur</a>.</td></tr>
+          <tr><td><b>Continuation</b></td><td class="secondary">Code à exécuter après la fin d'une Task. Avec <code>await</code>, la continuation est la suite de la méthode.</td></tr>
+          <tr><td><b>State machine</b></td><td class="secondary">Structure générée par le compilateur pour chaque méthode async. Elle garde la position et les variables de la méthode.</td></tr>
+          <tr><td><b>Pile</b></td><td class="secondary">Mémoire propre à un thread. Elle contient les appels en cours et les variables locales.</td></tr>
+          <tr><td><b>Heap</b></td><td class="secondary">Mémoire partagée par tous les threads du process. Tous les objets sont sur le heap.</td></tr>
+          <tr><td><b>SynchronizationContext</b></td><td class="secondary">Objet qui indique où exécuter une continuation. Exemple : le thread UI en WPF.</td></tr>
+          <tr><td><b>ExecutionContext</b></td><td class="secondary">Objet qui transporte les données du flux logique d'un <code>await</code> à l'autre. Exemple : <code>AsyncLocal</code>.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="threads" class="stack">
+      <h2>Le thread</h2>
+      <p class="intro">Un thread exécute du code. Un thread ne possède pas les objets. Un thread n'est pas une Task. Un thread n'est pas un cœur.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Contenu d'un thread</h3>
+          <ul class="bul">
+            <li><b>Une pile.</b> Elle contient les appels en cours et les variables locales. Taille réservée : 1 Mo sous Windows, 1,5 Mo sous Linux.</li>
+            <li><b>Un contexte CPU.</b> Il contient les registres et l'adresse de l'instruction suivante.</li>
+            <li><b>Un stockage local.</b> Il contient les valeurs <code>[ThreadStatic]</code> et <code>ThreadLocal&lt;T&gt;</code>.</li>
+            <li><b>Un objet noyau.</b> Le système d'exploitation le gère. L'objet .NET <code>Thread</code> l'enveloppe.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Différences avec les autres concepts</h3>
+          <ul class="bul">
+            <li><b>Thread et cœur.</b> 200 threads sur 8 cœurs : 8 threads s'exécutent. Les 192 autres attendent un cœur ou sont bloqués.</li>
+            <li><b>Thread et Task.</b> Un thread exécute beaucoup de Tasks l'une après l'autre. Une Task d'I/O n'utilise pas de thread pendant l'attente.</li>
+            <li><b>Thread et objets.</b> Les objets sont sur le heap. Tous les threads du process ont accès au heap.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 class="sub">États d'un thread</h3>
+      <div class="board">
+        <div class="column"><div class="column-head"><span class="status" data-state="progress" data-label="Running"></span></div><div class="card"><span class="meta">Le thread s'exécute sur un cœur.</span></div><span class="muted" style="font-size:.85rem">Passe à Ready à la fin de sa tranche de temps.</span></div>
+        <div class="column"><div class="column-head"><span class="status" data-state="todo" data-label="Ready"></span></div><div class="card"><span class="meta">Le thread est prêt. Il attend un cœur libre.</span></div><span class="muted" style="font-size:.85rem">Passe à Running quand l'ordonnanceur le choisit.</span></div>
+        <div class="column"><div class="column-head"><span class="status" data-state="alert" data-label="Blocked"></span></div><div class="card is-alert"><span class="meta">Le thread attend une I/O, un verrou, <code>.Result</code> ou <code>Thread.Sleep</code>.</span></div><span class="muted" style="font-size:.85rem">Passe à Ready à la fin de l'attente.</span></div>
+      </div>
+      <div class="msg warning"><p><strong>Thread bloqué.</strong> Un thread bloqué n'utilise pas le CPU. Mais il garde sa pile et ne fait pas d'autre travail. Dans le ThreadPool, chaque thread bloqué est un worker en moins pour les requêtes. Cette perte est la cause de la starvation.</p></div>
+
+      <h3 class="sub">Exemple : thread de chaque appel</h3>
+<script type="text/x-csharp">
+Log("Main");
+new Thread(() => Log("new Thread")).Start();
+ThreadPool.QueueUserWorkItem(_ => Log("QueueUserWorkItem"));
+await Task.Run(() => Log("Task.Run"));
+Log("après await Task.Run");
+await Task.Factory.StartNew(() => Log("LongRunning"), TaskCreationOptions.LongRunning);
+
+static void Log(string where) => Console.WriteLine(
+    $"{where,-22} T{Environment.CurrentManagedThreadId,-3} pool={Thread.CurrentThread.IsThreadPoolThread}");
+</script>
+<script type="text/x-csharp">
+// Sortie typique. Les numéros changent à chaque exécution.
+Main                   T1   pool=False   // thread principal
+new Thread             T10  pool=False   // thread dédié
+QueueUserWorkItem      T6   pool=True    // worker
+Task.Run               T7   pool=True    // worker
+après await Task.Run   T7   pool=True    // la suite de Main s'exécute sur un worker
+LongRunning            T11  pool=False   // thread dédié, hors ThreadPool
+</script>
+      <div class="msg info"><p><strong>Ligne 5.</strong> Après <code>await</code>, la suite de <code>Main</code> ne revient pas sur T1. Une application console n'a pas de SynchronizationContext. La continuation s'exécute donc sur un worker. ASP.NET Core fonctionne de la même façon.</p></div>
+
+      <h3 class="sub">Créer un thread ou utiliser le ThreadPool</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>API</th><th>Thread utilisé</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr><td><code>new Thread(...)</code></td><td class="secondary">Nouveau thread dédié. La création prend de 10 à 100 µs et réserve une pile.</td><td class="secondary">Cas rares : priorité, apartment COM.</td></tr>
+          <tr><td><code>ThreadPool.QueueUserWorkItem</code></td><td class="secondary">Worker</td><td class="secondary">API de bas niveau. Utilisez <code>Task.Run</code>.</td></tr>
+          <tr><td><code>Task.Run(...)</code></td><td class="secondary">Worker</td><td class="secondary">Libérer le thread UI d'un calcul. Paralléliser un calcul.</td></tr>
+          <tr><td><code>StartNew(..., LongRunning)</code></td><td class="secondary">Thread dédié, hors ThreadPool</td><td class="secondary">Boucle sans fin ou travail bloquant long.</td></tr>
+          <tr><td><code>await</code> d'une I/O</td><td class="secondary">Aucun thread pendant l'attente. Un worker pour la continuation.</td><td class="secondary">Toutes les I/O.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg"><p><strong>Pour aller plus loin.</strong> L'ordonnanceur du système, les changements de contexte et le fonctionnement interne du ThreadPool sont dans l'onglet <a href="#threadsys">Notions profondes</a>.</p></div>
+    </section>
+
+    <section id="pool" class="stack">
+      <h2>Simulateur : starvation, code bloquant et code async</h2>
+      <p class="intro">Des requêtes HTTP arrivent sur une API ASP.NET Core. Chaque requête fait 20 ms de calcul, un appel à la base de données, puis 20 ms de calcul. Le ThreadPool commence avec peu de workers. Il ajoute un worker toutes les 500 ms si la file n'est pas vide.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><span class="label">Mode</span><span class="segmented" role="group" aria-label="Mode" id="tpMode"><button type="button" data-m="sync" aria-pressed="true">.Result (bloquant)</button><button type="button" data-m="async" aria-pressed="false">await (async)</button></span></div>
+          <div class="field"><label for="tpReq">Requêtes : <span class="val" id="tpReqO"></span></label><input type="range" id="tpReq" min="10" max="200" value="80"></div>
+          <div class="field"><label for="tpThr">Minimum de workers : <span class="val" id="tpThrO"></span></label><input type="range" id="tpThr" min="1" max="16" value="4"></div>
+          <div class="field"><label for="tpIo">Durée de l'appel base (ms) : <span class="val" id="tpIoO"></span></label><input type="range" id="tpIo" min="200" max="2000" step="100" value="1000"></div>
+          <div class="field"><label for="tpSpeed">Vitesse : <span class="val" id="tpSpeedO"></span></label><input type="range" id="tpSpeed" min="1" max="20" value="4"></div>
+        </div>
+        <div class="row"><button class="btn" type="button" id="tpRun">Démarrer</button><button class="btn ghost" type="button" id="tpReset">Réinitialiser</button></div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Worker en calcul</span><span><i style="background:var(--red)"></i>Worker bloqué sur la base</span><span><i style="background:var(--rule)"></i>Worker libre</span><span><i style="background:var(--green)"></i>I/O en cours sans thread</span><span><i style="background:var(--ink-faint)"></i>Requête en file</span></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Temps simulé</p><p class="value" id="sT">0 ms</p></div>
+          <div class="tile neutral"><p class="eyebrow">Terminées</p><p class="value" id="sDone">0</p></div>
+          <div class="tile neutral"><p class="eyebrow">Workers</p><p class="value" id="sThr">0</p></div>
+          <div class="tile neutral"><p class="eyebrow">En file</p><p class="value" id="sQ">0</p></div>
+          <div class="tile neutral"><p class="eyebrow">Latence moyenne</p><p class="value" id="sLat">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Latence maximale</p><p class="value" id="sMax">–</p></div>
+        </div>
+        <div class="zone"><h3>Workers du ThreadPool</h3><div class="threads" id="tpThreads"></div></div>
+        <div class="zone"><h3>File d'attente du ThreadPool <span id="qCount"></span></h3><div class="dots" id="tpQueue"></div></div>
+        <div class="zone"><h3>I/O en cours, aucun thread utilisé <span id="ioCount"></span></h3><div class="dots" id="tpIoZone"></div></div>
+        <div class="msg" id="tpVerdict" hidden></div>
+        <div class="table-wrap"><table class="table dense" id="tpRes"><thead><tr><th>Mode</th><th class="num">Requêtes</th><th class="num">Durée base</th><th class="num">Workers max.</th><th class="num">Temps total</th><th class="num">Latence moy.</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="msg info"><p><strong>Comparaison.</strong> Exécutez les deux modes avec les mêmes réglages. Comparez les lignes du tableau. En mode bloquant, les workers restent rouges pendant tout l'appel à la base. La file augmente. Le ThreadPool ajoute les workers lentement. C'est la <b>starvation</b>.</p></div>
+    </section>
+
+    <section id="sm" class="stack">
+      <h2><code>await</code> étape par étape</h2>
+      <p class="intro">Regardez le thread qui exécute chaque ligne. Regardez le moment où le thread retourne au ThreadPool.</p>
+      <div class="panel stack">
+        <div class="split">
+          <div class="codelines" id="smCode"></div>
+          <ul class="list kv">
+            <li><span>Thread actuel</span><span id="smThread"></span></li>
+            <li><span>Threads utilisés par la requête</span><span id="smCount"></span></li>
+            <li><span>Méthode <code>Get</code></span><span id="smA"></span></li>
+            <li><span>Méthode <code>GetUserAsync</code></span><span id="smB"></span></li>
+          </ul>
+        </div>
+        <div data-stepbar="sm"></div>
+      </div>
+    </section>
+
+    <section id="whenall" class="stack">
+      <h2><code>await</code> séquentiel et <code>Task.WhenAll</code></h2>
+      <p class="intro">Trois appels sont indépendants. Démarrez les trois appels. Attendez ensuite les trois résultats.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+// Séquentiel
+var user   = await GetUserAsync();   // 300 ms
+var orders = await GetOrdersAsync(); // 500 ms
+var prefs  = await GetPrefsAsync();  // 200 ms
+</script>
+<script type="text/x-csharp">
+// Concurrent
+var tUser   = GetUserAsync();   // démarré
+var tOrders = GetOrdersAsync(); // démarré
+var tPrefs  = GetPrefsAsync();  // démarré
+await Task.WhenAll(tUser, tOrders, tPrefs);
+</script>
+      </div>
+      <div class="panel stack">
+        <div class="row"><button class="btn secondary sm" type="button" id="waSeq">Exécuter en séquentiel</button><button class="btn sm" type="button" id="waAll">Exécuter avec WhenAll</button><span class="muted">Temps écoulé : <b class="num" id="waT">0 ms</b></span></div>
+        <div class="gantt" id="waGantt"></div>
+      </div>
+      <div class="msg info"><p><strong>Résultat.</strong> En séquentiel, la durée est la somme des appels. Avec WhenAll, la durée est celle de l'appel le plus long. Dans les deux cas, aucun thread n'attend. Le gain porte sur la latence, pas sur les threads.</p></div>
+    </section>
+
+    <section id="bounded" class="stack">
+      <h2>Concurrence bornée : <code>Parallel.ForEachAsync</code></h2>
+      <p class="intro">40 appels vers une API partenaire. Cette API accepte 10 connexions simultanées. Au-dessus de 10, elle ralentit et retourne des erreurs 429.</p>
+<script type="text/x-csharp">
+await Parallel.ForEachAsync(ids, new ParallelOptions { MaxDegreeOfParallelism = dop, CancellationToken = ct },
+    async (id, token) => await _partner.SyncAsync(id, token));
+</script>
+      <div class="panel stack">
+        <div class="toolbar"><div class="field"><label for="boDop">MaxDegreeOfParallelism : <span class="val" id="boDopO"></span></label><input type="range" id="boDop" min="1" max="40" value="4"></div></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Temps total</p><p class="value" id="boT"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Connexions simultanées</p><p class="value" id="boC"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Réponses 429</p><p class="value" id="bo429"></p></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Appel normal</span><span><i style="background:var(--red)"></i>Appel ralenti ou 429 avec nouvel essai</span><span>Une ligne = un emplacement de concurrence</span></div>
+        <div class="lanes" id="boLanes"></div>
+        <div class="msg" id="boNote"></div>
+      </div>
+    </section>
+
+    <section id="exceptions" class="stack">
+      <h2>Exceptions : <code>.Result</code>, <code>GetResult()</code> et <code>await</code></h2>
+      <p class="intro"><code>GetUserAsync</code> lève une <code>HttpRequestException</code>. Choisissez une façon d'attendre. Le tableau indique l'exception reçue par l'appelant.</p>
+      <div class="panel stack">
+        <span class="segmented wrap" role="group" aria-label="Façon d'attendre" id="exMode"><button type="button" data-m="result" aria-pressed="true">.Result</button><button type="button" data-m="wait" aria-pressed="false">.Wait()</button><button type="button" data-m="gr" aria-pressed="false">.GetAwaiter().GetResult()</button><button type="button" data-m="await" aria-pressed="false">await</button><button type="button" data-m="whenall" aria-pressed="false">await Task.WhenAll</button></span>
+        <div id="exCode"></div>
+        <div class="table-wrap"><table class="table dense" id="exOut"></table></div>
+      </div>
+      <p class="prose">Une Task peut contenir plusieurs exceptions, par exemple avec <code>WhenAll</code>. L'API synchrone de .NET 4.0 regroupe donc toujours les exceptions dans une <code>AggregateException</code>. <code>await</code> relance la première exception d'origine et garde sa stack trace.</p>
+      <div class="msg"><p><strong>Exception non observée.</strong> Une Task en erreur sans code qui l'attend déclenche <code>TaskScheduler.UnobservedTaskException</code> pendant sa finalisation. Le process continue. L'erreur reste invisible.</p></div>
+    </section>
+
+    <section id="anti" class="stack">
+      <h2>Mauvaises pratiques : description, cause, correction</h2>
+      <p class="intro">Cliquez sur un titre pour afficher le détail.</p>
+      <div class="stack" id="antiList"></div>
+    </section>
+
+    <section id="qcm-base" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 1</p>
+        <h2>QCM : notions de base</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="b"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS AVANCÉES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="avance" aria-labelledby="tab-btn-avance" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 2</p>
+      <h2>Notions avancées</h2>
+      <p class="lede">Ces notions expliquent les comportements inattendus : mémoire après await, contexte de reprise, deadlock, async void, tâches de fond et accès concurrents.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="heap" class="stack">
+      <h2>Thread libéré : variables locales et services injectés</h2>
+      <p class="intro">Les objets sont sur le heap. Le thread exécute seulement le code. Quand le thread retourne au ThreadPool, aucun objet n'est supprimé. Avancez étape par étape.</p>
+<script type="text/x-csharp">
+public class UserService(HttpClient http)          // créé par la DI au début de la requête
+{
+    public async Task<User> GetAsync(int id)
+    {
+        var json = await http.GetStringAsync($"/users/{id}");
+        return Parse(json);
+    }
+}
+</script>
+      <div class="panel stack">
+        <div class="board">
+          <div class="column"><div class="column-head"><h3>Pile de T4</h3></div><div id="hpT4"></div></div>
+          <div class="column"><div class="column-head"><h3>Pile de T7</h3></div><div id="hpT7"></div></div>
+          <div class="column"><div class="column-head"><h3>Heap (mémoire partagée)</h3></div><div id="hpHeap"></div></div>
+        </div>
+        <div data-stepbar="hp"></div>
+      </div>
+
+      <h3 class="sub">Les variables locales deviennent des champs</h3>
+<script type="text/x-csharp">
+// Code généré par le compilateur (simplifié)
+struct GetAsync_StateMachine : IAsyncStateMachine
+{
+    public int state;                    // position de reprise (-1 = début, 0 = après le 1er await)
+    public int id;                       // paramètre → champ
+    public string json;                  // variable locale → champ
+    public UserService _this;            // "this" → la même instance de UserService
+    public AsyncTaskMethodBuilder<User> builder;
+    TaskAwaiter<string> awaiter;
+
+    void MoveNext() { switch (state) { /* reprend à la bonne position */ } }
+}
+</script>
+      <p class="prose">Au premier <code>await</code> qui suspend la méthode, .NET copie cette structure sur le heap. La Task en cours référence la continuation. La continuation référence la state machine. La state machine référence <code>this</code>. Pendant l'I/O, le GC ne supprime donc aucun de ces objets.</p>
+
+      <h3 class="sub">La DI ne crée pas de nouvel objet après await</h3>
+      <p class="prose">La DI crée un objet pendant une résolution : création du contrôleur ou appel à <code>GetRequiredService</code>. La DI ne voit pas les <code>await</code>. Le scope DI appartient à la requête, pas au thread. Le scope existe jusqu'à la fin de la requête HTTP.</p>
+<script type="text/x-csharp">
+var before = (Environment.CurrentManagedThreadId, GetHashCode());
+await http.GetStringAsync(url);
+var after  = (Environment.CurrentManagedThreadId, GetHashCode());
+// Identifiant du thread : souvent différent (T4 → T7)
+// Hash de this          : toujours identique → même instance de UserService
+</script>
+      <h3 class="sub">Cas d'erreur</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Cas</th><th>Problème</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td>Fire-and-forget avec un service scoped</td><td class="secondary">La requête se termine. Le scope est supprimé. Résultat : <code>ObjectDisposedException: Cannot access a disposed context instance</code>.</td></tr>
+          <tr><td><code>Task.WhenAll</code> sur un seul DbContext</td><td class="secondary">Deux opérations en même temps sur un objet non thread-safe.</td></tr>
+          <tr><td>Singleton avec un état modifiable</td><td class="secondary">Toutes les requêtes et tous les threads partagent cet état. Le singleton doit être thread-safe.</td></tr>
+          <tr><td>Singleton qui reçoit un service scoped</td><td class="secondary">Le service scoped devient captif. Il existe pour toujours et toutes les requêtes le partagent.</td></tr>
+          <tr><td>Donnée dans <code>[ThreadStatic]</code></td><td class="secondary">Après <code>await</code>, la valeur est perdue ou appartient à une autre requête. Voir la section suivante.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="asynclocal" class="stack">
+      <h2><code>[ThreadStatic]</code> et <code>AsyncLocal&lt;T&gt;</code></h2>
+      <p class="intro">Les objets restent disponibles après <code>await</code>. Les données stockées sur le thread posent un problème : identifiant de corrélation, utilisateur actuel, tenant. Dans cet exemple, deux requêtes A et B partagent les workers T4 et T7.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+// Code incorrect
+[ThreadStatic] static string? _id;
+
+_id = "A";                       // valeur dans le stockage de T4
+await http.GetStringAsync(url);  // reprise sur T7
+Log(_id);                        // lit le stockage de T7
+</script>
+<script type="text/x-csharp">
+// Code correct
+static readonly AsyncLocal<string?> _id = new();
+
+_id.Value = "A";                 // valeur dans l'ExecutionContext du flux A
+await http.GetStringAsync(url);  // ExecutionContext capturé, puis restauré sur T7
+Log(_id.Value);                  // "A"
+</script>
+      </div>
+      <div class="panel stack">
+        <div class="table-wrap"><table class="table dense" id="alTable"></table></div>
+        <div data-stepbar="al"></div>
+      </div>
+      <h3 class="sub">Fonctionnement</h3>
+      <p class="prose"><code>AsyncLocal</code> stocke la valeur dans l'ExecutionContext. À chaque <code>await</code>, .NET capture l'ExecutionContext. À la reprise, .NET restaure l'ExecutionContext sur le worker qui reprend. La valeur suit donc le flux logique, pas le thread.</p>
+      <p class="prose">L'ExecutionContext est copié à chaque modification. Une méthode appelée qui change une valeur ne change pas la valeur de l'appelant.</p>
+      <div class="msg"><p><strong>Utilisations dans le framework.</strong> <code>IHttpContextAccessor.HttpContext</code>, <code>Activity.Current</code> (trace OpenTelemetry ou Datadog), <code>ILogger.BeginScope</code> et <code>CultureInfo.CurrentCulture</code> utilisent ce mécanisme.</p></div>
+    </section>
+
+    <section id="configureawait" class="stack">
+      <h2><code>ConfigureAwait</code> : position de la continuation</h2>
+      <p class="intro"><code>ConfigureAwait(bool continueOnCapturedContext)</code> indique où exécuter la continuation. Valeur par défaut : <code>true</code>. Dans ce cas, <code>await</code> capture <code>SynchronizationContext.Current</code> et y envoie la continuation.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="caApp">Type d'application</label><select class="select" id="caApp"><option value="ui">WPF, WinForms, MAUI</option><option value="aspfx">ASP.NET (.NET Framework)</option><option value="core" selected>ASP.NET Core</option><option value="console">Console, Worker Service</option></select></div>
+          <div class="field"><label for="caCfg">Instruction</label><select class="select" id="caCfg"><option value="true">await x;</option><option value="false">await x.ConfigureAwait(false);</option></select></div>
+          <div class="field"><label for="caDone">État de la Task</label><select class="select" id="caDone"><option value="no">Non terminée (I/O en cours)</option><option value="yes">Déjà terminée (cache)</option></select></div>
+        </div>
+        <div class="table-wrap"><table class="table dense" id="caOut"></table></div>
+      </div>
+<script type="text/x-csharp">
+// Bibliothèque réutilisable : pas de dépendance au contexte de l'appelant
+public async Task<string> LoadAsync(CancellationToken ct)
+{
+    var r = await http.GetStringAsync(url, ct).ConfigureAwait(false);
+    return r.ToUpper();          // s'exécute sur un worker
+}
+
+// .NET 8 et versions suivantes : options supplémentaires sur Task
+await task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);  // attendre sans relancer l'exception
+await task.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);     // toujours suspendre
+</script>
+      <div class="msg info"><p><strong>À retenir.</strong> Utilisez <code>ConfigureAwait(false)</code> dans les bibliothèques. Dans le code d'une application ASP.NET Core, il n'a pas d'effet. Il ne change jamais l'ExecutionContext. Il agit seulement quand <code>await</code> suspend la méthode. En UI, après une suspension avec <code>ConfigureAwait(false)</code>, l'accès à un contrôle provoque une exception.</p></div>
+    </section>
+
+    <section id="deadlock" class="stack">
+      <h2>Deadlock avec <code>.Result</code></h2>
+      <p class="intro">Application WPF ou WinForms, ou ASP.NET sur .NET Framework. Le SynchronizationContext impose l'exécution de la continuation sur le thread UI.</p>
+      <div class="panel stack">
+        <div class="split">
+          <div class="codelines" id="dlCode"></div>
+          <ul class="list kv">
+            <li><span>Thread UI</span><span id="dlUi"></span></li>
+            <li><span>File du Dispatcher</span><span id="dlQueue"></span></li>
+            <li><span>Task de <code>LoadAsync</code></span><span id="dlTask"></span></li>
+            <li><span>Requête HTTP</span><span id="dlHttp"></span></li>
+          </ul>
+        </div>
+        <div class="cycle" id="dlCycle"><div class="card" id="dlC1"><span class="meta">Le thread UI attend la Task (<code>.Result</code>)</span></div><span class="arr" aria-hidden="true">⇄</span><div class="card" id="dlC2"><span class="meta">La Task attend le thread UI (continuation)</span></div></div>
+        <div data-stepbar="dl"></div>
+      </div>
+    </section>
+
+    <section id="asyncvoid" class="stack">
+      <h2><code>async void</code> : raisons de l'éviter</h2>
+      <p class="intro">Une méthode <code>async void</code> ne retourne pas de Task. L'appelant ne peut pas l'attendre. L'appelant ne connaît pas sa fin. Une exception arrête le process.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th></th><th><code>async Task</code></th><th><code>async void</code></th></tr></thead>
+        <tbody>
+          <tr><td>Objet qui représente l'opération</td><td class="secondary">La Task, retournée à l'appelant</td><td class="secondary">Aucun</td></tr>
+          <tr><td><code>await</code></td><td class="secondary">Possible</td><td class="secondary">Impossible (erreur CS4008)</td></tr>
+          <tr><td>Fin de l'opération</td><td class="secondary">État de la Task, continuation</td><td class="secondary">Inconnue</td></tr>
+          <tr class="is-alert"><td>Exception</td><td class="secondary">Stockée dans la Task, relancée par <code>await</code></td><td class="secondary">Relancée sur un autre thread. Le process s'arrête.</td></tr>
+          <tr><td>try/catch autour de l'appel</td><td class="secondary">Reçoit l'exception, avec <code>await</code></td><td class="secondary">Ne reçoit jamais l'exception</td></tr>
+          <tr><td>Tests unitaires</td><td class="secondary">Le test attend la fin</td><td class="secondary">Le test se termine avant la méthode</td></tr>
+        </tbody>
+      </table></div>
+      <h3 class="sub">Conversions implicites dangereuses</h3>
+      <p class="prose">Une lambda async passée à un paramètre <code>Action</code> devient <code>async void</code>. Le compilateur ne donne pas d'avertissement. Il choisit <code>Func&lt;Task&gt;</code> seulement si une surcharge l'accepte.</p>
+<script type="text/x-csharp">
+list.ForEach(async x => await F(x));               // Action<T>     → async void (incorrect)
+Parallel.ForEach(items, async x => await F(x));    // Action<T>     → async void (incorrect)
+Task.Run(async () => await F());                   // Func<Task>    → async Task (correct)
+button.Click += async (s, e) => await LoadAsync(); // EventHandler  → void obligatoire, accepté
+</script>
+      <h3 class="sub">Seul cas accepté : l'event handler</h3>
+      <p class="prose">Un délégué <code>EventHandler</code> impose le type de retour <code>void</code>. Dans ce cas, mettez le <code>try/catch</code> <b>dans</b> la méthode. C'est le seul endroit où le code peut recevoir l'exception.</p>
+<script type="text/x-csharp">
+private async void Button_Click(object s, EventArgs e)
+{
+    try { await LoadAsync(); }
+    catch (Exception ex) { _log.LogError(ex, "Échec du chargement"); ShowError(); }
+}
+</script>
+      <div class="msg"><p><strong>Pour aller plus loin.</strong> Le code généré par le compilateur et la chronologie de l'arrêt du process sont dans l'onglet <a href="#asyncvoid-internals">Notions profondes</a>.</p></div>
+    </section>
+
+    <section id="background" class="stack">
+      <h2><code>Task.Run</code> côté serveur et tâches de fond</h2>
+      <p class="intro">Une requête doit faire 80 ms de calcul. Ces frises montrent les threads utilisés dans chaque cas.</p>
+      <div class="panel stack">
+        <h3>1. Appel synchrone : <code>return Ok(Compute());</code></h3>
+        <div class="grow"><span class="lbl">T4</span><div class="segs"><div class="sg cpu" style="width:80%">Compute()</div><div class="sg ok" style="width:6%">200</div></div></div>
+        <h3>2. <code>return Ok(await Task.Run(() =&gt; Compute()));</code></h3>
+        <div class="grow"><span class="lbl">T4</span><div class="segs"><div class="sg cpu" style="width:4%"></div><div class="sg free" style="width:86%">retourne au ThreadPool</div></div></div>
+        <div class="grow"><span class="lbl">T9</span><div class="segs"><div class="sg free" style="width:6%"></div><div class="sg cpu" style="width:80%">Compute()</div><div class="sg ok" style="width:6%">200</div></div></div>
+        <h3>3. <code>_ = Task.Run(() =&gt; Process(order)); return Accepted();</code></h3>
+        <div class="grow"><span class="lbl">T4</span><div class="segs"><div class="sg cpu" style="width:4%"></div><div class="sg ok" style="width:5%">202</div><div class="sg free" style="width:91%">requête terminée, scope DI supprimé</div></div></div>
+        <div class="grow"><span class="lbl">T9</span><div class="segs"><div class="sg free" style="width:6%"></div><div class="sg cpu" style="width:30%">Process()</div><div class="sg bad" style="width:26%">DbContext supprimé</div></div></div>
+      </div>
+      <div class="tiles">
+        <div class="tile blue"><h3>Cas 2 : avec await</h3><p>Ce n'est pas une tâche de fond. Le travail reste lié à la requête. T4 est libéré, mais T9 du même ThreadPool travaille. Il n'y a pas de gain, seulement un coût supplémentaire. <code>Task.Run</code> sert à libérer un thread UI, pas une requête HTTP.</p></div>
+        <div class="tile red"><h3>Cas 3 : sans await</h3><p>C'est une tâche de fond, mais sans contrôle. L'hôte ne la suit pas. Un redéploiement l'arrête. Les exceptions sont perdues. Les services scoped sont supprimés. Il n'y a pas de nouvel essai. Ce travail utilise les mêmes workers que les requêtes.</p></div>
+      </div>
+      <h3 class="sub">Tâche de fond correcte : Channel et BackgroundService</h3>
+<script type="text/x-csharp">
+// Program.cs
+builder.Services.AddSingleton(Channel.CreateBounded<EmailJob>(100));
+builder.Services.AddHostedService<EmailWorker>();
+
+// Contrôleur : dépose le travail, puis répond
+public async Task<IActionResult> Register(RegisterDto dto, CancellationToken ct)
+{
+    var user = await _users.CreateAsync(dto, ct);
+    await _channel.Writer.WriteAsync(new EmailJob(user.Id), ct);
+    return Accepted();
+}
+
+// Worker : suivi par l'hôte, arrêt propre, un scope DI par travail
+public class EmailWorker(Channel<EmailJob> channel, IServiceScopeFactory scopes, ILogger<EmailWorker> log)
+    : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        await foreach (var job in channel.Reader.ReadAllAsync(stoppingToken))
+        {
+            try
+            {
+                using var scope = scopes.CreateScope();          // DbContext propre à ce travail
+                var sender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+                await sender.SendAsync(job, stoppingToken);
+            }
+            catch (Exception ex) { log.LogError(ex, "Échec du travail {Id}", job.UserId); }
+        }
+    }
+}
+</script>
+<script type="text/x-csharp">
+// Tâche périodique
+protected override async Task ExecuteAsync(CancellationToken ct)
+{
+    using var timer = new PeriodicTimer(TimeSpan.FromMinutes(5));
+    while (await timer.WaitForNextTickAsync(ct))
+        await PurgeAsync(ct);
+}
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Besoin</th><th>Solution</th><th>Limite</th></tr></thead>
+        <tbody>
+          <tr><td>Travail léger en mémoire : e-mail, notification, recalcul</td><td class="secondary"><code>Channel</code> + <code>BackgroundService</code></td><td class="secondary">Travail perdu si le process s'arrête brutalement.</td></tr>
+          <tr><td>Travail périodique</td><td class="secondary"><code>BackgroundService</code> + <code>PeriodicTimer</code></td><td class="secondary">S'exécute sur chaque instance. Attention avec plusieurs pods.</td></tr>
+          <tr><td>Exécution garantie : nouvel essai, reprise après arrêt, plusieurs instances</td><td class="secondary">Hangfire ou Quartz avec persistance. Ou file de messages (Service Bus, RabbitMQ) avec le pattern Outbox.</td><td class="secondary">Infrastructure supplémentaire.</td></tr>
+          <tr><td>Calcul long</td><td class="secondary">Worker service séparé</td><td class="secondary">Déploiement supplémentaire. L'API garde ses workers.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="race" class="stack">
+      <h2>Race condition</h2>
+      <p class="intro"><code>counter++</code> contient trois opérations : lire, ajouter 1, écrire. Choisissez l'ordre d'exécution des deux threads.</p>
+      <div class="panel stack">
+        <div class="row">
+          <span class="segmented" role="group" aria-label="Instruction" id="raMode"><button type="button" data-m="naive" aria-pressed="true">counter++</button><button type="button" data-m="atomic" aria-pressed="false">Interlocked.Increment</button></span>
+          <span class="spacer" style="flex:1"></span>
+          <button class="btn secondary sm" type="button" id="raLose">Rejouer le scénario d'erreur</button>
+          <button class="btn ghost sm" type="button" id="raReset">Réinitialiser</button>
+        </div>
+        <div class="race">
+          <div class="card"><h4>Thread 1</h4><div class="ops" id="raOps1"></div><span class="meta">Registre : <b class="num" id="raR1">–</b></span><button class="btn sm" type="button" id="raS1">Exécuter une opération</button></div>
+          <div class="tiles"><div class="tile blue" style="text-align:center"><p class="eyebrow">Mémoire partagée</p><p class="value" id="raMem">0</p><p>Valeur attendue : 2</p></div></div>
+          <div class="card"><h4>Thread 2</h4><div class="ops" id="raOps2"></div><span class="meta">Registre : <b class="num" id="raR2">–</b></span><button class="btn sm" type="button" id="raS2">Exécuter une opération</button></div>
+        </div>
+        <div class="msg" id="raNote"></div>
+      </div>
+      <h3 class="sub">Choisir la protection</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Besoin</th><th>Outil</th></tr></thead>
+        <tbody>
+          <tr><td>Une seule variable numérique ou une référence</td><td class="secondary"><code>Interlocked</code> (<code>Increment</code>, <code>Add</code>, <code>CompareExchange</code>)</td></tr>
+          <tr><td>Plusieurs variables liées, code synchrone</td><td class="secondary"><code>lock</code></td></tr>
+          <tr><td>Section protégée avec un <code>await</code></td><td class="secondary"><code>SemaphoreSlim(1, 1)</code> avec <code>WaitAsync</code> et <code>Release</code> dans un <code>finally</code></td></tr>
+          <tr><td>Collection partagée</td><td class="secondary"><code>ConcurrentDictionary</code>, <code>ConcurrentQueue</code>, <code>Channel</code></td></tr>
+          <tr><td>Meilleure solution</td><td class="secondary">Pas d'état partagé modifiable. Chaque tâche retourne son résultat. Le code combine les résultats à la fin.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg"><p><strong>Pour aller plus loin.</strong> Les instructions du processeur et le protocole de cache derrière <code>Interlocked</code> sont dans l'onglet <a href="#interlocked">Notions profondes</a>.</p></div>
+    </section>
+
+    <section id="elision" class="stack">
+      <h2>Élider <code>async</code> et <code>await</code> : conséquences</h2>
+      <p class="intro">La méthode retourne la Task sans l'attendre. La méthode se termine donc dès le démarrage de l'opération.</p>
+<script type="text/x-csharp">
+public Task<string> ReadAsync()
+{
+    using var client = new HttpClient();
+    return client.GetStringAsync(url);   // retourne une Task en cours
+}                                          // Dispose() ici, pendant la requête
+</script>
+      <div class="panel stack">
+        <div class="grow"><span class="lbl">ReadAsync</span><div class="segs"><div class="sg cpu" style="width:6%"></div><div class="sg bad" style="width:8%">Dispose</div><div class="sg free" style="width:86%">méthode terminée</div></div></div>
+        <div class="grow"><span class="lbl">HTTP</span><div class="segs"><div class="sg free" style="width:5%"></div><div class="sg cpu" style="width:9%"></div><div class="sg bad" style="width:30%">annulée</div></div></div>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Ressource supprimée trop tôt</th><th>Symptôme</th></tr></thead>
+        <tbody>
+          <tr><td><code>HttpClient</code></td><td class="secondary"><code>TaskCanceledException: The operation was canceled</code> ou <code>ObjectDisposedException</code></td></tr>
+          <tr><td><code>DbContext</code></td><td class="secondary"><code>ObjectDisposedException: Cannot access a disposed context instance</code></td></tr>
+          <tr><td><code>Stream</code>, <code>FileStream</code></td><td class="secondary"><code>ObjectDisposedException: Cannot access a closed file</code></td></tr>
+          <tr><td><code>SqlConnection</code></td><td class="secondary">Connexion fermée pendant la lecture</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Erreur intermittente.</strong> Si l'opération se termine avant <code>Dispose</code>, le code fonctionne. Exemples : cache, réponse très rapide. L'erreur apparaît donc en production et pas en local.</p></div>
+      <h3 class="sub">Autres effets, même sans using</h3>
+      <ul class="bul">
+        <li>Un <code>try/catch</code> dans la méthode ne reçoit pas les erreurs async. L'exception arrive plus tard, chez l'appelant.</li>
+        <li>La méthode n'apparaît pas dans la stack trace async. Le diagnostic est plus difficile.</li>
+        <li>Une erreur de validation d'argument se produit immédiatement à l'appel. Elle n'est pas stockée dans la Task.</li>
+      </ul>
+<script type="text/x-csharp">
+// Élision acceptable : simple transmission, sans using, sans try, sans code après
+public Task<User> GetAsync(int id) => GetAsync(id, CancellationToken.None);
+</script>
+    </section>
+
+    <section id="qcm-avance" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 2</p>
+        <h2>QCM : notions avancées</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="a"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS PROFONDES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="profond" aria-labelledby="tab-btn-profond" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 3</p>
+      <h2>Notions profondes</h2>
+      <p class="lede">Ces notions décrivent les mécanismes internes : ordonnanceur du système, ThreadPool, code généré par le compilateur et instructions du processeur.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="threadsys" class="stack">
+      <h2>Le thread dans le système</h2>
+      <h3 class="sub" style="margin-top:0">Changement de contexte</h3>
+      <p class="prose">L'ordonnanceur remplace parfois le thread d'un cœur par un autre thread. Il enregistre les registres de l'ancien thread. Il charge les registres du nouveau thread. Cette opération dure environ une microseconde.</p>
+      <p class="prose">Le coût indirect est plus grand. Les caches du cœur contiennent les données de l'ancien thread. Le nouveau thread commence donc avec des caches inutiles. Plus de threads actifs que de cœurs donne plus de changements de contexte et moins de travail utile.</p>
+      <h3 class="sub">Threads d'un process .NET</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Thread</th><th>Rôle</th><th>Dans le ThreadPool</th></tr></thead>
+        <tbody>
+          <tr><td>Thread principal</td><td class="secondary">Exécute <code>Main</code>. En ASP.NET Core, il démarre l'hôte, puis attend l'arrêt.</td><td class="secondary">Non</td></tr>
+          <tr><td>Workers</td><td class="secondary">Exécutent les requêtes HTTP, les continuations, <code>Task.Run</code>, <code>Parallel</code> et les timers.</td><td class="secondary">Oui</td></tr>
+          <tr><td>Threads I/O</td><td class="secondary">Reçoivent les signaux de fin d'I/O du système (IOCP sous Windows, epoll sous Linux). Ils mettent les continuations en file.</td><td class="secondary">Particulier</td></tr>
+          <tr><td>Threads du GC</td><td class="secondary">En mode Server GC (valeur par défaut d'ASP.NET Core) : un thread de GC par cœur.</td><td class="secondary">Non</td></tr>
+          <tr><td>Finalizer</td><td class="secondary">Exécute les finaliseurs <code>~MaClasse()</code>.</td><td class="secondary">Non</td></tr>
+          <tr><td>Threads dédiés</td><td class="secondary">Créés par <code>new Thread()</code> ou <code>TaskCreationOptions.LongRunning</code>.</td><td class="secondary">Non</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg"><p><strong>Foreground et background.</strong> Les workers sont des threads « background » : le process s'arrête sans les attendre. Un <code>new Thread()</code> est « foreground » par défaut : le process attend sa fin. Pour changer ce comportement, réglez <code>IsBackground = true</code>.</p></div>
+    </section>
+
+    <section id="os" class="stack">
+      <h2>Simulateur : threads et cœurs</h2>
+      <p class="intro">L'ordonnanceur du système donne un cœur à chaque thread prêt, pendant une tranche de temps. Chaque case est une tranche de temps. Le numéro indique le thread. Un filet rouge à gauche indique un changement de contexte.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><span class="label">Travail</span><span class="segmented" role="group" aria-label="Type de travail" id="osMode"><button type="button" data-m="cpu" aria-pressed="true">Calcul CPU</button><button type="button" data-m="block" aria-pressed="false">I/O bloquante</button></span></div>
+          <div class="field"><label for="osCores">Cœurs : <span class="val" id="osCoresO"></span></label><input type="range" id="osCores" min="1" max="8" value="4"></div>
+          <div class="field"><label for="osThreads">Threads : <span class="val" id="osThreadsO"></span></label><input type="range" id="osThreads" min="1" max="32" value="4"></div>
+          <div class="field" id="osBlockWrap" hidden><label for="osBlock">Durée du blocage (tranches) : <span class="val" id="osBlockO"></span></label><input type="range" id="osBlock" min="1" max="15" value="6"></div>
+          <span class="spacer"></span>
+          <div class="row"><button class="btn" type="button" id="osPlay">Démarrer</button><button class="btn ghost" type="button" id="osReset">Réinitialiser</button></div>
+        </div>
+        <div id="osCoresView"></div>
+        <div class="zone"><h3>Threads</h3><div class="row" style="gap:.35rem" id="osChips"></div></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Travail utile par tranche</p><p class="value" id="osTp">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Utilisation CPU</p><p class="value" id="osUtil">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Changements de contexte</p><p class="value" id="osSw">0</p></div>
+          <div class="tile neutral"><p class="eyebrow">Piles réservées</p><p class="value" id="osMem">–</p></div>
+        </div>
+        <div class="msg" id="osNote"></div>
+      </div>
+      <div class="msg info"><p><strong>Essai 1.</strong> Choisissez « Calcul CPU » et 4 cœurs. Passez de 4 à 32 threads. Le travail utile diminue.</p><p><strong>Essai 2.</strong> Choisissez « I/O bloquante » et 4 cœurs. Avec 4 threads, les cœurs restent inactifs. Augmentez le nombre de threads pour occuper les cœurs.</p></div>
+    </section>
+
+    <section id="tpinside" class="stack">
+      <h2>Le ThreadPool interne</h2>
+      <p class="intro">Chaque process a un seul ThreadPool. ASP.NET Core, <code>Task.Run</code>, les continuations, <code>Parallel</code> et les timers l'utilisent. Depuis .NET 6, le ThreadPool est écrit en C#. Il fonctionne de la même façon sous Windows et sous Linux.</p>
+<pre>                ┌──────────────────────────── ThreadPool ────────────────────────────┐
+ requêtes HTTP ►│  File GLOBALE (FIFO)                                               │
+ timers         │      │                                                             │
+ code externe   │      ▼                                                             │
+                │  T1 [file locale]  T2 [file locale]  T3 [file locale] ...          │
+                │   ▲ le worker prend en LIFO      ◄── les autres volent en FIFO     │
+                └────────────────────────────────────────────────────────────────────┘
+                         ▲
+ fin d'une I/O ──────────┘  le système signale la fin (IOCP / epoll) → continuation en file</pre>
+
+      <h3 class="sub">Réglages du ThreadPool</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Réglage</th><th>Valeur par défaut</th><th>Effet</th></tr></thead>
+        <tbody>
+          <tr><td><b>Minimum</b> de workers</td><td class="secondary"><code>Environment.ProcessorCount</code></td><td class="secondary">Sous le minimum, le ThreadPool crée un worker immédiatement pour chaque travail en attente.</td></tr>
+          <tr><td><b>Maximum</b> de workers</td><td class="secondary">32 767 (64 bits)</td><td class="secondary">Limite absolue. Ne changez pas cette valeur.</td></tr>
+          <tr><td>Injection au-dessus du minimum</td><td class="secondary">Environ 1 thread toutes les 500 ms</td><td class="secondary">La file n'avance pas : le ThreadPool ajoute un worker. Ce rythme est lent volontairement.</td></tr>
+          <tr><td>Hill climbing</td><td class="secondary">Toujours actif</td><td class="secondary">Le ThreadPool mesure le débit. Il essaie un worker de plus ou de moins. Il garde le meilleur résultat.</td></tr>
+          <tr><td>Retrait</td><td class="secondary">Après environ 20 s d'inactivité</td><td class="secondary">Le ThreadPool supprime un worker inactif. Il ne descend pas sous le minimum.</td></tr>
+          <tr><td>Détection de blocage (.NET 6+)</td><td class="secondary">Active</td><td class="secondary"><code>Task.Wait</code> ou <code>.Result</code> sur un worker accélère un peu l'injection. Cette détection réduit la starvation. Elle ne la supprime pas.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+ThreadPool.GetMinThreads(out var minWorker, out var minIo);
+ThreadPool.GetMaxThreads(out var maxWorker, out var maxIo);
+Console.WriteLine($"cœurs={Environment.ProcessorCount} min={minWorker} max={maxWorker}");
+Console.WriteLine($"threads={ThreadPool.ThreadCount} en attente={ThreadPool.PendingWorkItemCount}");
+// Mac à 10 cœurs : cœurs=10 min=10 max=32767
+</script>
+
+      <h3 class="sub">Raison de l'injection lente</h3>
+      <p class="prose">Le ThreadPool suppose un travail court et non bloquant. Un worker par travail en attente donnerait des milliers de threads pendant un pic de charge. Ces threads utiliseraient beaucoup de mémoire et de changements de contexte. Le ThreadPool fait donc attendre le travail. Cette règle est efficace avec du code async. Elle est mauvaise avec du code bloquant.</p>
+
+      <h3 class="sub">Nombre de threads utile</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Type de travail</th><th>Nombre de threads utile</th><th>Raison</th></tr></thead>
+        <tbody>
+          <tr><td><b>Calcul (CPU-bound)</b></td><td class="secondary">Environ le nombre de cœurs</td><td class="secondary">Plus de threads donne plus de changements de contexte.</td></tr>
+          <tr><td><b>I/O async</b></td><td class="secondary">Environ le nombre de cœurs</td><td class="secondary">Aucun thread n'attend. Chaque worker exécute les continuations l'une après l'autre.</td></tr>
+          <tr><td><b>I/O bloquante</b></td><td class="secondary">Beaucoup plus que le nombre de cœurs</td><td class="secondary">Les threads bloqués ne travaillent pas. Le ThreadPool doit en ajouter, lentement.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg"><p><strong>Cœurs logiques et cœurs physiques.</strong> <code>ProcessorCount</code> compte les cœurs logiques. Avec l'hyperthreading, un cœur physique donne deux cœurs logiques. Ces deux cœurs logiques partagent les unités de calcul. Le gain est de 15 à 30 % sur un calcul, pas de 100 %.</p></div>
+
+      <h3 class="sub">API hors ThreadPool et parallélisme par défaut</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>API</th><th>Comportement</th></tr></thead>
+        <tbody>
+          <tr><td><code>new Thread</code>, <code>LongRunning</code></td><td class="secondary">Thread dédié, hors ThreadPool</td></tr>
+          <tr><td><code>Parallel.For</code>, <code>Parallel.ForEach</code></td><td class="secondary">Utilisent le ThreadPool. Pas de limite explicite par défaut.</td></tr>
+          <tr><td><code>Parallel.ForEachAsync</code></td><td class="secondary">Parallélisme par défaut : <code>ProcessorCount</code></td></tr>
+          <tr><td>PLINQ <code>.AsParallel()</code></td><td class="secondary">Parallélisme par défaut : <code>ProcessorCount</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="ws" class="stack">
+      <h2>Simulateur : files locales et vol de travail</h2>
+      <p class="intro">Le ThreadPool a 4 workers. Une requête HTTP arrive dans la file globale. Au démarrage, chaque requête crée 2 tâches. Ces tâches vont dans la file locale du worker. Un worker libre cherche du travail dans cet ordre : sa file locale (LIFO), la file globale (FIFO), la file d'un autre worker (vol, FIFO).</p>
+      <div class="panel stack">
+        <div class="row">
+          <button class="btn secondary sm" type="button" id="wsReq">Ajouter 1 requête</button>
+          <button class="btn secondary sm" type="button" id="wsBurst">Ajouter 5 requêtes</button>
+          <span class="spacer" style="flex:1"></span>
+          <button class="btn sm" type="button" id="wsStep">Étape suivante</button>
+          <button class="btn secondary sm" type="button" id="wsAuto">Lecture automatique</button>
+          <button class="btn ghost sm" type="button" id="wsReset">Réinitialiser</button>
+        </div>
+        <div class="legend"><span><span class="pill blue">R1</span> requête, file globale</span><span><span class="pill green">R1.a</span> tâche créée par un worker, file locale</span><span>Dans une file locale : à droite, la tâche la plus récente. À gauche, la plus ancienne.</span></div>
+        <div class="zone"><h3>File globale</h3><div class="deque" id="wsGlobal"></div></div>
+        <div class="board" id="wsThreads"></div>
+        <div class="zone"><h3>Journal</h3><div class="log" id="wsLog"></div></div>
+      </div>
+      <div class="msg info"><p><strong>LIFO dans la file locale.</strong> La tâche la plus récente utilise souvent les données que le worker vient de lire. Ces données sont encore dans le cache du cœur.</p><p><strong>Vol par l'autre extrémité.</strong> Le voleur et le propriétaire ne prennent pas la même tâche. Ils n'ont presque jamais besoin de verrou.</p></div>
+    </section>
+
+    <section id="injection" class="stack">
+      <h2>Injection de threads, conteneurs et SetMinThreads</h2>
+      <p class="intro">Ce graphique montre le temps nécessaire pour donner un worker à chaque requête bloquée. Modèle simplifié : création immédiate jusqu'au minimum, puis 1 worker toutes les 500 ms.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="injK">Requêtes bloquées en même temps : <span class="val" id="injKO"></span></label><input type="range" id="injK" min="5" max="200" value="60"></div>
+          <div class="field"><label for="injM">Minimum de workers : <span class="val" id="injMO"></span></label><input type="range" id="injM" min="1" max="100" value="4"></div>
+        </div>
+        <div class="chart"><svg id="injSvg" viewBox="0 0 640 220" role="img" aria-label="Nombre de workers dans le temps"></svg></div>
+        <div class="msg" id="injNote"></div>
+      </div>
+
+      <h3 class="sub">Conteneur Kubernetes</h3>
+      <p class="prose">.NET lit la limite CPU du conteneur. Il arrondit cette limite à l'entier supérieur. Le résultat donne <code>ProcessorCount</code>, donc le minimum de workers.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="k8sCpu"><code>resources.limits.cpu</code> : <span class="val" id="k8sCpuO"></span></label><input type="range" id="k8sCpu" min="100" max="8000" step="100" value="500"></div>
+          <div class="field"><span class="label">Limite</span><label class="check"><input type="checkbox" id="k8sNoLimit"> Pas de limite (nœud de 32 cœurs)</label></div>
+        </div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">ProcessorCount</p><p class="value" id="k8sPc"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Minimum de workers</p><p class="value" id="k8sMin"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Temps pour 50 requêtes bloquées</p><p class="value" id="k8sT"></p></div>
+        </div>
+        <div class="msg" id="k8sNote"></div>
+      </div>
+
+      <h3 class="sub">SetMinThreads</h3>
+<script type="text/x-csharp">
+// Au démarrage de l'application
+ThreadPool.SetMinThreads(workerThreads: 100, completionPortThreads: 100);
+
+// Ou dans le .csproj
+// <PropertyGroup>
+//   <ThreadPoolMinThreads>100</ThreadPoolMinThreads>
+// </PropertyGroup>
+</script>
+      <div class="msg warning"><p><strong>Solution temporaire.</strong> Jusqu'à 100 workers, la création est immédiate. Utilisez ce réglage seulement pour du code bloquant que vous ne pouvez pas corriger tout de suite. Ce réglage augmente la mémoire et les changements de contexte. La correction est du code async de bout en bout.</p></div>
+
+      <h3 class="sub">Diagnostic</h3>
+<script type="text/x-csharp">
+// Terminal
+// dotnet-counters monitor -n MonApi --counters System.Runtime
+// dotnet-dump collect -p <pid>      puis, dans dotnet-dump analyze :  clrstack -all
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Compteur</th><th>Lecture</th></tr></thead>
+        <tbody>
+          <tr><td>ThreadPool Thread Count</td><td class="secondary">Augmente par paliers d'environ 0,5 s : des threads sont bloqués.</td></tr>
+          <tr><td>ThreadPool Queue Length</td><td class="secondary">Reste supérieur à 0 : du travail attend un worker.</td></tr>
+          <tr><td>ThreadPool Completed Work Item Count</td><td class="secondary">Débit du ThreadPool.</td></tr>
+          <tr class="is-alert"><td>% CPU</td><td class="secondary">Bas pendant que la file est pleine : signature de la starvation.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Signes de la starvation.</strong> La latence augmente beaucoup. Le CPU reste bas. Le nombre de threads augmente par paliers. La file reste pleine. Les health checks échouent. Dans un dump, <code>clrstack -all</code> montre des threads arrêtés dans <code>Task.Wait</code>, <code>GetResult</code> ou <code>Monitor.Enter</code>.</p></div>
+    </section>
+
+    <section id="asyncvoid-internals" class="stack">
+      <h2><code>async void</code> : code généré</h2>
+      <p class="intro">Le compilateur transforme chaque méthode async en state machine et en builder. Le type de retour choisit le builder. Cette différence explique tous les problèmes d'<code>async void</code>.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+// async Task : code généré
+public Task SaveAsync()
+{
+    var sm = new SaveAsync_StateMachine();
+    sm.builder = AsyncTaskMethodBuilder.Create();  // contient une Task
+    sm._this = this;
+    sm.state = -1;
+    sm.builder.Start(ref sm);   // MoveNext() jusqu'au 1er await
+    return sm.builder.Task;     // la Task retourne à l'appelant
+}
+</script>
+<script type="text/x-csharp">
+// async void : code généré
+public void Save()
+{
+    var sm = new Save_StateMachine();
+    sm.builder = AsyncVoidMethodBuilder.Create();  // aucune Task disponible
+    sm._this = this;
+    sm.state = -1;
+    sm.builder.Start(ref sm);
+    // rien à retourner
+}
+</script>
+      </div>
+<script type="text/x-csharp">
+// MoveNext() : identique dans les deux cas
+void MoveNext()
+{
+    try
+    {
+        // ... code de la méthode, découpé à chaque await ...
+    }
+    catch (Exception e)
+    {
+        state = -2;
+        builder.SetException(e);   // toutes les exceptions passent ici
+        return;
+    }
+    state = -2;
+    builder.SetResult();
+}
+</script>
+      <h3 class="sub">Raison de l'erreur CS4008 avec <code>await Save()</code></h3>
+      <p class="prose">Le compilateur transforme <code>await x</code> en appels à <code>x.GetAwaiter()</code>, <code>IsCompleted</code>, <code>OnCompleted(continuation)</code> et <code>GetResult()</code>. Il faut donc un objet qui représente l'opération. Une méthode <code>void</code> ne retourne pas d'objet. Le compilateur signale donc <code>error CS4008: Cannot await 'void'</code>. <code>AsyncVoidMethodBuilder</code> ne donne pas non plus de Task en interne.</p>
+
+      <h3 class="sub">Comportement de chaque builder</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Appel</th><th><code>AsyncTaskMethodBuilder</code></th><th><code>AsyncVoidMethodBuilder</code></th></tr></thead>
+        <tbody>
+          <tr><td><code>Create()</code></td><td class="secondary">Prépare une Task.</td><td class="secondary">Capture <code>SynchronizationContext.Current</code>. Appelle <code>OperationStarted()</code> si le contexte existe.</td></tr>
+          <tr><td><code>SetResult()</code></td><td class="secondary">La Task passe à <code>RanToCompletion</code>. Les continuations démarrent.</td><td class="secondary">Appelle <code>OperationCompleted()</code> si le contexte existe. Sinon, aucune action.</td></tr>
+          <tr class="is-alert"><td><code>SetException(e)</code></td><td class="secondary">L'exception est stockée dans la Task. <code>await</code> la relance.</td><td class="secondary">Aucune Task ne peut stocker l'exception. Le builder relance l'exception sur un autre thread.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+// AsyncVoidMethodBuilder.SetException (version simplifiée du runtime)
+public void SetException(Exception exception)
+{
+    if (_synchronizationContext != null)
+        _synchronizationContext.Post(s => ExceptionDispatchInfo.Throw((Exception)s), exception);
+    else
+        ThreadPool.QueueUserWorkItem(s => ExceptionDispatchInfo.Throw((Exception)s), exception);
+}
+</script>
+      <div class="msg"><p><strong>OperationStarted et OperationCompleted.</strong> Ces appels sont le seul suivi possible d'un <code>async void</code>. Ils passent par le SynchronizationContext. ASP.NET sur .NET Framework comptait ainsi les opérations en cours. xUnit utilise ce mécanisme pour attendre un test <code>async void</code>. ASP.NET Core et les applications console n'ont pas de contexte : il n'y a aucun suivi.</p></div>
+
+      <h3 class="sub">Chronologie : le try/catch de l'appelant ne reçoit pas l'exception</h3>
+      <div class="panel stack">
+        <div class="split">
+          <div class="codelines" id="avCode"></div>
+          <ul class="list kv">
+            <li><span>Pile de T4</span><span id="avT4"></span></li>
+            <li><span>Pile de T7</span><span id="avT7"></span></li>
+            <li><span>Pile de T9</span><span id="avT9"></span></li>
+            <li><span>try de l'appelant actif</span><span id="avTry"></span></li>
+          </ul>
+        </div>
+        <div data-stepbar="av"></div>
+      </div>
+    </section>
+
+    <section id="interlocked" class="stack">
+      <h2><code>Interlocked</code> et cache du processeur</h2>
+      <p class="intro"><code>Interlocked</code> n'est pas un appel de méthode normal. Le JIT le remplace par une instruction atomique du processeur.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Méthode</th><th>x86 / x64</th><th>ARM64</th></tr></thead>
+        <tbody>
+          <tr><td><code>Increment</code>, <code>Add</code></td><td class="secondary"><code>lock xadd</code></td><td class="secondary"><code>ldadd</code> (LSE) ou boucle <code>ldxr</code>/<code>stxr</code></td></tr>
+          <tr><td><code>CompareExchange</code></td><td class="secondary"><code>lock cmpxchg</code></td><td class="secondary"><code>cas</code> ou boucle <code>ldxr</code>/<code>stxr</code></td></tr>
+          <tr><td><code>Exchange</code></td><td class="secondary"><code>xchg</code> (verrou implicite)</td><td class="secondary"><code>swp</code></td></tr>
+        </tbody>
+      </table></div>
+      <p class="prose">Avancez étape par étape. Deux cœurs ajoutent 1 au même compteur. Chaque cœur a un cache. La ligne de cache de 64 octets qui contient <code>counter</code> a un état MESI : <b>M</b>odified, <b>E</b>xclusive, <b>S</b>hared, <b>I</b>nvalid.</p>
+      <div class="panel stack">
+        <div class="mesi">
+          <div class="card" id="me1"><h4>Cœur 1</h4><div id="me1l"></div></div>
+          <div class="card" id="me2"><h4>Cœur 2</h4><div id="me2l"></div></div>
+          <p class="msg info full" id="meBus"></p>
+          <p class="full muted num" style="margin:0;font-size:.875rem" id="meRam"></p>
+        </div>
+        <div data-stepbar="me"></div>
+      </div>
+
+      <h3 class="sub">CompareExchange : base du code sans verrou</h3>
+<script type="text/x-csharp">
+// Mettre à jour le maximum sans verrou : boucle CAS
+int current, updated;
+do
+{
+    current = _max;
+    updated = Math.Max(current, value);
+}
+while (Interlocked.CompareExchange(ref _max, updated, current) != current);
+// Un autre thread a changé _max entre la lecture et l'écriture : le CAS échoue, la boucle recommence
+</script>
+      <div class="msg"><p><strong>Lien avec lock.</strong> <code>Monitor.Enter</code> essaie d'abord un <code>CompareExchange</code>. En cas d'échec, il fait une courte attente active, puis il met le thread en attente dans le noyau. <code>Interlocked</code> ne met jamais un thread en attente. Mais il protège une seule variable.</p></div>
+    </section>
+
+    <section id="qcm-profond" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 3</p>
+        <h2>QCM : notions profondes</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="p"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-brand">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      Carbon IT · Formation .NET
+    </span>
+    <span class="ste">Rédaction : règles ASD-STE100 appliquées au français. Références : Stephen Toub, David Fowler, Stephen Cleary, documentation Microsoft.</span>
+  </footer>
+</main>
+
+<script>
+/* ───────── Utilitaires ───────── */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const HL = /(\/\/.*)|(\$?"(?:[^"\\]|\\.)*")|\b(async|await|var|public|private|protected|return|new|using|static|void|lock|for|foreach|while|do|if|else|true|false|null|try|finally|catch|throw|class|struct|readonly|object|override|switch|case)\b|\b(Task|ValueTask|int|string|bool|CancellationToken|SemaphoreSlim|Parallel|Interlocked|HttpClient|IActionResult|User|Channel|ParallelOptions|EventArgs|Thread|ThreadPool|IHttpClientFactory|IDbContextFactory|BackgroundService|List|AsyncLocal|Exception|AggregateException|HttpRequestException|ExceptionDispatchInfo|SynchronizationContext|AsyncTaskMethodBuilder|AsyncVoidMethodBuilder|IAsyncStateMachine|TaskAwaiter|IServiceScopeFactory|PeriodicTimer|TimeSpan|ILogger|EmailJob|IEmailSender|Console|Environment|TaskCreationOptions|ConfigureAwaitOptions|UserService|EmailWorker|Math|RegisterDto|ThreadStatic)\b/g;
+function hl(src){
+  let out='',last=0,m; HL.lastIndex=0;
+  while((m=HL.exec(src))){
+    out+=esc(src.slice(last,m.index));
+    const cls=m[1]?'c':m[2]?'s':m[3]?'k':'t';
+    out+=`<span class="${cls}">${esc(m[0])}</span>`; last=HL.lastIndex;
+  }
+  return out+esc(src.slice(last));
+}
+document.querySelectorAll('script[type="text/x-csharp"]').forEach(s=>{
+  const pre=document.createElement('pre');
+  pre.innerHTML=hl(s.textContent.replace(/^\s*\n/,'').replace(/\s+$/,''));
+  s.replaceWith(pre);
+});
+const HEX='<svg viewBox="0 0 32 32" aria-hidden="true"><path class="fill" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/><path class="edge" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/></svg>';
+const st=(state,label)=>`<span class="status" data-state="${state}">${HEX}<span class="label">${label}</span></span>`;
+document.querySelectorAll('.status[data-label]').forEach(el=>{el.innerHTML=HEX+`<span class="label">${el.dataset.label}</span>`;});
+document.querySelectorAll('[data-stepbar]').forEach(el=>{
+  const p=el.dataset.stepbar;
+  el.outerHTML=`<div class="msg note" id="${p}Note"></div><div class="stepbar"><button class="btn secondary sm" type="button" id="${p}Prev">Précédent</button><button class="btn sm" type="button" id="${p}Next">Suivant</button><button class="btn ghost sm" type="button" id="${p}Reset">Recommencer</button><span class="count" id="${p}Cnt"></span></div>`;
+});
+function bindRange(id){const r=$('#'+id),o=$('#'+id+'O');const f=()=>{if(o)o.textContent=r.value;};r.addEventListener('input',f);f();return r;}
+function seg(id,cb){const el=$('#'+id);el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');cb(b.dataset.m);}));}
+const TONE={good:'msg success note',warn:'msg warning note',mid:'msg info note','':'msg note'};
+function setMsg(el,tone,html){const keep=el.classList.contains('note');el.className=(TONE[tone]||'msg note').replace(' note',keep?' note':'');el.innerHTML=html;}
+
+/* Démonstration pas à pas : préfixe p → #pCode #pNote #pCnt #pPrev #pNext #pReset */
+function stepper(p,cfg){
+  let i=0;
+  const lines=cfg.code?cfg.code.split('\n'):null;
+  function draw(){
+    const s=cfg.steps[i];
+    if(lines) $('#'+p+'Code').innerHTML=lines.map((l,n)=>{
+      const cls=s.line===n?'cur':(s.paused||[]).includes(n)?'paused':'';
+      return `<div class="${cls}"><span class="ln">${n+1}</span>${hl(l)||' '}</div>`;
+    }).join('');
+    cfg.render(s,i);
+    const note=$('#'+p+'Note'); note.className=TONE[s.tone||'']; note.innerHTML=`<p>${s.note}</p>`;
+    $('#'+p+'Cnt').textContent=`Étape ${i+1} sur ${cfg.steps.length}`;
+    $('#'+p+'Prev').disabled=i===0; $('#'+p+'Next').disabled=i===cfg.steps.length-1;
+  }
+  $('#'+p+'Prev').onclick=()=>{if(i>0){i--;draw();}};
+  $('#'+p+'Next').onclick=()=>{if(i<cfg.steps.length-1){i++;draw();}};
+  $('#'+p+'Reset').onclick=()=>{i=0;draw();};
+  draw();
+}
+
+/* ───────── Thème (repris du design system) ───────── */
+(()=>{
+  const root=document.documentElement;
+  const apply=v=>{
+    if(v==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
+    document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===v)));
+  };
+  let saved='auto';
+  try{saved=localStorage.getItem('cds-theme')||'auto';}catch(_){}
+  apply(saved);
+  document.querySelectorAll('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>{
+    apply(b.dataset.themeSet);
+    try{localStorage.setItem('cds-theme',b.dataset.themeSet);}catch(_){}
+  }));
+})();
+
+/* ───────── Onglets de niveau ───────── */
+const syncHeights=()=>{
+  const r=document.documentElement.style;
+  r.setProperty('--topbar-h',$('.topbar').offsetHeight+'px');
+  r.setProperty('--tabs-h',$('.tabs').offsetHeight+'px');
+};
+syncHeights(); window.addEventListener('resize',syncHeights);
+const Tabs=(()=>{
+  const IDS=['base','avance','profond'];
+  let current='base';
+  const panelOf=el=>el&&el.closest('.tabpanel');
+  function show(id){
+    current=id;
+    IDS.forEach(t=>{
+      $('#'+t).hidden=t!==id;
+      $('#tab-btn-'+t).setAttribute('aria-selected',String(t===id));
+      const nav=document.querySelector(`[data-nav="${t}"]`); if(nav){ if(t===id) nav.setAttribute('aria-current','page'); else nav.removeAttribute('aria-current'); }
+    });
+    $('#ctaQcm').setAttribute('href','#qcm-'+id);
+    try{localStorage.setItem('async-tab',id);}catch(_){}
+  }
+  function go(hash,push){
+    const id=hash.replace(/^#/,'');
+    if(!id||id==='haut'){ window.scrollTo({top:0}); return; }
+    let target;
+    if(IDS.includes(id)){ show(id); target=document.querySelector('.tabs'); }
+    else{
+      target=document.getElementById(id); if(!target) return;
+      const p=panelOf(target); if(p) show(p.id);
+    }
+    if(push) history.replaceState(null,'','#'+id);
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  }
+  IDS.forEach(t=>$('#tab-btn-'+t).addEventListener('click',()=>{show(t);history.replaceState(null,'','#'+t);}));
+  $('.tabs').addEventListener('keydown',e=>{
+    if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return;
+    const i=IDS.indexOf(current), n=IDS[(i+(e.key==='ArrowRight'?1:IDS.length-1))%IDS.length];
+    show(n); $('#tab-btn-'+n).focus();
+  });
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#"]'); if(!a) return;
+    e.preventDefault(); go(a.getAttribute('href'),true);
+  });
+  window.addEventListener('hashchange',()=>go(location.hash,false));
+  let start='base';
+  try{start=localStorage.getItem('async-tab')||'base';}catch(_){}
+  show(IDS.includes(start)?start:'base');
+  if(location.hash) go(location.hash,false);
+  return {show};
+})();
+
+/* ───────── Ordonnanceur ───────── */
+(function(){
+  const cR=bindRange('osCores'), tR=bindRange('osThreads'), bR=bindRange('osBlock');
+  let mode='cpu', S, timer=null;
+  const Q=3, HIST=28;
+  seg('osMode',m=>{mode=m;$('#osBlockWrap').hidden=m!=='block';reset();});
+  function reset(){
+    const C=+cR.value,N=+tR.value;
+    S={tick:0,work:0,busy:0,sw:0,
+      cores:Array.from({length:C},()=>({t:null,q:0,last:null,fresh:false,hist:[]})),
+      th:Array.from({length:N},()=>({st:'ready',bl:0})),
+      ready:[...Array(N).keys()]};
+    draw();
+  }
+  function tick(){
+    const B=+bR.value; S.tick++;
+    S.th.forEach((t,i)=>{ if(t.st==='blocked' && --t.bl<=0){t.st='ready';S.ready.push(i);} });
+    for(const c of S.cores){
+      if(c.t===null && S.ready.length){
+        const i=S.ready.shift(); c.t=i; c.q=Q;
+        c.fresh=c.last!==i; if(c.fresh && c.last!==null) S.sw++;
+        S.th[i].st='running';
+      }
+    }
+    for(const c of S.cores){
+      if(c.t===null){c.hist.push(null);}
+      else{
+        const i=c.t,t=S.th[i];
+        S.work+=c.fresh?0.6:1; S.busy++;
+        c.hist.push({i,sw:c.fresh && c.last!==null});
+        c.fresh=false; c.last=i;
+        if(mode==='block'){t.st='blocked';t.bl=B;c.t=null;}
+        else if(--c.q<=0){ if(S.ready.length){t.st='ready';S.ready.push(i);c.t=null;} else c.q=Q; }
+      }
+      if(c.hist.length>HIST) c.hist.shift();
+    }
+  }
+  function draw(){
+    const C=S.cores.length,N=S.th.length;
+    $('#osCoresView').innerHTML=S.cores.map((c,k)=>{
+      const cells=[], pad=HIST-c.hist.length;
+      for(let j=0;j<HIST;j++){
+        const h=j<pad?null:c.hist[j-pad];
+        cells.push(h?`<div class="cell busy${h.sw?' sw':''}">${h.i+1}</div>`:'<div class="cell"></div>');
+      }
+      return `<div class="corerow"><span class="lbl">Cœur ${k+1}</span><div class="cells">${cells.join('')}</div></div>`;
+    }).join('');
+    const lbl={ready:'prêt',running:'sur un cœur',blocked:'bloqué'}, cls={ready:'',running:'blue',blocked:'red'};
+    $('#osChips').innerHTML=S.th.map((t,i)=>`<span class="pill ${cls[t.st]}">T${i+1} · ${lbl[t.st]}</span>`).join('');
+    const tp=S.tick?S.work/S.tick:0, util=S.tick?S.busy/(C*S.tick):0;
+    $('#osTp').textContent=S.tick?`${tp.toFixed(2)} / ${C}`:'–';
+    $('#osUtil').textContent=S.tick?Math.round(util*100)+' %':'–';
+    $('#osSw').textContent=S.sw;
+    $('#osMem').textContent=`${(N*1.5).toFixed(1)} Mo`;
+    const n=$('#osNote');
+    if(mode==='cpu'){
+      if(N<C) setMsg(n,'mid',`<p><strong>${N} threads pour ${C} cœurs.</strong> ${C-N} cœur(s) restent inactifs. Pour un calcul, utilisez au moins un thread par cœur.</p>`);
+      else if(N===C) setMsg(n,'good',`<p><strong>Un thread par cœur.</strong> Chaque thread garde son cœur. Il n'y a pas de changement de contexte. Les caches restent utiles. C'est la meilleure configuration pour un calcul.</p>`);
+      else setMsg(n,'warn',`<p><strong>${N} threads pour ${C} cœurs.</strong> Seulement ${C} threads s'exécutent en même temps. L'ordonnanceur alterne les threads. Chaque changement de contexte a un coût (filets rouges). Le travail utile diminue. Plus de threads n'accélère pas un calcul.</p>`);
+    }else{
+      const need=C*(+bR.value+1);
+      if(N<need) setMsg(n,'mid',`<p><strong>I/O bloquante.</strong> Chaque thread calcule pendant 1 tranche. Ensuite, il reste bloqué pendant ${bR.value} tranches. Avec ${N} threads, les cœurs sont souvent inactifs (utilisation : ${S.tick?Math.round(util*100):0} %). Il faut environ ${need} threads pour occuper les cœurs. Le code bloquant oblige donc le ThreadPool à grandir. Avec <code>await</code>, l'attente n'utilise pas de thread : ${C} threads suffisent.</p>`);
+      else setMsg(n,'good',`<p><strong>${N} threads.</strong> Ce nombre occupe les cœurs malgré le blocage. Le coût : ${(N*1.5).toFixed(0)} Mo de piles réservées et beaucoup de changements de contexte. Le code async donne le même débit avec ${C} threads.</p>`);
+    }
+  }
+  $('#osPlay').onclick=()=>{
+    if(timer){clearInterval(timer);timer=null;$('#osPlay').textContent='Démarrer';}
+    else{timer=setInterval(()=>{tick();draw();},180);$('#osPlay').textContent='Pause';}
+  };
+  $('#osReset').onclick=reset;
+  [cR,tR].forEach(r=>r.addEventListener('input',reset));
+  reset();
+})();
+
+/* ───────── Vol de travail ───────── */
+(function(){
+  const W=4; let S, seq=0, auto=null;
+  function reset(){S={g:[],th:Array.from({length:W},()=>({loc:[],cur:null})),log:[]};seq=0;draw();}
+  function log(s){S.log.unshift(s);S.log=S.log.slice(0,10);}
+  function addReq(){const id='R'+(++seq);S.g.push({id,left:2,kind:'req'});log(`La requête ${id} entre dans la file globale.`);}
+  function step(){
+    S.th.forEach((t,k)=>{ if(t.cur && --t.cur.left<=0){ log(`T${k+1} termine ${t.cur.id}.`); t.cur=null; } });
+    S.th.forEach((t,k)=>{
+      if(t.cur) return;
+      let it=null,src='';
+      if(t.loc.length){it=t.loc.pop();src='sa file locale (LIFO : la plus récente)';}
+      else if(S.g.length){it=S.g.shift();src='la file globale (FIFO)';}
+      else{
+        const v=S.th.map((o,j)=>({j,n:o.loc.length})).filter(o=>o.j!==k&&o.n>0).sort((a,b)=>b.n-a.n)[0];
+        if(v){it=S.th[v.j].loc.shift();src=`la file de T${v.j+1}. Vol (FIFO : la plus ancienne)`;}
+      }
+      if(!it) return;
+      t.cur=it; log(`T${k+1} prend ${it.id} dans ${src}.`);
+      if(it.kind==='req'){
+        t.loc.push({id:it.id+'.a',left:3,kind:'sub'},{id:it.id+'.b',left:3,kind:'sub'});
+        log(`${it.id} crée ${it.id}.a et ${it.id}.b dans la file locale de T${k+1}.`);
+      }
+    });
+    draw();
+  }
+  const chip=it=>`<span class="pill ${it.kind==='sub'?'green':'blue'}">${it.id}</span>`;
+  function draw(){
+    $('#wsGlobal').innerHTML=S.g.length?S.g.map(chip).join(''):'<span class="muted" style="font-size:.85rem">Vide</span>';
+    $('#wsThreads').innerHTML=S.th.map((t,k)=>`<div class="column">
+      <div class="column-head">${st(t.cur?'progress':'todo','Worker T'+(k+1))}</div>
+      <div class="card"><span class="meta">${t.cur?`En cours : ${chip(t.cur)} (${t.cur.left} étape(s))`:'Libre'}</span></div>
+      <span class="muted" style="font-size:.8rem">File locale</span>
+      <div class="deque">${t.loc.length?t.loc.map(chip).join(''):'<span class="muted" style="font-size:.85rem">Vide</span>'}</div></div>`).join('');
+    $('#wsLog').innerHTML=S.log.length?S.log.map(l=>`<div>${l}</div>`).join(''):'<div class="muted">Ajoutez des requêtes. Cliquez ensuite sur « Étape suivante ».</div>';
+  }
+  $('#wsReq').onclick=()=>{addReq();draw();};
+  $('#wsBurst').onclick=()=>{for(let i=0;i<5;i++)addReq();draw();};
+  $('#wsStep').onclick=step;
+  $('#wsAuto').onclick=()=>{
+    if(auto){clearInterval(auto);auto=null;$('#wsAuto').textContent='Lecture automatique';}
+    else{auto=setInterval(step,700);$('#wsAuto').textContent='Pause';}
+  };
+  $('#wsReset').onclick=reset;
+  reset();
+})();
+
+/* ───────── Injection et conteneurs ───────── */
+(function(){
+  const k=bindRange('injK'), m=bindRange('injM');
+  function draw(){
+    const K=+k.value, M=+m.value;
+    const T=Math.max(0,K-M)*0.5, span=Math.max(5,T*1.1+0.5);
+    const W=640,H=220,L=44,R=16,Tp=18,B=30;
+    const x=t=>L+t/span*(W-L-R), y=n=>H-B-n/K*(H-B-Tp);
+    let d=`M${x(0)},${y(Math.min(M,K))}`, n=Math.min(M,K), t=0;
+    while(n<K){t+=0.5; d+=` H${x(t)} V${y(n+1)}`; n++;}
+    d+=` H${x(span)}`;
+    let ticks='';
+    const stp=span>40?10:span>15?5:span>6?2:1;
+    for(let s=0;s<=span;s+=stp) ticks+=`<line x1="${x(s)}" x2="${x(s)}" y1="${H-B}" y2="${H-B+4}" stroke="var(--rule)"/><text x="${x(s)}" y="${H-B+18}" text-anchor="middle">${s} s</text>`;
+    $('#injSvg').innerHTML=`
+      <line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="var(--rule)"/>
+      <line x1="${L}" x2="${W-R}" y1="${y(K)}" y2="${y(K)}" stroke="var(--red)" stroke-dasharray="4 4"/>
+      <text x="${W-R}" y="${y(K)-6}" text-anchor="end">${K} workers nécessaires</text>
+      <text x="${L-6}" y="${y(Math.min(M,K))+4}" text-anchor="end">${Math.min(M,K)}</text>
+      <path d="${d}" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+      ${ticks}
+      <text x="${L}" y="${Tp-6}">Workers dans le ThreadPool</text>`;
+    const nt=$('#injNote');
+    if(M>=K) setMsg(nt,'good',`<p><strong>Création immédiate.</strong> Le minimum (${M}) couvre les ${K} requêtes bloquées. Le ThreadPool crée tous les workers tout de suite.</p>`);
+    else setMsg(nt,T>5?'warn':'mid',`<p><strong>${T.toFixed(1)} s</strong> avant un worker pour chacune des ${K} requêtes bloquées. Pendant ce temps, les autres requêtes attendent dans la file, même les requêtes async. Un minimum plus haut réduit ce temps. La suppression du blocage supprime le besoin.</p>`);
+  }
+  [k,m].forEach(r=>r.addEventListener('input',draw)); draw();
+
+  const cpu=$('#k8sCpu'), nl=$('#k8sNoLimit');
+  function k8s(){
+    $('#k8sCpuO').textContent=nl.checked?'aucune':cpu.value+'m';
+    cpu.disabled=nl.checked;
+    const pc=nl.checked?32:Math.max(1,Math.ceil(+cpu.value/1000));
+    $('#k8sPc').textContent=pc; $('#k8sMin').textContent=pc;
+    const t=Math.max(0,50-pc)*0.5; $('#k8sT').textContent=t.toFixed(1)+' s';
+    const n=$('#k8sNote');
+    if(nl.checked) setMsg(n,'mid',`<p><strong>Pas de limite.</strong> <code>ProcessorCount</code> est égal au nombre de cœurs du nœud (32 ici). Le pod partage ce nœud avec d'autres pods. Kubernetes peut le ralentir selon ses <code>requests</code>.</p>`);
+    else if(pc<=2) setMsg(n,'warn',`<p><strong>Risque en production.</strong> Avec <code>${cpu.value}m</code>, le ThreadPool commence avec ${pc} worker(s). Un seul <code>.Result</code> provoque une starvation immédiate. Le même code fonctionne sur un poste de 10 à 16 cœurs. Pour forcer la valeur, utilisez <code>DOTNET_PROCESSOR_COUNT</code> ou SetMinThreads.</p>`);
+    else setMsg(n,'',`<p><code>${cpu.value}m</code> arrondi à l'entier supérieur : .NET voit ${pc} cœurs. Le minimum est donc de ${pc} workers.</p>`);
+  }
+  cpu.addEventListener('input',k8s); nl.addEventListener('change',k8s); k8s();
+})();
+
+/* ───────── Simulateur de starvation ───────── */
+(function(){
+  const req=bindRange('tpReq'),thr=bindRange('tpThr'),io=bindRange('tpIo'),speed=bindRange('tpSpeed');
+  let mode='sync'; seg('tpMode',m=>{mode=m;reset();});
+  const CPU=20, ARRIVAL=25, INJECT=500, MAXT=64, DT=10;
+  let S=null, raf=null;
+  function reset(){
+    cancelAnimationFrame(raf); raf=null;
+    S={t:0,spawned:0,N:+req.value,io:+io.value,threads:[],queue:[],ioq:[],done:0,lat:[],lastInject:0,maxThreads:+thr.value,finished:false};
+    for(let i=0;i<+thr.value;i++) S.threads.push({item:null,born:-1});
+    $('#tpVerdict').hidden=true;
+    render();
+  }
+  const mkItem=(r,phases,next)=>({r,phases,idx:0,rem:phases[0][1],next});
+  function newReq(){
+    const r={id:++S.spawned,start:S.t};
+    if(mode==='sync') S.queue.push(mkItem(r,[['cpu',CPU],['block',S.io],['cpu',CPU]],'done'));
+    else S.queue.push(mkItem(r,[['cpu',CPU]],'io'));
+  }
+  function finish(it){
+    if(it.next==='io') S.ioq.push({r:it.r,rem:S.io});
+    else {S.done++; S.lat.push(S.t-it.r.start);}
+  }
+  function tick(){
+    S.t+=DT;
+    while(S.spawned<S.N && S.spawned*ARRIVAL<=S.t) newReq();
+    for(const th of S.threads){
+      const it=th.item; if(!it) continue;
+      it.rem-=DT;
+      if(it.rem<=0){ it.idx++; if(it.idx<it.phases.length) it.rem=it.phases[it.idx][1]; else {th.item=null; finish(it);} }
+    }
+    for(let i=S.ioq.length-1;i>=0;i--){
+      const x=S.ioq[i]; x.rem-=DT;
+      if(x.rem<=0){S.ioq.splice(i,1); S.queue.push(mkItem(x.r,[['cpu',CPU]],'done'));}
+    }
+    for(const th of S.threads) if(!th.item && S.queue.length) th.item=S.queue.shift();
+    if(S.queue.length && S.t-S.lastInject>=INJECT && S.threads.length<MAXT){
+      S.threads.push({item:S.queue.shift(),born:S.t}); S.lastInject=S.t;
+    }
+    S.maxThreads=Math.max(S.maxThreads,S.threads.length);
+    if(S.done===S.N) S.finished=true;
+  }
+  function render(){
+    $('#sT').textContent=S.t+' ms';
+    $('#sDone').textContent=S.done+' / '+S.N;
+    $('#sThr').textContent=S.threads.length;
+    $('#sQ').textContent=S.queue.length;
+    const avg=S.lat.length?Math.round(S.lat.reduce((a,b)=>a+b,0)/S.lat.length):null;
+    $('#sLat').textContent=avg!=null?avg+' ms':'–';
+    $('#sMax').textContent=S.lat.length?Math.max(...S.lat)+' ms':'–';
+    $('#tpThreads').innerHTML=S.threads.map((th,i)=>{
+      const it=th.item; let cls='',sub='libre';
+      if(it){const k=it.phases[it.idx][0]; cls=k; sub='#'+it.r.id+(k==='block'?' bloqué':'');}
+      const isNew=th.born>=0&&S.t-th.born<300?' new':'';
+      return `<div class="th ${cls}${isNew}"><b>T${i+1}</b>${sub}</div>`;
+    }).join('');
+    $('#qCount').textContent='('+S.queue.length+')';
+    $('#ioCount').textContent='('+S.ioq.length+')';
+    $('#tpQueue').innerHTML='<span class="dot"></span>'.repeat(Math.min(S.queue.length,150));
+    $('#tpIoZone').innerHTML=mode==='sync'
+      ? '<span class="muted" style="font-size:.85rem">En mode bloquant, chaque I/O utilise un worker (filet rouge).</span>'
+      : '<span class="dot io"></span>'.repeat(Math.min(S.ioq.length,150));
+  }
+  function loop(){
+    for(let i=0;i<+speed.value && !S.finished;i++) tick();
+    render();
+    if(S.finished){
+      raf=null;
+      const avg=Math.round(S.lat.reduce((a,b)=>a+b,0)/S.lat.length);
+      const row=document.createElement('tr');
+      row.innerHTML=`<td>${mode==='sync'?'.Result':'await'}</td><td class="num">${S.N}</td><td class="num">${S.io} ms</td><td class="num">${S.maxThreads}</td><td class="num">${S.t} ms</td><td class="num">${avg} ms</td>`;
+      if(mode==='sync') row.className='is-alert';
+      $('#tpRes tbody').prepend(row);
+      const v=$('#tpVerdict'); v.hidden=false;
+      if(mode==='sync') setMsg(v,'warn',`<p><strong>Mode bloquant.</strong> Le ThreadPool a utilisé ${S.maxThreads} workers. La latence moyenne est de ${avg} ms. Une requête seule dure ${S.io+2*CPU} ms. Les workers attendaient la base sans travailler. Le ThreadPool a ajouté les workers lentement (1 toutes les 500 ms).</p>`);
+      else setMsg(v,'good',`<p><strong>Mode async.</strong> ${S.maxThreads} workers ont suffi. La latence moyenne est de ${avg} ms, proche du minimum de ${S.io+2*CPU} ms. Pendant l'appel à la base, aucun worker n'est utilisé (points verts).</p>`);
+      return;
+    }
+    raf=requestAnimationFrame(loop);
+  }
+  $('#tpRun').onclick=()=>{ if(S.finished||S.t>0) reset(); if(!raf) raf=requestAnimationFrame(loop); };
+  $('#tpReset').onclick=reset;
+  [req,thr,io].forEach(r=>r.addEventListener('change',reset));
+  reset();
+})();
+
+/* ───────── Heap et DI ───────── */
+(function(){
+  const F=(t,hot)=>`<div class="card mono${hot?' hot':''}">${esc(t)}</div>`;
+  const O=(t,c)=>`<div class="card mono${c?' '+c:''}">${esc(t)}</div>`;
+  const E=t=>`<div class="empty-note">${t}</div>`;
+  const base=['Scope DI de la requête A','UserController (scoped)','UserService (scoped) #4417','HttpClient → handler (factory)'];
+  stepper('hp',{
+    steps:[
+      {t4:[F('Kestrel / middleware'),F('UserController.Get(42)',1)],t7:[E('Libre, dans le ThreadPool')],heap:base.map((b,i)=>O(b,i<3?'hot':'')),
+       note:`Une requête arrive. ASP.NET Core prend le worker T4. Il crée un scope DI. Il crée le contrôleur. Le contrôleur reçoit <code>UserService</code> (instance #4417). <code>UserService</code> reçoit un <code>HttpClient</code>. Tous ces objets sont sur le heap. La pile de T4 contient les appels en cours et des références vers ces objets.`},
+      {t4:[F('Kestrel / middleware'),F('UserController.Get(42)'),F('UserService.GetAsync(42) : state machine sur la pile, id=42, this=#4417',1)],t7:[E('Libre')],heap:base.map(b=>O(b)),
+       note:`<code>GetAsync(42)</code> démarre sur T4 de façon synchrone. La state machine est encore une structure sur la pile de T4.`},
+      {t4:[E('Pile vide : T4 retourne au ThreadPool')],t7:[E('Libre')],heap:[...base.map(b=>O(b)),O('StateMachine GetAsync { state=0, id=42, this → UserService #4417 }','hot'),O('Task de GetStringAsync → continuation → StateMachine','hot'),O('StateMachine Get { state=0, this → UserController }','hot')],
+       note:`<code>await http.GetStringAsync(...)</code> : la Task n'est pas terminée. .NET copie la state machine sur le heap, avec <code>id</code> et <code>this</code>. La Task référence la continuation. Les appels se terminent. La pile de T4 est vide. T4 retourne au ThreadPool. Aucun objet n'est supprimé : la Task en cours les référence tous.`},
+      {t4:[F('Requête B : OrderController.List()',1)],t7:[E('Libre')],heap:[...base.map(b=>O(b)),O('StateMachine GetAsync { state=0, id=42, this → #4417 }'),O('Task de GetStringAsync (I/O en cours)'),O('StateMachine Get'),O('Scope DI de la requête B')],tone:'good',
+       note:`Le serveur distant prépare sa réponse. Pendant ce temps, <b>T4 traite la requête B</b>. Les objets de la requête A sont toujours sur le heap. Chaîne de références : I/O en cours → Task → continuation → state machine → <code>this</code> → UserService #4417 → HttpClient.`},
+      {t4:[F('Requête B')],t7:[F('ThreadPool : exécution de la continuation'),F('GetAsync.MoveNext() : state=0, this=#4417',1)],heap:[...base.map(b=>O(b)),O('StateMachine GetAsync { state=0, id=42, json="…" }','hot'),O('Task de GetStringAsync : terminée'),O('StateMachine Get')],
+       note:`La réponse arrive. Le worker <b>T7</b> exécute la continuation. Il appelle <code>MoveNext()</code> sur <b>la même state machine</b>. Cette state machine référence <b>la même instance</b> UserService #4417. La DI n'intervient pas. Seul le thread change.`},
+      {t4:[F('Requête B')],t7:[E('Libre')],heap:[O('Scope DI de la requête A : supprimé','dead'),O('UserController : collectable','dead'),O('UserService #4417 : collectable','dead'),O('HttpClient → handler (réutilisé par la factory)'),O('State machines et Tasks : collectables','dead')],
+       note:`ASP.NET Core envoie la réponse HTTP. La requête se termine. <b>Le scope DI est supprimé.</b> Aucune référence ne vise plus les objets de la requête A. Le GC peut les collecter. La fin de la requête décide de la fin du service, pas le thread.`}
+    ],
+    render(s){ $('#hpT4').innerHTML=s.t4.join(''); $('#hpT7').innerHTML=s.t7.join(''); $('#hpHeap').innerHTML=s.heap.join(''); }
+  });
+})();
+
+/* ───────── await étape par étape ───────── */
+stepper('sm',{
+  code:`// Contrôleur ASP.NET Core
+public async Task<IActionResult> Get(int id)
+{
+    _log.LogInformation("Début");
+    var user = await _repo.GetUserAsync(id);
+    return Ok(user);
+}
+
+public async Task<User> GetUserAsync(int id)
+{
+    var sql = BuildQuery(id);
+    var row = await _db.QueryAsync(sql);
+    return Map(row);
+}`,
+  steps:[
+    {line:1,th:['progress','T4'],n:1,a:['progress','en cours'],b:['todo','pas démarrée'],note:`Une requête HTTP arrive. ASP.NET Core prend le worker <b>T4</b> dans le ThreadPool. T4 appelle <code>Get</code>.`},
+    {line:3,th:['progress','T4'],n:1,a:['progress','en cours'],b:['todo','pas démarrée'],note:`T4 exécute cette ligne de façon synchrone. Le mot-clé <code>async</code> ne crée pas de thread.`},
+    {line:4,th:['progress','T4'],n:1,a:['progress','en cours'],b:['progress','en cours'],note:`<code>Get</code> appelle <code>GetUserAsync</code>. T4 entre dans <code>GetUserAsync</code> <b>de façon synchrone</b>. Le code avant le premier <code>await</code> s'exécute sur le thread appelant.`},
+    {line:10,th:['progress','T4'],n:1,a:['progress','en cours'],b:['progress','en cours'],note:`T4 exécute <code>BuildQuery</code>. Un calcul long à cet endroit bloque l'appelant. L'asynchronisme n'est pas du parallélisme.`},
+    {line:11,th:['progress','T4'],n:1,a:['progress','en cours'],b:['todo','suspendue'],note:`<code>QueryAsync</code> envoie la requête SQL. Il retourne une Task <b>non terminée</b>. <code>await</code> enregistre la suite de la méthode comme <b>continuation</b>. <code>GetUserAsync</code> retourne une Task non terminée à <code>Get</code>.`},
+    {line:4,th:['progress','T4'],n:1,a:['todo','suspendue'],b:['todo','suspendue'],paused:[11],note:`<code>Get</code> reçoit la Task non terminée. <code>Get</code> se suspend de la même façon. <code>Get</code> retourne sa Task à ASP.NET Core.`},
+    {line:-1,th:['todo','aucun'],n:0,a:['todo','suspendue'],b:['todo','suspendue'],paused:[4,11],tone:'good',note:`<b>Point principal.</b> T4 retourne au ThreadPool et traite d'autres requêtes. SQL Server prépare la réponse. Le système signalera la réponse à .NET. <b>Aucun thread n'attend.</b>`},
+    {line:12,th:['progress','T7'],n:1,a:['todo','suspendue'],b:['progress','reprise'],paused:[4],note:`La réponse arrive. Le ThreadPool donne la continuation au worker <b>T7</b>. T7 n'est pas forcément T4. La méthode reprend après <code>await</code> et exécute <code>Map(row)</code>. ASP.NET Core n'a pas de SynchronizationContext. Un worker quelconque peut donc reprendre la méthode.`},
+    {line:12,th:['progress','T7'],n:1,a:['todo','suspendue'],b:['done','terminée'],paused:[4],note:`<code>return</code> termine la <code>Task&lt;User&gt;</code>. Cet événement démarre la continuation de <code>Get</code>, souvent sur T7.`},
+    {line:5,th:['progress','T7'],n:1,a:['progress','reprise'],b:['done','terminée'],note:`<code>Get</code> reprend après son <code>await</code> avec la valeur <code>user</code>. <code>Get</code> construit la réponse.`},
+    {line:-1,th:['todo','aucun'],n:0,a:['done','terminée'],b:['done','terminée'],tone:'good',note:`La Task de <code>Get</code> est terminée. ASP.NET Core envoie la réponse HTTP. La requête a utilisé un thread pendant quelques millisecondes de calcul. <b>Aucun thread</b> n'a attendu la base de données. Le mécanisme interne (state machine, heap) est dans l'onglet <a href="#heap">Notions avancées</a>.`}
+  ],
+  render(s){
+    $('#smThread').innerHTML=st(...s.th);
+    $('#smCount').innerHTML=`<span class="pill count ${s.n?'blue':'green'}">${s.n}</span>`;
+    $('#smA').innerHTML=st(...s.a); $('#smB').innerHTML=st(...s.b);
+  }
+});
+
+/* ───────── AsyncLocal ───────── */
+stepper('al',{
+  steps:[
+    {ev:'La requête A démarre sur T4 et écrit id = "A"',t4:'A',t7:'–',ecA:'id = A',ecB:'–',note:`La requête A démarre sur <b>T4</b>. Elle écrit son identifiant. ThreadStatic : la valeur va dans le stockage de T4. AsyncLocal : la valeur va dans l'ExecutionContext du flux A.`},
+    {ev:'A exécute await. T4 retourne au ThreadPool.',t4:'A',t7:'–',ecA:'id = A (capturé)',ecB:'–',note:`À l'<code>await</code>, .NET <b>capture</b> l'ExecutionContext du flux A. .NET le garde avec la continuation. Le stockage ThreadStatic reste lié à T4.`},
+    {ev:'La requête B démarre sur T4 et écrit id = "B"',t4:'B',t7:'–',ecA:'id = A (capturé)',ecB:'id = B',tone:'mid',note:`T4 est libre. T4 traite la requête B. B écrit son identifiant. ThreadStatic : <b>"B" remplace "A"</b> dans le stockage de T4. AsyncLocal : le flux B a son propre ExecutionContext. Celui de A ne change pas.`},
+    {ev:'B exécute await. T4 retourne au ThreadPool.',t4:'B',t7:'–',ecA:'id = A (capturé)',ecB:'id = B (capturé)',note:`B se suspend aussi.`},
+    {ev:'A reprend sur T7 et lit id',t4:'B',t7:'–',ecA:'id = A (restauré sur T7)',ecB:'id = B (capturé)',rts:['alert','null'],ral:['done','"A"'],tone:'warn',note:`A reprend sur <b>T7</b>. ThreadStatic lit le stockage de T7 : <b>null</b>. La valeur est perdue. AsyncLocal : .NET restaure l'ExecutionContext de A sur T7. La lecture donne <b>"A"</b>.`},
+    {ev:'Autre cas : A reprend sur T4 et lit id',t4:'B',t7:'–',ecA:'id = A (restauré sur T4)',ecB:'id = B (capturé)',rts:['alert','"B"'],ral:['done','"A"'],tone:'warn',note:`Cas le plus grave : A reprend sur <b>T4</b>. ThreadStatic lit <b>"B"</b>. La requête A utilise l'identifiant de B. Pour un utilisateur ou un tenant, c'est une <b>fuite de données entre clients</b>. AsyncLocal lit toujours "A".`}
+  ],
+  render(s){
+    const r=(a,b)=>`<tr><td class="secondary">${a}</td><td>${b}</td></tr>`;
+    $('#alTable').innerHTML=`<thead><tr><th colspan="2">${s.ev}</th></tr></thead><tbody>
+      ${r('Stockage [ThreadStatic] de T4',`<code>${s.t4}</code>`)}
+      ${r('Stockage [ThreadStatic] de T7',`<code>${s.t7}</code>`)}
+      ${r('ExecutionContext du flux A',s.ecA)}
+      ${r('ExecutionContext du flux B',s.ecB)}
+      ${r('<b>Lecture de A avec ThreadStatic</b>',s.rts?st(...s.rts):'–')}
+      ${r('<b>Lecture de A avec AsyncLocal</b>',s.ral?st(...s.ral):'–')}</tbody>`;
+  }
+});
+
+/* ───────── ConfigureAwait ───────── */
+(function(){
+  function draw(){
+    const app=$('#caApp').value, cfg=$('#caCfg').value==='true', done=$('#caDone').value==='yes';
+    const hasCtx=app==='ui'||app==='aspfx';
+    const ctxName=app==='ui'?'le thread UI':app==='aspfx'?'le contexte de la requête ASP.NET':'';
+    let where,ui,dead,why,alert=false;
+    if(done){where='Sur le thread actuel (pas de suspension)';ui=app==='ui'?'Oui. Le code reste sur le thread UI.':'Sans objet';dead='Non';why=`La Task est déjà terminée. <code>await</code> continue de façon synchrone. .NET ne capture rien et n'envoie rien. ConfigureAwait n'a pas d'effet.`;}
+    else if(!hasCtx){where='Un worker du ThreadPool';ui='Sans objet';dead='Pas de deadlock. Risque de starvation.';why=`${app==='core'?'ASP.NET Core':'Une application console ou un Worker Service'} n'a pas de SynchronizationContext. La continuation s'exécute sur un worker, avec ou sans <code>ConfigureAwait(false)</code>.`;}
+    else if(cfg){where=`Envoyée sur ${ctxName}`;ui=app==='ui'?'Oui':'Sans objet';dead='<b>Oui</b>, si l\'appelant utilise .Result ou .Wait() sur ce contexte';alert=true;why=`<code>await</code> capture le contexte et y envoie la continuation. Ce comportement permet de modifier l'UI après <code>await</code>. Il est dangereux si un autre code bloque ce contexte.`;}
+    else{where='Un worker du ThreadPool';ui=app==='ui'?'<b>Non</b>. Un accès à un contrôle provoque une exception.':'Sans objet';dead='Non, pour cet await';why=`.NET ne capture pas le contexte. La continuation s'exécute sur un worker. Ce comportement convient à une bibliothèque. La suite de la méthode ne s'exécute plus sur ${ctxName}.`;}
+    $('#caOut').innerHTML=`<tbody>
+      <tr><td class="secondary" style="width:17rem">Exécution de la continuation</td><td><b>${where}</b></td></tr>
+      <tr><td class="secondary">Accès à l'UI après await</td><td>${ui}</td></tr>
+      <tr${alert?' class="is-alert"':''}><td class="secondary">Risque de deadlock avec .Result</td><td>${dead}</td></tr>
+      <tr><td class="secondary">AsyncLocal, culture, trace</td><td>Toujours transmis (ExecutionContext)</td></tr>
+      <tr><td class="secondary">Explication</td><td>${why}</td></tr></tbody>`;
+  }
+  ['#caApp','#caCfg','#caDone'].forEach(s=>$(s).addEventListener('change',draw)); draw();
+})();
+
+/* ───────── Deadlock ───────── */
+stepper('dl',{
+  code:`// Handler WPF, exécuté sur le thread UI
+void Button_Click(object s, EventArgs e)
+{
+    var data = LoadAsync().Result;   // bloque le thread UI
+    label.Text = data;
+}
+
+async Task<string> LoadAsync()
+{
+    var r = await http.GetStringAsync(url);
+    return r.ToUpper();
+}`,
+  steps:[
+    {line:1,ui:['progress','actif'],q:'vide',task:['todo','pas créée'],http:['todo','pas envoyée'],note:`L'utilisateur clique sur le bouton. Le handler s'exécute sur le seul <b>thread UI</b>. Ce thread exécute une boucle de messages (Dispatcher). Cette boucle traite les événements un par un.`},
+    {line:3,ui:['progress','actif'],q:'vide',task:['todo','pas créée'],http:['todo','pas envoyée'],note:`Le handler appelle <code>LoadAsync()</code>. Le thread UI entre dans <code>LoadAsync</code> de façon synchrone.`},
+    {line:9,ui:['progress','actif'],q:'vide',task:['progress','non terminée'],http:['progress','en cours'],note:`La requête HTTP part. <code>await</code> <b>capture le SynchronizationContext</b> du thread UI. La continuation devra donc s'exécuter sur le thread UI. <code>LoadAsync</code> retourne une Task non terminée.`},
+    {line:3,ui:['alert','bloqué par .Result'],q:'vide',task:['progress','non terminée'],http:['progress','en cours'],paused:[9],tone:'warn',note:`<code>.Result</code> <b>bloque le thread UI</b> jusqu'à la fin de la Task. L'interface ne répond plus.`},
+    {line:-1,ui:['alert','bloqué par .Result'],q:'continuation de LoadAsync',task:['progress','non terminée'],http:['done','réponse reçue'],paused:[3,9],tone:'warn',note:`La réponse HTTP arrive. .NET envoie la continuation (lignes 10 et 11) dans la <b>file du Dispatcher</b>. Le thread UI doit l'exécuter.`},
+    {line:-1,ui:['alert','bloqué pour toujours'],q:'continuation jamais exécutée',task:['alert','jamais terminée'],http:['done','réponse reçue'],paused:[3,9],tone:'warn',cycle:true,note:`<b>Deadlock.</b> Le thread UI attend la Task. La Task attend l'exécution de sa continuation par le thread UI. Aucun des deux n'avance. L'application ne répond plus.`},
+    {line:3,ui:['todo','libre'],q:'vide',task:['done','terminée'],http:['done','terminée'],tone:'good',note:`<b>Correction :</b> écrivez <code>async void Button_Click(...)</code> et <code>var data = await LoadAsync();</code>. Un event handler peut être <code>async void</code>. Le thread UI reste libre et exécute la continuation. <code>ConfigureAwait(false)</code> dans <code>LoadAsync</code> supprime aussi le deadlock, mais c'est une solution temporaire. <b>En ASP.NET Core</b>, il n'y a pas de SynchronizationContext, donc pas ce deadlock. Mais <code>.Result</code> provoque une starvation du ThreadPool.`}
+  ],
+  render(s){
+    $('#dlUi').innerHTML=st(...s.ui);
+    $('#dlQueue').textContent=s.q;
+    $('#dlTask').innerHTML=st(...s.task);
+    $('#dlHttp').innerHTML=st(...s.http);
+    $('#dlCycle').classList.toggle('on',!!s.cycle);
+    $('#dlC1').classList.toggle('is-alert',!!s.cycle); $('#dlC2').classList.toggle('is-alert',!!s.cycle);
+  }
+});
+
+/* ───────── Exceptions ───────── */
+(function(){
+  const M={
+    result:{code:`try { var u = GetUserAsync().Result; }
+catch (HttpRequestException) { /* pas exécuté */ }
+catch (AggregateException ex) { var real = ex.InnerException; }`,type:'AggregateException',inner:'InnerException = HttpRequestException',catch1:['alert','Non'],block:['alert','Oui'],note:`L'exception est enveloppée. Les catch typés ne la reçoivent pas. Les logs affichent « One or more errors occurred ».`},
+    wait:{code:`try { GetUserAsync().Wait(); }
+catch (AggregateException ex) { /* même comportement que .Result */ }`,type:'AggregateException',inner:'InnerException = HttpRequestException',catch1:['alert','Non'],block:['alert','Oui'],note:`Même comportement que <code>.Result</code>.`},
+    gr:{code:`try { var u = GetUserAsync().GetAwaiter().GetResult(); }
+catch (HttpRequestException ex) { /* exécuté */ }`,type:'HttpRequestException',inner:'Aucune',catch1:['done','Oui'],block:['alert','Oui'],note:`L'appelant reçoit l'exception d'origine. Mais le thread reste bloqué. La starvation et le deadlock restent possibles.`},
+    await:{code:`try { var u = await GetUserAsync(); }
+catch (HttpRequestException ex) { /* exécuté */ }`,type:'HttpRequestException',inner:'Aucune',catch1:['done','Oui'],block:['done','Non'],note:`<code>await</code> relance l'exception d'origine à la position de l'<code>await</code>. La stack trace est conservée. C'est le comportement correct.`},
+    whenall:{code:`var all = Task.WhenAll(GetUserAsync(), GetOrdersAsync()); // les deux appels échouent
+try { await all; }
+catch (Exception ex) { /* ex = la première exception */
+    foreach (var e in all.Exception!.InnerExceptions) Log(e); }`,type:'Première exception uniquement',inner:'Toutes dans all.Exception.InnerExceptions',catch1:['done','Oui (la première)'],block:['done','Non'],note:`<code>await</code> relance seulement la première erreur. Pour lire toutes les erreurs, gardez la Task de <code>WhenAll</code> et lisez sa propriété <code>Exception</code>.`}
+  };
+  function draw(m){
+    const x=M[m];
+    $('#exCode').innerHTML=`<pre>${hl(x.code)}</pre>`;
+    $('#exOut').innerHTML=`<tbody>
+      <tr><td class="secondary" style="width:17rem">Exception reçue</td><td><b>${x.type}</b></td></tr>
+      <tr><td class="secondary">Exceptions internes</td><td>${x.inner}</td></tr>
+      <tr><td class="secondary">catch (HttpRequestException) exécuté</td><td>${st(...x.catch1)}</td></tr>
+      <tr><td class="secondary">Thread bloqué</td><td>${st(...x.block)}</td></tr>
+      <tr><td class="secondary">À retenir</td><td>${x.note}</td></tr></tbody>`;
+  }
+  seg('exMode',draw); draw('result');
+})();
+
+/* ───────── async void : chronologie ───────── */
+stepper('av',{
+  code:`// Appelant
+try
+{
+    Save();                       // async void
+}
+catch (Exception) { /* jamais exécuté */ }
+
+async void Save()
+{
+    await _db.SaveChangesAsync();
+    throw new Exception("boom");
+}`,
+  steps:[
+    {line:1,t4:'Appelant',t7:'–',t9:'–',tr:['done','oui'],note:`L'appelant entre dans son <code>try</code>, sur T4.`},
+    {line:3,t4:'Appelant → Save() → MoveNext()',t7:'–',t9:'–',tr:['done','oui'],note:`<code>Save()</code> crée un <code>AsyncVoidMethodBuilder</code>. Ce builder capture le SynchronizationContext (ici : aucun). <code>Start</code> exécute <code>MoveNext()</code> de façon synchrone.`},
+    {line:9,t4:'Appelant → Save() → MoveNext()',t7:'–',t9:'–',tr:['done','oui'],note:`<code>SaveChangesAsync()</code> retourne une Task non terminée. .NET enregistre la continuation. <code>MoveNext</code> se termine. <code>Save()</code> se termine et retourne <b>void</b>. L'appelant ne reçoit aucun objet à surveiller.`},
+    {line:5,t4:'Appelant (après le try)',t7:'–',t9:'–',tr:['todo','non'],note:`L'appelant <b>sort du try</b>. Pour l'appelant, <code>Save()</code> est terminée.`},
+    {line:-1,t4:'Retourné au ThreadPool',t7:'–',t9:'–',tr:['todo','non'],note:`T4 retourne au ThreadPool. La base de données traite la requête.`},
+    {line:10,t4:'Autre travail',t7:'ThreadPool → MoveNext() (reprise)',t9:'–',tr:['todo','non'],paused:[9],note:`La base répond. <b>T7</b> reprend <code>MoveNext()</code>. T7 exécute <code>throw new Exception("boom")</code>.`},
+    {line:10,t4:'Autre travail',t7:'catch de MoveNext → builder.SetException(e)',t9:'–',tr:['todo','non'],tone:'mid',note:`Le <code>catch</code> généré dans <code>MoveNext</code> reçoit l'exception. Il appelle <code>SetException</code>. Avec async void, <b>aucune Task ne peut stocker l'exception</b>. Il n'y a pas de contexte. Le builder appelle donc <code>ThreadPool.QueueUserWorkItem</code> pour relancer l'exception.`},
+    {line:-1,t4:'Autre travail',t7:'–',t9:'ExceptionDispatchInfo.Throw → exception non gérée',tr:['todo','non'],tone:'warn',note:`<b>T9</b> exécute ce travail et relance l'exception. La pile de T9 ne contient <b>aucun try/catch</b> de votre code. L'exception n'est pas gérée. .NET déclenche <code>AppDomain.UnhandledException</code>, puis <b>arrête le process</b>. Toute l'API s'arrête.`},
+    {line:3,t4:'Appelant : await SaveAsync() suspendu, dans le try',t7:'catch de MoveNext → SetException : exception stockée dans la Task',t9:'–',tr:['done','oui'],tone:'good',note:`<b>Avec async Task et await :</b> <code>SetException</code> stocke l'exception dans la Task. La continuation de l'appelant reprend <b>dans son try</b>. <code>GetResult()</code> relance l'exception. Le <code>catch</code> la reçoit. La Task transporte le résultat vers l'appelant.`}
+  ],
+  render(s){
+    $('#avT4').textContent=s.t4; $('#avT7').textContent=s.t7; $('#avT9').textContent=s.t9;
+    $('#avTry').innerHTML=st(...s.tr);
+  }
+});
+
+/* ───────── WhenAll ───────── */
+(function(){
+  const calls=[['GetUserAsync',300],['GetOrdersAsync',500],['GetPrefsAsync',200]];
+  const SCALE=1000; let raf=null;
+  function draw(mode,elapsed){
+    let off=0;
+    const rows=calls.map(([n,d])=>{
+      const start=mode==='seq'?off:0; off+=d;
+      const done=Math.max(0,Math.min(d,elapsed-start));
+      return `<div class="grow"><span class="lbl">${n}</span><div class="track"><div class="bar" style="left:${start/SCALE*100}%;width:${d/SCALE*100}%"></div><div class="fill" style="left:${start/SCALE*100}%;width:${done/SCALE*100}%"></div></div></div>`;
+    });
+    const total=mode==='seq'?1000:500;
+    rows.push(`<div class="grow"><span class="lbl">Total</span><div class="track"><div class="fill total" style="left:0;width:${Math.min(elapsed,total)/SCALE*100}%"></div></div></div>`);
+    $('#waGantt').innerHTML=rows.join('');
+    $('#waT').textContent=Math.round(Math.min(elapsed,total))+' ms';
+    return elapsed>=total;
+  }
+  function play(mode){
+    cancelAnimationFrame(raf); const t0=performance.now();
+    const f=now=>{ if(!draw(mode,(now-t0)*0.6)) raf=requestAnimationFrame(f); };
+    raf=requestAnimationFrame(f);
+  }
+  $('#waSeq').onclick=()=>play('seq'); $('#waAll').onclick=()=>play('all');
+  draw('seq',0);
+})();
+
+/* ───────── Concurrence bornée ───────── */
+(function(){
+  const dop=bindRange('boDop'); const N=40, CAP=10;
+  let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  const durs=Array.from({length:N},()=>100+Math.round(rnd()*300));
+  function draw(){
+    const d=+dop.value;
+    const factor=d>CAP?Math.pow(d/CAP,1.4):1;
+    const lanes=Array.from({length:d},()=>({t:0,jobs:[]}));
+    let n429=0;
+    durs.forEach((base,i)=>{
+      const lane=lanes.reduce((a,b)=>b.t<a.t?b:a);
+      const over=d>CAP && (i%d)>=CAP;
+      if(over) n429++;
+      const dur=Math.round(base*factor+(over?300:0));
+      lane.jobs.push({s:lane.t,d:dur,slow:d>CAP}); lane.t+=dur;
+    });
+    const total=Math.max(...lanes.map(l=>l.t));
+    const scale=Math.max(total,2600);
+    $('#boLanes').innerHTML=lanes.map(l=>`<div class="lane">${l.jobs.map(j=>`<div class="job${j.slow?' slow':''}" style="left:${j.s/scale*100}%;width:calc(${j.d/scale*100}% - 1px)"></div>`).join('')}</div>`).join('');
+    $('#boT').textContent=total+' ms'; $('#boC').textContent=d; $('#bo429').textContent=n429;
+    const note=$('#boNote');
+    if(d===1) setMsg(note,'',`<p><strong>DOP = 1.</strong> Ce réglage est égal à un <code>foreach</code> avec <code>await</code>. Il est sûr, mais lent.</p>`);
+    else if(d<=CAP) setMsg(note,'good',`<p><strong>DOP = ${d}.</strong> Le débit augmente. La capacité de l'API n'est pas dépassée. Réglez la valeur près de la limite connue de la ressource cible.</p>`);
+    else setMsg(note,'warn',`<p><strong>DOP = ${d}.</strong> Au-dessus de ${CAP}, l'API est saturée. Chaque appel ralentit. Les réponses 429 provoquent de nouveaux essais. Le temps total <b>augmente</b>. Un <code>Task.WhenAll(ids.Select(...))</code> sans limite sur des milliers d'éléments donne ce résultat. Il épuise aussi les sockets et le pool de connexions à la base.</p>`);
+  }
+  dop.addEventListener('input',draw); draw();
+})();
+
+/* ───────── Race condition ───────── */
+(function(){
+  let mode='naive', S;
+  const opsFor=()=>mode==='naive'
+    ?[['LIRE','reg = counter'],['AJOUTER','reg = reg + 1'],['ÉCRIRE','counter = reg']]
+    :[['ATOMIQUE','Interlocked.Increment(ref counter)']];
+  function reset(){S={mem:0,t:[{pc:0,reg:null},{pc:0,reg:null}],log:[]};draw();}
+  function step(k){
+    const th=S.t[k], ops=opsFor(); if(th.pc>=ops.length) return;
+    const op=ops[th.pc][0];
+    if(op==='LIRE') th.reg=S.mem;
+    else if(op==='AJOUTER') th.reg=th.reg+1;
+    else if(op==='ÉCRIRE') S.mem=th.reg;
+    else {S.mem+=1; th.reg=S.mem;}
+    th.pc++; S.log.push(`T${k+1} ${op}`); draw();
+  }
+  function draw(){
+    const ops=opsFor();
+    [0,1].forEach(k=>{
+      const th=S.t[k];
+      $('#raOps'+(k+1)).innerHTML=ops.map((o,i)=>`<div class="${i<th.pc?'done':i===th.pc?'next':''}">${o[0]} · ${o[1]}</div>`).join('');
+      $('#raR'+(k+1)).textContent=th.reg==null?'–':th.reg;
+      $('#raS'+(k+1)).disabled=th.pc>=ops.length;
+    });
+    $('#raMem').textContent=S.mem;
+    const fin=S.t.every(t=>t.pc>=ops.length), n=$('#raNote');
+    if(!fin) setMsg(n,'',S.log.length?`<p>Séquence : ${S.log.join(' → ')}</p>`:`<p>Chaque thread exécute <code>counter++</code> une fois. Cliquez sur les boutons dans l'ordre de votre choix. Vous pouvez aussi rejouer le scénario d'erreur.</p>`);
+    else if(S.mem===2) setMsg(n,'good',`<p>Séquence : ${S.log.join(' → ')}</p><p><strong>Résultat correct : 2.</strong> ${mode==='atomic'?`<code>Interlocked.Increment</code> est une seule opération atomique. Aucun autre thread ne peut s'exécuter entre la lecture et l'écriture.`:`Cet ordre a donné le bon résultat. En production, rien ne garantit cet ordre.`}</p>`);
+    else setMsg(n,'warn',`<p>Séquence : ${S.log.join(' → ')}</p><p><strong>Mise à jour perdue : ${S.mem} au lieu de 2.</strong> Les deux threads ont lu la même valeur avant l'écriture de l'autre thread. Correction : <code>Interlocked.Increment</code> ou <code>lock</code>. Meilleure solution : pas d'état partagé modifiable.</p>`);
+  }
+  seg('raMode',m=>{mode=m;reset();});
+  $('#raS1').onclick=()=>step(0); $('#raS2').onclick=()=>step(1); $('#raReset').onclick=reset;
+  $('#raLose').onclick=()=>{
+    reset();
+    const seq=mode==='naive'?[0,1,0,1,0,1]:[0,1];
+    seq.forEach((k,i)=>setTimeout(()=>step(k),i*450));
+  };
+  reset();
+})();
+
+/* ───────── Cache CPU (MESI) ───────── */
+stepper('me',{
+  steps:[
+    {c1:['I','–'],c2:['I','–'],act:0,bus:'Aucun échange.',note:`<code>counter = 0</code> en mémoire. Aucun cœur n'a la ligne de cache. État des deux cœurs : <b>I</b>nvalid.`},
+    {c1:['E','0'],c2:['I','–'],act:1,bus:'Cœur 1 → bus : demande de la ligne en exclusivité (Read For Ownership).',note:`Le cœur 1 exécute <code>lock xadd [counter], 1</code>. Il demande la ligne <b>en exclusivité</b>. Aucun autre cœur n'a la ligne. Le cœur 1 la charge à l'état <b>E</b>xclusive.`},
+    {c1:['M','1'],c2:['I','–'],act:1,bus:'Le cœur 1 garde la ligne pendant la lecture, l\'ajout et l\'écriture.',note:`Le cœur 1 lit, ajoute et écrit <b>sans libérer la ligne</b>. Les demandes des autres cœurs attendent la fin de l'instruction. La ligne passe à l'état <b>M</b>odified (valeur 1). La mémoire n'a pas encore la nouvelle valeur. Le préfixe <code>lock</code> agit aussi comme une <b>barrière mémoire complète</b>.`},
+    {c1:['I','–'],c2:['E','1'],act:2,bus:'Cœur 2 → bus : demande en exclusivité. Le cœur 1 transmet sa valeur et invalide sa copie.',note:`Le cœur 2 exécute <code>lock xadd</code>. Il demande la ligne en exclusivité. Le cœur 1 a la ligne à l'état M. Il <b>transmet la valeur 1</b> au cœur 2. Ensuite, il passe à l'état <b>I</b>. Le cœur 2 a la ligne à l'état E, avec la bonne valeur.`},
+    {c1:['I','–'],c2:['M','2'],act:2,bus:'Le cœur 2 garde la ligne pendant l\'instruction.',note:`Le cœur 2 lit 1 et écrit 2. <b>Résultat garanti : 2.</b> Un seul cœur à la fois possède la ligne pendant l'opération. Aucune mise à jour n'est perdue. Pas d'appel au noyau, pas de thread en attente : 10 à 50 cycles sans contention.`},
+    {c1:['I','–'],c2:['M','2'],act:0,bus:'Avec contention : la ligne passe sans arrêt d\'un cache à l\'autre.',tone:'mid',note:`<b>Coût caché.</b> 16 cœurs qui ajoutent 1 au même compteur en boucle font circuler la ligne d'un cache à l'autre. Chaque transfert coûte des centaines de cycles. <b>False sharing :</b> deux compteurs <i>différents</i> dans la même ligne de 64 octets provoquent le même problème. Solutions : un compteur par thread, additionné à la fin, ou du remplissage (padding).`}
+  ],
+  render(s){
+    const C={M:'red',E:'green',S:'blue',I:''}, N={M:'Modified',E:'Exclusive',S:'Shared',I:'Invalid'};
+    const L=c=>`<span class="pill ${C[c[0]]}">${c[0]} · ${N[c[0]]}</span> <span class="meta">counter = <b class="num">${c[1]}</b></span>`;
+    $('#me1l').innerHTML=L(s.c1); $('#me2l').innerHTML=L(s.c2);
+    $('#me1').classList.toggle('hot',s.act===1); $('#me2').classList.toggle('hot',s.act===2);
+    $('#meBus').textContent=s.bus;
+    $('#meRam').textContent=`Mémoire : counter = 0${s.c1[0]==='M'||s.c2[0]==='M'?' (valeur périmée : la valeur actuelle est dans un cache à l\'état M)':''}`;
+  }
+});
+
+/* ───────── Mauvaises pratiques ───────── */
+const ANTI=[
+  {t:`Attente synchrone d'une Task : .Result, .Wait()`,why:`Le thread reste bloqué pendant toute l'I/O. Avec une charge élevée, le ThreadPool manque de workers (starvation). Avec un SynchronizationContext (UI, ASP.NET sur .NET Framework), un deadlock se produit. L'exception arrive dans une AggregateException.`,bad:`var user = _repo.GetUserAsync(id).Result;`,good:`var user = await _repo.GetUserAsync(id, ct);
+// async de bout en bout, jusqu'au contrôleur`},
+  {t:`async void`,why:`La méthode ne retourne pas de Task. L'appelant ne peut pas l'attendre et ne connaît pas sa fin. Une exception arrête le process. Exception acceptée : les event handlers UI.`,bad:`public async void Process() { await DoAsync(); }`,good:`public async Task ProcessAsync() { await DoAsync(); }`},
+  {t:`Lambda async dans Parallel.ForEach ou List.ForEach`,why:`Ces méthodes attendent une Action<T>. La lambda async devient donc async void. La boucle se termine immédiatement. Les exceptions sont perdues.`,bad:`Parallel.ForEach(ids, async id => await SyncAsync(id));`,good:`await Parallel.ForEachAsync(ids,
+    new ParallelOptions { MaxDegreeOfParallelism = 8 },
+    async (id, ct) => await SyncAsync(id, ct));`},
+  {t:`Task.Run côté serveur pour rendre une méthode async`,why:`Le code prend un worker pour libérer un autre worker du même ThreadPool. Il n'y a pas de gain. Un changement de contexte s'ajoute. Task.Run sert à libérer le thread UI d'un calcul.`,bad:`public Task<int> ComputeAsync() => Task.Run(() => Compute());`,good:`public int Compute() { ... }
+// Travail synchrone : API synchrone`},
+  {t:`Fire-and-forget dans un contrôleur`,why:`Les exceptions sont perdues. Les services scoped (DbContext) sont supprimés à la fin de la requête. L'arrêt de l'application interrompt le travail.`,bad:`_ = SendEmailAsync(user); // dans un contrôleur
+return Ok();`,good:`await _channel.Writer.WriteAsync(new EmailJob(user.Id), ct);
+return Accepted();
+// un BackgroundService lit le Channel`},
+  {t:`CancellationToken non utilisé`,why:`Le client annule la requête. Le serveur continue une requête SQL de 30 s. Ce travail inutile augmente la charge pendant les pics.`,bad:`public async Task<IActionResult> Search(string q)
+    => Ok(await _db.Items.Where(...).ToListAsync());`,good:`public async Task<IActionResult> Search(string q, CancellationToken ct)
+    => Ok(await _db.Items.Where(...).ToListAsync(ct));`},
+  {t:`Task.WhenAll sans limite`,why:`10 000 appels en même temps épuisent les sockets. L'API cible retourne des erreurs 429. Le pool de connexions est saturé.`,bad:`await Task.WhenAll(ids.Select(id => _api.CallAsync(id)));`,good:`await Parallel.ForEachAsync(ids,
+    new ParallelOptions { MaxDegreeOfParallelism = 10, CancellationToken = ct },
+    async (id, t) => await _api.CallAsync(id, t));`},
+  {t:`DbContext partagé en parallèle`,why:`DbContext n'est pas thread-safe. Erreur : « A second operation was started on this context instance ».`,bad:`await Task.WhenAll(ids.Select(id => _db.Users.FindAsync(id).AsTask()));`,good:`var users = await _db.Users.Where(u => ids.Contains(u.Id)).ToListAsync(ct);
+// ou IDbContextFactory : un contexte par tâche`},
+  {t:`lock autour d'un await`,why:`Le compilateur interdit ce code. Un lock (Monitor) appartient à un thread. Après await, la méthode peut reprendre sur un autre thread.`,bad:`lock (_sync) { await SaveAsync(); } // erreur de compilation`,good:`await _sem.WaitAsync(ct);
+try { await SaveAsync(); }
+finally { _sem.Release(); }   // SemaphoreSlim(1, 1)`},
+  {t:`[ThreadStatic] pour une donnée de requête`,why:`Après await, la méthode peut reprendre sur un autre thread. La valeur est perdue ou appartient à une autre requête.`,bad:`[ThreadStatic] static string? _tenant;`,good:`static readonly AsyncLocal<string?> _tenant = new();
+// ou mieux : un service scoped injecté`},
+  {t:`Thread.Sleep dans du code async`,why:`Thread.Sleep bloque le thread. Il ne libère pas le thread.`,bad:`Thread.Sleep(1000);`,good:`await Task.Delay(1000, ct);`},
+  {t:`Élision de async et await avec un using`,why:`Sans await, la méthode se termine avant la Task. La ressource est supprimée pendant l'opération. Erreur intermittente : TaskCanceledException ou ObjectDisposedException.`,bad:`public Task<string> ReadAsync()
+{
+    using var client = new HttpClient();
+    return client.GetStringAsync(url);
+}`,good:`public async Task<string> ReadAsync()
+{
+    var client = _factory.CreateClient(); // IHttpClientFactory
+    return await client.GetStringAsync(url);
+}`},
+  {t:`await séquentiel sur des appels indépendants`,why:`La latence est la somme des durées. Avec WhenAll, la latence est la durée la plus longue.`,bad:`var a = await GetAAsync();
+var b = await GetBAsync();`,good:`var ta = GetAAsync(); var tb = GetBAsync();
+await Task.WhenAll(ta, tb);
+var (a, b) = (ta.Result, tb.Result); // correct : les Tasks sont terminées`},
+  {t:`Travail bloquant long sur le ThreadPool`,why:`Une boucle sans fin ou une attente bloquante occupe un worker pour toujours.`,bad:`Task.Run(() => { while (true) { var msg = queue.Take(); Handle(msg); } });`,good:`Task.Factory.StartNew(() => Loop(), TaskCreationOptions.LongRunning);
+// ou mieux : BackgroundService + API async (Channel.Reader.ReadAllAsync)`}
+];
+$('#antiList').innerHTML=ANTI.map((a,i)=>`<details class="disclosure"><summary>${i+1}. ${esc(a.t)}</summary><div class="disclosure-body stack" style="padding-top:.8rem"><p style="margin:0">${esc(a.why)}</p><div class="tiles"><div class="tile red"><h3>À éviter</h3><pre>${hl(a.bad)}</pre></div><div class="tile green"><h3>À faire</h3><pre>${hl(a.good)}</pre></div></div></div></details>`).join('');
+
+/* ───────── QCM (un par niveau : b = base, a = avancé, p = profond) ───────── */
+const QCM=[
+  {lv:'b',th:'Bases',q:`Qu'est-ce qu'une Task en .NET ?`,o:[`Un thread du système d'exploitation`,`Un objet qui représente une opération en cours ou terminée`,`Un process léger pour chaque méthode async`,`Un timer du ThreadPool`],a:1,e:`Une Task contient un état (en cours, terminée, en erreur, annulée) et un résultat. Une Task d'I/O n'utilise pas de thread pendant l'attente.`},
+  {lv:'b',th:'Bases',q:`Quel effet principal a async/await sur une API web ?`,o:[`Une requête seule est plus rapide`,`Le serveur traite plus de requêtes simultanées avec peu de threads`,`Un calcul utilise moins de CPU`,`La sécurité augmente`],a:1,e:`Une requête seule n'est pas plus rapide. Mais les threads sont libres pendant l'I/O. Le serveur traite donc plus de requêtes avec le même ThreadPool.`},
+  {lv:'b',th:'Threads',q:`Une machine a 8 cœurs logiques. Combien de threads s'exécutent au même instant ?`,o:[`Tous les threads du process`,`8 au maximum`,`16, avec l'hyperthreading`,`1, les autres sont simulés`],a:1,e:`Un cœur logique exécute un thread à la fois. Les autres threads sont prêts ou bloqués. Le nombre de cœurs logiques inclut déjà l'hyperthreading.`},
+  {lv:'p',th:'Threads',q:`Un calcul passe de 8 à 64 threads sur 8 cœurs. Quel est le résultat ?`,o:[`Le calcul est environ 8 fois plus rapide`,`Aucun changement`,`Le débit diminue un peu : changements de contexte et caches inutiles`,`Le process s'arrête`],a:2,e:`Seulement 8 threads s'exécutent en même temps. L'ordonnanceur alterne les 64 threads. Chaque changement de contexte a un coût. Pour un calcul, utilisez environ un thread par cœur.`},
+  {lv:'b',th:'Threads',q:`Quel est l'état d'un thread bloqué sur une I/O synchrone ?`,o:[`Il utilise 100 % d'un cœur`,`Il n'utilise pas de CPU, mais il ne fait pas d'autre travail et garde sa pile`,`Le système le supprime puis le recrée`,`.NET le rend async automatiquement`],a:1,e:`Le thread est à l'état Waiting. Il n'utilise pas de CPU. Mais il ne fait pas d'autre travail. Dans le ThreadPool, c'est un worker en moins pour les requêtes.`},
+  {lv:'p',th:'ThreadPool',q:`Quel est le minimum de workers par défaut ?`,o:[`1`,`Environment.ProcessorCount`,`100`,`32 767`],a:1,e:`Le minimum est égal à ProcessorCount. Sous le minimum, le ThreadPool crée un worker immédiatement. 32 767 est le maximum.`},
+  {lv:'p',th:'ThreadPool',q:`Au-dessus du minimum, à quel rythme le ThreadPool ajoute-t-il des workers ?`,o:[`Immédiatement, autant que nécessaire`,`Environ 1 worker toutes les 500 ms`,`Jamais : la taille est fixe`,`Un par cœur chaque seconde`],a:1,e:`L'injection est lente volontairement. Elle évite un trop grand nombre de threads. Elle ne compense pas un blocage important : c'est la starvation.`},
+  {lv:'p',th:'ThreadPool',q:`Un pod Kubernetes a resources.limits.cpu: 500m. Quelle est la valeur de Environment.ProcessorCount ?`,o:[`0,5`,`1`,`Le nombre de cœurs du nœud`,`2`],a:1,e:`.NET lit la limite du conteneur. Il l'arrondit à l'entier supérieur, avec un minimum de 1. Le ThreadPool commence donc avec 1 worker. Un seul blocage provoque une starvation.`},
+  {lv:'p',th:'ThreadPool',q:`Un worker crée une Task (par exemple Task.Run dans une continuation). Où va cette Task ?`,o:[`Dans la file globale`,`Dans la file locale de ce worker`,`Sur un nouveau thread dédié`,`Dans la file du thread principal`],a:1,e:`La Task va dans la file locale du worker. Ce worker la prend en LIFO. Les autres workers peuvent la voler par l'autre extrémité (FIFO).`},
+  {lv:'p',th:'ThreadPool',q:`Pourquoi un worker prend-il sa file locale en LIFO ?`,o:[`Pour l'équité`,`La tâche la plus récente utilise des données encore dans le cache du cœur`,`Ce code est plus simple`,`Pour éviter les deadlocks`],a:1,e:`La dernière tâche utilise souvent les données que le thread vient de lire. Les voleurs prennent par l'autre extrémité. Les conflits sont donc rares.`},
+  {lv:'b',th:'Starvation',q:`Quels signes indiquent une starvation du ThreadPool ?`,o:[`CPU à 100 % et latence stable`,`CPU bas, latence élevée, nombre de workers en hausse lente, file non vide`,`Erreurs OutOfMemoryException`,`Nombre de threads en baisse`],a:1,e:`Les threads sont bloqués : ils n'utilisent pas de CPU. Le ThreadPool ajoute un worker toutes les 500 ms environ. Le travail attend dans la file.`},
+  {lv:'p',th:'ThreadPool',q:`À quoi sert TaskCreationOptions.LongRunning ?`,o:[`À donner une priorité haute à la tâche`,`À exécuter la tâche sur un thread dédié hors ThreadPool, pour un travail long ou bloquant`,`À empêcher l'annulation`,`À rendre la tâche async`],a:1,e:`Une boucle sans fin ou un travail bloquant long occuperait un worker. LongRunning crée un thread dédié.`},
+  {lv:'b',th:'await',q:`Pendant await _db.QueryAsync(sql), combien de threads attendent la réponse de la base ?`,o:[`Un worker`,`Le thread appelant`,`Aucun`,`Un thread dédié du driver SQL`],a:2,e:`Le système signale la réponse à .NET (IOCP sous Windows, epoll sous Linux). Aucun thread n'attend.`},
+  {lv:'b',th:'await',q:`Sur quel thread s'exécute le code d'une méthode async avant le premier await ?`,o:[`Sur un nouveau thread`,`Sur un worker choisi par le runtime`,`Sur le thread appelant, de façon synchrone`,`Après l'await de l'appelant`],a:2,e:`async ne crée pas de thread. Le code avant le premier await sur une Task non terminée s'exécute sur le thread appelant.`},
+  {lv:'a',th:'Heap et DI',q:`Après un await, quel est l'état du service scoped injecté (par exemple UserService) ?`,o:[`La DI le recrée sur le nouveau thread`,`C'est la même instance. La state machine la référence par this.`,`Il est null`,`Il est copié`],a:1,e:`La DI crée un objet seulement pendant une résolution. La state machine, sur le heap, référence this. Seul le thread change. L'objet reste le même jusqu'à la fin de la requête.`},
+  {lv:'a',th:'Heap et DI',q:`Où sont les variables locales d'une méthode async suspendue ?`,o:[`Sur la pile du thread précédent`,`Dans les champs de la state machine, copiée sur le heap`,`Dans les registres du processeur`,`Elles sont perdues puis recalculées`],a:1,e:`Le compilateur transforme les variables locales en champs. Au premier await qui suspend la méthode, .NET copie la state machine sur le heap. La pile du thread peut alors se vider.`},
+  {lv:'a',th:'Heap et DI',q:`Quand ASP.NET Core supprime-t-il un service scoped ?`,o:[`Quand le thread retourne au ThreadPool`,`À chaque await`,`À la fin de la requête HTTP, avec le scope`,`Jamais`],a:2,e:`Le scope appartient à la requête, pas au thread. Un fire-and-forget qui utilise le DbContext de la requête provoque donc une ObjectDisposedException.`},
+  {lv:'a',th:'AsyncLocal',q:`Une valeur [ThreadStatic] est écrite avant un await et lue après. Quel est le résultat ?`,o:[`La valeur est toujours correcte`,`La valeur peut être null ou appartenir à une autre requête`,`Une exception`,`.NET copie la valeur automatiquement`],a:1,e:`ThreadStatic stocke une valeur par thread. Après await, le code lit le stockage du thread qui reprend. Ce stockage peut contenir la valeur d'une autre requête.`},
+  {lv:'a',th:'AsyncLocal',q:`Où AsyncLocal<T> stocke-t-il sa valeur ?`,o:[`Dans le stockage local du thread`,`Dans l'ExecutionContext, capturé à l'await et restauré à la reprise`,`Dans le SynchronizationContext`,`Dans une variable statique partagée`],a:1,e:`L'ExecutionContext suit le flux logique. IHttpContextAccessor, Activity.Current et les scopes de log utilisent ce mécanisme.`},
+  {lv:'a',th:'ConfigureAwait',q:`Où ConfigureAwait(false) est-il le plus utile ?`,o:[`Dans tous les contrôleurs ASP.NET Core`,`Dans les bibliothèques réutilisables, appelées aussi par des applications UI`,`Seulement dans Program.cs`,`Nulle part : il est obsolète`],a:1,e:`Une bibliothèque ne doit pas dépendre du contexte de l'appelant. ASP.NET Core n'a pas de SynchronizationContext. Dans le code d'une application ASP.NET Core, ConfigureAwait n'a donc pas d'effet.`},
+  {lv:'a',th:'ConfigureAwait',q:`ConfigureAwait(false) arrête-t-il la transmission de AsyncLocal et Activity.Current ?`,o:[`Oui, il supprime tout le contexte`,`Non. Il agit seulement sur le SynchronizationContext. L'ExecutionContext est toujours transmis.`,`Seulement sur .NET Framework`,`Seulement si la Task est terminée`],a:1,e:`Il existe deux contextes. Le SynchronizationContext indique où reprendre. L'ExecutionContext transporte les données du flux. ConfigureAwait agit seulement sur le premier.`},
+  {lv:'a',th:'Deadlock',q:`Pourquoi .Result dans un handler WPF provoque-t-il un deadlock ?`,o:[`HttpClient n'est pas thread-safe`,`La continuation doit s'exécuter sur le thread UI, et .Result bloque ce thread`,`WPF interdit les Tasks`,`La Task s'exécute deux fois`],a:1,e:`await capture le SynchronizationContext UI. La continuation va dans la file du Dispatcher. Le thread UI attend cette Task. Chacun attend l'autre.`},
+  {lv:'b',th:'Starvation',q:`En ASP.NET Core, .Result sur une Task d'I/O avec une charge élevée provoque surtout…`,o:[`Un deadlock à chaque appel`,`Une starvation du ThreadPool`,`Une StackOverflowException`,`Aucun problème`],a:1,e:`ASP.NET Core n'a pas de SynchronizationContext, donc pas de deadlock. Mais chaque requête bloque un worker pendant l'I/O. Le ThreadPool ajoute seulement 1 worker toutes les 500 ms environ.`},
+  {lv:'b',th:'Exceptions',q:`GetUserAsync() lève une HttpRequestException. Quelle exception GetUserAsync().Result lève-t-il ?`,o:[`HttpRequestException`,`AggregateException, avec la HttpRequestException en InnerException`,`TaskCanceledException`,`Aucune`],a:1,e:`L'API synchrone enveloppe toujours l'exception dans une AggregateException. GetAwaiter().GetResult() et await relancent l'exception d'origine.`},
+  {lv:'b',th:'Exceptions',q:`await Task.WhenAll(t1, t2) : t1 et t2 échouent. Que reçoit le catch ?`,o:[`Une AggregateException avec les deux exceptions`,`La première exception seulement`,`La dernière exception`,`Rien`],a:1,e:`await relance la première exception. Pour lire toutes les exceptions, gardez la Task de WhenAll et lisez task.Exception.InnerExceptions.`},
+  {lv:'p',th:'async void',q:`Save est async void. Pourquoi await Save() provoque-t-il une erreur de compilation ?`,o:[`Une convention du compilateur l'interdit`,`await a besoin d'un objet avec GetAwaiter(), et void ne retourne pas d'objet`,`Save n'est pas terminée`,`Le code compile, mais il ne fait rien`],a:1,e:`await utilise GetAwaiter, IsCompleted, OnCompleted et GetResult. Sans objet retourné, il n'y a rien à attendre : erreur CS4008.`},
+  {lv:'a',th:'async void',q:`En ASP.NET Core, que devient une exception levée dans une méthode async void ?`,o:[`.NET la stocke dans une Task cachée`,`.NET la relance sur un autre thread. Elle n'est pas gérée et le process s'arrête.`,`.NET l'écrit dans les logs et continue`,`Le try/catch de l'appelant la reçoit`],a:1,e:`Aucune Task ne peut stocker l'exception. .NET la relance sur le ThreadPool. Aucun catch n'est dans la pile : le process s'arrête.`},
+  {lv:'p',th:'async void',q:`async void Save() { throw new X(); } lève l'exception avant tout await. try { Save(); } catch { } reçoit-il l'exception ?`,o:[`Oui, l'exception est synchrone`,`Non. Le catch généré dans MoveNext la transmet à SetException, qui la relance ailleurs.`,`Oui, mais seulement en Debug`,`Le code ne compile pas`],a:1,e:`Tout le corps de la méthode est dans un try/catch généré. Même avant le premier await, l'exception passe par le builder. Le builder la relance ailleurs. L'appelant ne la reçoit jamais.`},
+  {lv:'b',th:'Concurrence',q:`Quel est l'effet de Parallel.ForEach(items, async x => await F(x)) ?`,o:[`Traitement en parallèle, puis fin de la boucle après tous les traitements`,`La lambda devient async void. La boucle se termine avant les traitements. Les exceptions sont perdues.`,`Erreur de compilation`,`Traitement séquentiel`],a:1,e:`Parallel.ForEach attend une Action<T>. La lambda async devient async void. Utilisez Parallel.ForEachAsync.`},
+  {lv:'b',th:'Concurrence',q:`Vous devez appeler une API externe 5 000 fois. Quelle solution choisir ?`,o:[`Task.WhenAll(ids.Select(CallAsync))`,`Un foreach avec .Result`,`Parallel.ForEachAsync avec MaxDegreeOfParallelism`,`Parallel.ForEach avec Task.Run`],a:2,e:`La concurrence doit avoir une limite. Sans limite, les sockets s'épuisent et l'API cible retourne des erreurs 429.`},
+  {lv:'b',th:'Concurrence',q:`GetA dure 200 ms et GetB 300 ms. Les appels sont indépendants. Quelle est la durée avec deux await successifs, puis avec Task.WhenAll ?`,o:[`300 ms et 300 ms`,`500 ms et 300 ms`,`500 ms et 500 ms`,`200 ms et 300 ms`],a:1,e:`En séquentiel, la durée est la somme. Avec WhenAll, la durée est celle de l'appel le plus long, car les deux appels démarrent avant l'attente.`},
+  {lv:'b',th:'Concurrence',q:`Quel est le résultat de await Task.WhenAll(ids.Select(id => _db.Users.FindAsync(id).AsTask())) avec un seul DbContext ?`,o:[`Le code fonctionne et il est plus rapide`,`Une InvalidOperationException : DbContext n'est pas thread-safe`,`Les requêtes s'exécutent l'une après l'autre automatiquement`,`.NET crée un DbContext par requête`],a:1,e:`Un DbContext accepte une seule opération à la fois. Utilisez une seule requête avec Contains, ou IDbContextFactory.`},
+  {lv:'a',th:'Tâches de fond',q:`Quel est l'effet de return Ok(await Task.Run(() => Compute())) dans un contrôleur ASP.NET Core ?`,o:[`Une tâche de fond démarre`,`Aucun gain : un autre worker du même ThreadPool fait le travail, avec un coût supplémentaire`,`C'est obligatoire pour un calcul`,`Cela empêche les deadlocks`],a:1,e:`Le travail reste lié à la requête. Il utilise toujours un worker. Task.Run sert à libérer un thread UI.`},
+  {lv:'a',th:'Tâches de fond',q:`Vous devez envoyer un e-mail après une inscription. L'envoi doit avoir de nouveaux essais et résister au redémarrage du pod. Quelle solution choisir ?`,o:[`_ = Task.Run(() => SendAsync())`,`Channel + BackgroundService`,`Un travail persistant (Hangfire, Quartz) ou une file de messages (Service Bus, RabbitMQ)`,`async void SendMail()`],a:2,e:`Channel + BackgroundService garde le travail en mémoire. Un arrêt du process le perd. Pour garantir l'exécution, il faut une persistance.`},
+  {lv:'a',th:'Synchronisation',q:`Deux threads exécutent chacun 1 000 fois counter++ sur une variable partagée. Quel est le résultat ?`,o:[`Toujours 2000`,`Toujours 1000`,`2000 ou moins, selon l'ordre d'exécution`,`Une exception`],a:2,e:`counter++ contient trois opérations : lire, ajouter, écrire. Si les deux threads lisent la même valeur avant d'écrire, une mise à jour est perdue.`},
+  {lv:'p',th:'Synchronisation',q:`Sur x64, en quoi le JIT transforme-t-il Interlocked.Increment ?`,o:[`Un appel au noyau`,`Une instruction lock xadd`,`Un Monitor.Enter et un Monitor.Exit`,`Une boucle d'attente active`],a:1,e:`Le JIT produit une instruction atomique. Le préfixe lock donne la ligne de cache au cœur en exclusivité pendant la lecture, l'ajout et l'écriture. Il agit aussi comme une barrière mémoire.`},
+  {lv:'p',th:'Synchronisation',q:`Qu'est-ce que le false sharing ?`,o:[`Deux threads qui partagent un lock`,`Deux variables différentes dans la même ligne de cache, qui ralentissent les cœurs comme une variable partagée`,`Une race condition sur un booléen`,`Un deadlock entre deux SemaphoreSlim`],a:1,e:`Le cache fonctionne par lignes de 64 octets. Deux cœurs modifient chacun leur compteur dans la même ligne. La ligne passe alors sans arrêt d'un cache à l'autre.`},
+  {lv:'a',th:'Synchronisation',q:`Pourquoi le compilateur interdit-il await dans un lock ?`,o:[`lock est trop lent`,`Un lock appartient à un thread. Après await, la méthode peut reprendre sur un autre thread.`,`lock est obsolète`,`Il ne l'interdit pas`],a:1,e:`Le thread qui a pris le Monitor doit le libérer. Utilisez SemaphoreSlim(1,1) avec WaitAsync et Release.`},
+  {lv:'a',th:'Élision',q:`public Task<string> ReadAsync() { using var c = new HttpClient(); return c.GetStringAsync(url); } : quel est le risque ?`,o:[`Aucun : ce code est plus performant`,`Le client est supprimé pendant la requête : TaskCanceledException ou ObjectDisposedException, de façon intermittente`,`Une fuite de mémoire`,`Un deadlock`],a:1,e:`Sans await, la méthode se termine dès le démarrage de la requête. Le using supprime le client immédiatement.`},
+  {lv:'a',th:'Divers',q:`Quelle règle s'applique à une ValueTask ?`,o:[`Vous pouvez l'attendre plusieurs fois`,`Vous devez l'attendre une seule fois`,`Elle remplace toujours Task`,`Elle s'exécute toujours de façon synchrone`],a:1,e:`Une ValueTask peut utiliser un objet réutilisé. Deux await donnent un comportement indéfini. Utilisez ValueTask seulement sur un chemin critique mesuré.`},
+  {lv:'b',th:'Divers',q:`À quoi sert le CancellationToken d'une action ASP.NET Core ?`,o:[`À annuler automatiquement la transaction SQL`,`À signaler l'abandon de la requête par le client, pour arrêter le travail inutile`,`À limiter la durée de la requête à 30 s`,`À rien : il vaut toujours None`],a:1,e:`Il est lié à HttpContext.RequestAborted. Transmettez-le à EF Core, HttpClient et Task.Delay. Le travail s'arrête alors à la déconnexion du client.`},
+  {lv:'b',th:'Divers',q:`Un batch console doit calculer le hash de 10 000 images déjà en mémoire. Quel outil choisir ?`,o:[`async/await sur chaque calcul`,`Parallel.ForEach`,`Task.WhenAll de Task.Delay`,`Un seul thread suffit toujours`],a:1,e:`C'est un travail CPU-bound : il faut plusieurs cœurs. async/await n'accélère pas un calcul. Il libère un thread pendant une attente.`}
+];
+document.querySelectorAll('.qroot').forEach(root=>{
+  const lv=root.dataset.level, key={b:'base',a:'avance',p:'profond'}[lv];
+  const items=QCM.filter(q=>q.lv===lv);
+  let answered=0, good=0, theme='';
+  root.innerHTML=`<div class="panel qhead"><div class="row">
+      <span class="pill count" data-r="score">0 / 0</span><span class="muted" data-r="total"></span>
+      <div class="meter" aria-hidden="true"><i data-r="prog"></i></div>
+      <div class="field" style="min-width:12rem"><label for="qt-${key}" class="muted" style="font-weight:400">Thème</label><select class="select" id="qt-${key}" data-r="sel"><option value="">Tous les thèmes</option>${[...new Set(items.map(q=>q.th))].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <button class="btn ghost sm" type="button" data-r="reset">Recommencer</button></div></div>
+    <div class="stack" data-r="list"></div><div class="msg" data-r="final" hidden></div>`;
+  const R=n=>root.querySelector(`[data-r="${n}"]`);
+  const list=()=>items.filter(q=>!theme||q.th===theme);
+  function render(){
+    answered=0; good=0;
+    R('list').innerHTML=list().map((q,n)=>`<div class="panel stack q" data-i="${QCM.indexOf(q)}">
+      <div class="row"><span class="pill">${q.th}</span><span class="muted num" style="font-size:.85rem">Question ${n+1}</span></div>
+      <h3 style="margin:0">${esc(q.q)}</h3>
+      <div class="stack" style="gap:.4rem">${q.o.map((o,j)=>`<button class="choice" type="button" data-j="${j}">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join('')}</div>
+      <p class="msg info expl"></p></div>`).join('');
+    R('list').querySelectorAll('.q').forEach(el=>{
+      el.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+        if(el.classList.contains('answered')) return;
+        const q=QCM[+el.dataset.i], j=+b.dataset.j;
+        el.classList.add('answered'); answered++;
+        el.querySelectorAll('.choice')[q.a].classList.add('right');
+        const ok=j===q.a; if(ok) good++; else b.classList.add('wrong');
+        const ex=el.querySelector('.expl'); ex.className='msg expl '+(ok?'success':'warning');
+        ex.innerHTML=`<strong>${ok?'Bonne réponse.':'Réponse incorrecte.'}</strong> ${esc(q.e)}`;
+        score();
+      });
+    });
+    score();
+  }
+  function score(){
+    const total=list().length;
+    R('score').textContent=`${good} / ${answered}`;
+    R('total').textContent=`${answered} réponse(s) sur ${total} question(s)`;
+    R('prog').style.width=(answered/total*100)+'%';
+    const f=R('final');
+    if(answered===total){
+      const p=good/total; f.hidden=false;
+      f.className='msg '+(p>=.8?'success':p<.5?'warning':'info');
+      f.innerHTML=`<p><strong>Score final : ${good} sur ${total}.</strong> `+(p>=.8?(lv==='p'?`Ce résultat est solide. Vous maîtrisez les mécanismes internes.`:`Ce résultat est solide. Passez au niveau suivant.`):p>=.5?`La base est correcte. Lisez les explications des erreurs. Refaites les simulateurs de ces thèmes.`:`Refaites les sections de cet onglet. Ensuite, recommencez le QCM.`)+'</p>';
+    } else f.hidden=true;
+  }
+  R('sel').addEventListener('change',e=>{theme=e.target.value;render();});
+  R('reset').onclick=()=>{render(); root.scrollIntoView();};
+  render();
+});
+</script>
+</body>
+</html>
