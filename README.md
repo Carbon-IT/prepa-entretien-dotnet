@@ -38,6 +38,22 @@ Sa progression est enregistrée séparément de celle de `index.html`.
 
 Une troisième page, `async-dotnet.html`, est une formation interactive sur l'asynchronisme, les threads et le parallélisme en .NET, destinée aux consultants. Elle a trois niveaux (notions de base, avancées, profondes), avec des simulateurs, des exemples de code et un QCM par niveau. Elle n'est pas liée depuis `index.html` : on la transmet par son URL (`https://carbon-it.github.io/prepa-entretien-dotnet/async-dotnet.html`).
 
+### Page « Prépa RT modernisation legacy »
+
+Une quatrième page, `rt-modernisation.html`, prépare un consultant à un RT client .NET sur une mission de modernisation d'un legacy. Elle n'est pas liée depuis `index.html` : on la transmet par son URL (`https://carbon-it.github.io/prepa-entretien-dotnet/rt-modernisation.html`).
+
+| Section | Thèmes abordés |
+|---|---|
+| Contexte de la mission | Stack legacy et cible, questions de parcours (sans réponse) |
+| Modernisation du legacy | Golden Master et snapshot testing, Strangler Fig avec dual run, sortie des procédures stockées |
+| Architecture et DDD | Value Object, tests d'architecture (NetArchTest), pattern Mediator |
+| Cache et tests | FusionCache et fail-safe, tests dépendants du temps (`TimeProvider`) ou d'un cache |
+| Événementiel, scaling, observabilité | Scaling sur Kubernetes, OpenTelemetry, points clés de Kafka |
+| Revue de code : entraînement | Exercice fictif de location de films reprenant les pièges classiques : écarts avec le besoin, bugs, `HttpClient`, `.Result`, gestion des erreurs, tests |
+| Améliorations à faire | Ordre de correction en 20 minutes, version corrigée |
+
+Sa progression est enregistrée séparément de celle des autres pages.
+
 ## Fonctionnalités
 
 - Recherche plein texte (insensible aux accents)
@@ -52,12 +68,13 @@ Une troisième page, `async-dotnet.html`, est une formation interactive sur l'as
 ├── index.html               # La page principale : HTML, CSS et JavaScript intégrés
 ├── questions-ouvertes.html  # Questions complémentaires, non liée depuis index.html
 ├── async-dotnet.html        # Formation async et threads .NET, non liée depuis index.html
+├── rt-modernisation.html     # Prépa RT client modernisation, non liée depuis index.html
 └── README.md
 ```
 
 Chaque page est autonome : aucune dépendance à installer, aucun build. Seule la police Carlito est chargée depuis Google Fonts.
 
-Les trois pages suivent le Carbon Design System v1.0 : un bloc `<style id="carbon-ds">` copié du design system, puis un bloc `<style id="page">` pour les composants propres à la page, qui n'utilise que les tokens du design system. Un sélecteur Auto / Clair / Sombre dans la barre du haut règle le thème.
+Les quatre pages suivent le Carbon Design System v1.0 : un bloc `<style id="carbon-ds">` copié du design system, puis un bloc `<style id="page">` pour les composants propres à la page, qui n'utilise que les tokens du design system. Un sélecteur Auto / Clair / Sombre dans la barre du haut règle le thème.
 
 ## Consulter la page en local
 
