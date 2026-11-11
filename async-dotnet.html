@@ -347,7 +347,7 @@ ul.bul li { margin: .2rem 0; }
 .cycle.on .arr { color: var(--red); }
 
 /* QCM : choix de réponse */
-.choice { display: block; width: 100%; text-align: left; font: inherit; font-size: .95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .6rem .8rem; cursor: pointer; }
+.choice { display: block; width: 100%; overflow-wrap: anywhere; text-align: left; font: inherit; font-size: .95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .6rem .8rem; cursor: pointer; }
 .choice:hover { background: var(--surface-sunk); }
 .choice.right { background: var(--green-wash); border-color: var(--green-ink); font-weight: 700; }
 .choice.wrong { background: var(--red-wash); border-color: var(--red-ink); }
@@ -359,7 +359,7 @@ ul.bul li { margin: .2rem 0; }
 .ste { font-size: .825rem; }
 
 /* Petits écrans : règles reprises de la documentation du design system */
-.segmented.wrap { flex-wrap: wrap; }
+.segmented.segwrap { flex-wrap: wrap; }
 @media (max-width: 40rem) {
   .band-head { flex-direction: column; }
   .band-actions { margin-left: 0; align-self: flex-start; }
@@ -654,7 +654,7 @@ await Parallel.ForEachAsync(ids, new ParallelOptions { MaxDegreeOfParallelism = 
       <h2>Exceptions : <code>.Result</code>, <code>GetResult()</code> et <code>await</code></h2>
       <p class="intro"><code>GetUserAsync</code> lève une <code>HttpRequestException</code>. Choisissez une façon d'attendre. Le tableau indique l'exception reçue par l'appelant.</p>
       <div class="panel stack">
-        <span class="segmented wrap" role="group" aria-label="Façon d'attendre" id="exMode"><button type="button" data-m="result" aria-pressed="true">.Result</button><button type="button" data-m="wait" aria-pressed="false">.Wait()</button><button type="button" data-m="gr" aria-pressed="false">.GetAwaiter().GetResult()</button><button type="button" data-m="await" aria-pressed="false">await</button><button type="button" data-m="whenall" aria-pressed="false">await Task.WhenAll</button></span>
+        <span class="segmented segwrap" role="group" aria-label="Façon d'attendre" id="exMode"><button type="button" data-m="result" aria-pressed="true">.Result</button><button type="button" data-m="wait" aria-pressed="false">.Wait()</button><button type="button" data-m="gr" aria-pressed="false">.GetAwaiter().GetResult()</button><button type="button" data-m="await" aria-pressed="false">await</button><button type="button" data-m="whenall" aria-pressed="false">await Task.WhenAll</button></span>
         <div id="exCode"></div>
         <div class="table-wrap"><table class="table dense" id="exOut"></table></div>
       </div>

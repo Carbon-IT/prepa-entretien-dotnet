@@ -1,0 +1,1876 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache et Redis .NET</title>
+<meta name="description" content="Formation interactive sur le cache et Redis en .NET (IMemoryCache, IDistributedCache, HybridCache, StackExchange.Redis), en trois niveaux, avec simulateurs et QCM.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap">
+
+<!--
+  Design : Carbon Design System v1.0 (design-system/carbon-design-system.html).
+  - <style id="carbon-ds"> : copie du bloc du design system (composants utilisés par cette page).
+  - <style id="page">      : adaptations pour les composants absents du design system.
+                              Elles utilisent seulement les tokens du design system.
+  Rédaction : règles ASD-STE100 appliquées au français.
+-->
+
+<style id="carbon-ds">
+:root {
+  --ground: #f3f4f4; --surface: #fdfdfd; --surface-sunk: #ebebeb;
+  --ink: #282b2a; --ink-soft: #666867; --ink-faint: #9b9c9c;
+  --rule: #dbdbdb; --rule-soft: #ececec; --control-edge: #8a8c8b;
+  --red: #e53f49; --green: #00bb7e; --blue: #5b98d2;
+  --red-ink: #bd2f39; --green-ink: #007049; --blue-ink: #386a9b;
+  --red-wash: #fbeaeb; --green-wash: #e4f6f0; --blue-wash: #edf3f9;
+  --action: #d4353f; --on-action: #fdfdfd;
+  --band: #282b2a; --band-ink: #fdfdfd; --band-soft: #b9bab9; --band-rule: #535554; --band-red: #ff6b73;
+  --shadow: 0 1px 2px rgba(40, 43, 42, .07), 0 10px 28px -18px rgba(40, 43, 42, .28);
+  --shadow-overlay: 0 2px 6px rgba(40, 43, 42, .12), 0 24px 60px -24px rgba(40, 43, 42, .45);
+  --scrim: rgba(40, 43, 42, .45);
+  --font: "Calibri", "Carlito", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r-xs: 3px; --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; --r-2xl: 14px; --r-pill: 999px;
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.25rem; --s-6: 1.5rem; --s-7: 2.25rem; --s-8: 3rem;
+  --w-content: 56rem; --w-wide: 76rem;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+    --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+    --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+    --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+    --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+    --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+    --action: #d4353f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+    --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+    --scrim: rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+  --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+  --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+  --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+  --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+  --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+  --action: #d4353f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+  --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+  --scrim: rgba(0, 0, 0, .6);
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+h1 { font-weight: 700; font-size: clamp(2.1rem, 5.4vw, 3rem); letter-spacing: -.018em; line-height: 1.06; text-wrap: balance; margin: 0; }
+h2 { font-weight: 700; font-size: 1.35rem; letter-spacing: -.008em; line-height: 1.25; margin: 0 0 1rem; }
+h3 { font-weight: 700; font-size: 1rem; line-height: 1.35; margin: 0 0 .3rem; }
+a { color: var(--green-ink); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+code, kbd { font-family: var(--mono); font-size: .85em; background: var(--surface-sunk); padding: .1em .34em; border-radius: var(--r-xs); overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin: 0; }
+.lede { max-width: 40rem; margin: 0; font-size: 1.075rem; }
+.muted { color: var(--ink-soft); }
+.hexmark { display: block; fill: currentColor; }
+.accent-rule { display: flex; height: 3px; width: 100%; border-radius: 2px; overflow: hidden; }
+.accent-rule i { display: block; height: 100%; }
+.accent-rule i:nth-child(1) { background: var(--red); flex: 0 0 3.5rem; }
+.accent-rule i:nth-child(2) { background: var(--green); flex: 0 0 1.5rem; }
+.accent-rule i:nth-child(3) { background: var(--blue); flex: 0 0 .75rem; }
+.accent-rule i:nth-child(4) { background: var(--band-rule); flex: 1 1 0; }
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--ground) 90%, transparent); backdrop-filter: saturate(140%) blur(10px); border-bottom: 1px solid var(--rule); }
+.topbar-inner { max-width: var(--w-content); margin: 0 auto; padding: .55rem 1.5rem; display: flex; align-items: center; gap: 1.1rem; }
+.topbar.wide .topbar-inner { max-width: var(--w-wide); }
+.brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1rem; letter-spacing: -.005em; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand .hexmark { width: 20px; color: var(--ink); }
+.navlinks { display: flex; align-items: center; gap: 1.1rem; margin-left: auto; font-size: .9rem; }
+.navlinks a:not(.nav-cta) { color: var(--ink-soft); text-decoration: none; }
+.navlinks a:not(.nav-cta):hover { color: var(--ink); text-decoration: underline; text-underline-offset: .2em; }
+.navlinks a[aria-current="page"] { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: .45em; }
+.nav-cta { padding: .3rem .85rem; border-radius: var(--r-pill); background: var(--action); color: var(--on-action); font-weight: 700; text-decoration: none; font-size: .875rem; white-space: nowrap; }
+.nav-cta:hover { filter: brightness(1.07); }
+@media (max-width: 40rem) { .navlinks a:not(.nav-cta) { display: none; } }
+.wrap { max-width: var(--w-content); margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+.wrap.wide { max-width: var(--w-wide); }
+section { scroll-margin-top: 4.5rem; }
+.stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.band { position: relative; overflow: hidden; background: var(--band); color: var(--band-ink); border: 1px solid var(--band-rule); border-radius: var(--r-2xl); padding: 2.25rem 2.25rem 1.9rem; }
+.band-watermark { position: absolute; right: -3.5rem; top: 50%; transform: translateY(-50%); width: 17rem; color: var(--band-ink); opacity: .05; pointer-events: none; }
+.band-head { position: relative; display: flex; align-items: flex-start; gap: 1.4rem; }
+.band-titles { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.band .eyebrow { color: var(--band-red); }
+.band .lede { color: var(--band-soft); }
+.band .accent-rule { margin-top: 1.75rem; }
+.band-actions { position: relative; margin-left: auto; display: flex; gap: var(--s-2); align-self: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; font: inherit; font-weight: 700; font-size: 1rem; line-height: 1.2; padding: .7rem 1.25rem; border-radius: var(--r-md); border: 1px solid transparent; background: var(--action); color: var(--on-action); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.btn:hover { filter: brightness(1.07); }
+.btn.sm { font-size: .875rem; padding: .4rem .8rem; }
+.btn.secondary { background: var(--surface); color: var(--ink); border-color: var(--control-edge); }
+.btn.secondary:hover { filter: none; background: var(--surface-sunk); }
+.btn.ghost { background: transparent; color: var(--ink-soft); }
+.btn.ghost:hover { filter: none; background: var(--surface-sunk); color: var(--ink); }
+.band .btn.secondary { background: transparent; color: var(--band-ink); border-color: var(--band-soft); }
+.band .btn.secondary:hover { background: rgba(253, 253, 253, .08); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; filter: none; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 1.25rem 1.4rem; }
+.panel.raised { border-radius: var(--r-xl); padding: 1.35rem 1.5rem; box-shadow: var(--shadow); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.tile { background: var(--surface); padding: 1rem 1.1rem; border-top: 3px solid transparent; }
+.tile.red { border-top-color: var(--red); }
+.tile.green { border-top-color: var(--green); }
+.tile.blue { border-top-color: var(--blue); }
+.tile.neutral { border-top-color: var(--rule); }
+.tile p { margin: 0; color: var(--ink-soft); font-size: .925rem; }
+.tile .value { font-size: 2.1rem; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--ink); margin: .2rem 0 .15rem; }
+.tile .eyebrow { color: var(--ink-soft); letter-spacing: .12em; }
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.steps > li { counter-increment: step; background: var(--surface); padding: 1.15rem 1.3rem 1.25rem 3.5rem; position: relative; }
+.steps > li::before { content: counter(step); position: absolute; left: 1.15rem; top: 1.1rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--ink); color: var(--ground); font-weight: 700; font-size: .875rem; display: flex; align-items: center; justify-content: center; }
+.steps p { margin: .35rem 0 0; color: var(--ink-soft); }
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.list > li { display: flex; align-items: center; gap: var(--s-3); padding: .75rem 1.1rem; border-top: 1px solid var(--rule-soft); }
+.list > li:first-child { border-top: 0; }
+.list > li .meta { margin-left: auto; color: var(--ink-soft); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.disclosure { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 0 1.3rem; }
+.disclosure > summary { cursor: pointer; padding: 1rem 0; font-weight: 700; font-size: 1.05rem; list-style-position: inside; }
+.disclosure > summary::marker { color: var(--red); }
+.disclosure-body { padding: .2rem 0 .9rem; border-top: 1px solid var(--rule-soft); color: var(--ink-soft); }
+.msg { margin: 0; padding: .65rem .9rem; border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: .925rem; line-height: 1.45; background: var(--surface-sunk); border-left: 3px solid var(--control-edge); color: var(--ink-soft); }
+.msg p { margin: 0; }
+.msg p + p { margin-top: .5rem; }
+.msg strong { color: var(--ink); }
+.msg.info { background: var(--blue-wash); border-left-color: var(--blue); }
+.msg.success { background: var(--blue-wash); border-left-color: var(--green); }
+.msg.warning { background: var(--red-wash); border-left-color: var(--red); }
+.msg.warning strong { color: var(--red-ink); }
+.pill { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .55rem; border-radius: var(--r-pill); font-size: .78rem; font-weight: 700; line-height: 1.5; white-space: nowrap; background: var(--surface-sunk); color: var(--ink-soft); }
+.pill.red { background: var(--red-wash); color: var(--red-ink); }
+.pill.green { background: var(--green-wash); color: var(--green-ink); }
+.pill.blue { background: var(--blue-wash); color: var(--blue-ink); }
+.pill.count { min-width: 1.5rem; justify-content: center; padding: .05rem .45rem; font-variant-numeric: tabular-nums; }
+.status { display: inline-flex; align-items: center; gap: .45rem; font-size: .925rem; white-space: nowrap; color: var(--ink); }
+.status svg { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; overflow: visible; }
+.status .edge { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linejoin: round; }
+.status .fill { fill: var(--ink); }
+.status[data-state="todo"] .fill { display: none; }
+.status[data-state="alert"] .fill { display: none; }
+.status[data-state="alert"] .edge { stroke: var(--red); }
+.status[data-state="alert"] .label { color: var(--red-ink); font-weight: 700; }
+.status[data-state="progress"] .fill { clip-path: inset(50% 0 0 0); }
+.status[data-state="done"] .fill { fill: var(--green); }
+.status[data-state="done"] .edge { stroke: var(--green-ink); }
+.status[data-state="past"] .fill { fill: var(--ink-faint); }
+.status[data-state="past"] .edge { stroke: var(--ink-faint); }
+.status[data-state="past"] .label { color: var(--ink-soft); }
+.status[data-state="cancelled"] .fill { display: none; }
+.status[data-state="cancelled"] .edge { stroke: var(--ink-faint); }
+.status[data-state="cancelled"] .label { color: var(--ink-soft); text-decoration: line-through; }
+.field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.field > label, .field > .label { font-size: .875rem; font-weight: 700; color: var(--ink); }
+.input, .select { width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .55rem .75rem; min-height: 2.6rem; }
+.select { appearance: none; padding-right: 2.2rem; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%); background-position: calc(100% - 1.05rem) 52%, calc(100% - .75rem) 52%; background-size: .32rem .32rem; background-repeat: no-repeat; }
+.input:hover, .select:hover { border-color: var(--ink-soft); }
+.input:focus, .select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 30%, transparent); }
+.field .hint { font-size: .825rem; color: var(--ink-soft); }
+.check { display: inline-flex; align-items: center; gap: .5rem; font-size: .95rem; cursor: pointer; }
+.check input { width: 1.05rem; height: 1.05rem; accent-color: var(--ink); margin: 0; }
+.segmented { display: inline-flex; background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: 2px; gap: 2px; }
+.segmented button { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--ink-soft); padding: .35rem .8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.segmented button:hover { color: var(--ink); background: var(--surface-sunk); }
+.segmented button[aria-pressed="true"] { background: var(--ink); color: var(--ground); font-weight: 700; }
+.toolbar { display: flex; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap; }
+.toolbar .field { min-width: 12rem; }
+.toolbar .spacer { flex: 1; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); }
+.table { width: 100%; border-collapse: collapse; font-size: .925rem; }
+.table th, .table td { text-align: left; vertical-align: top; padding: .7rem .85rem; border-bottom: 1px solid var(--rule-soft); }
+.table th { font-weight: 700; font-size: .75rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .09em; white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+.table td.secondary { color: var(--ink-soft); }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table.dense th, .table.dense td { padding: .5rem .75rem; vertical-align: middle; }
+.table tr.is-alert td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--s-4); align-items: start; }
+.column { background: var(--surface-sunk); border-radius: var(--r-lg); padding: .75rem; display: flex; flex-direction: column; gap: .6rem; }
+.column-head { display: flex; align-items: center; gap: .5rem; padding: .15rem .25rem .35rem; }
+.column-head h3 { margin: 0; font-size: .95rem; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: .8rem .95rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .3rem; }
+.card h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.card .meta { font-size: .85rem; color: var(--ink-soft); }
+.card.is-alert { border-left: 3px solid var(--red); }
+.footer { border-top: 1px solid var(--rule); padding-top: 1.4rem; font-size: .875rem; color: var(--ink-soft); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.footer-brand { display: flex; align-items: center; gap: .5rem; }
+.footer-brand .hexmark { width: 16px; color: var(--red); }
+</style>
+
+<style id="page">
+/* ─── Adaptations : composants absents du design system. Tokens du design system uniquement. ─── */
+[hidden] { display: none !important; }
+section { scroll-margin-top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + 1rem); }
+
+/* Onglets de niveau : même règle que le lien actif de la barre (texte --ink gras, trait rouge) */
+.tabs { position: sticky; top: var(--topbar-h, 3.65rem); z-index: 9; display: flex; gap: 1.75rem; background: var(--ground); border-bottom: 1px solid var(--rule); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-top: -1.5rem; }
+.tabs .short { display: none; }
+.tabs button { font: inherit; font-size: 1rem; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: .75rem 0 .65rem; color: var(--ink-soft); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: .5rem; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--red); }
+.tabpanel { display: flex; flex-direction: column; gap: 3rem; }
+.tabpanel:focus-visible { outline: none; }
+
+/* Code : même rendu que le bloc .code de la documentation du design system (fond --band) */
+pre { margin: 0; background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: 1rem 1.1rem; overflow: auto; font-family: var(--mono); font-size: .8rem; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: inherit; }
+/* Coloration : valeurs « encre sombre » du design system, lisibles sur --band dans les deux thèmes */
+.k { color: var(--band-red); } .t { color: #8dbae3; } .s { color: #23c490; } .c { color: var(--band-soft); font-style: italic; }
+
+/* Code ligne par ligne, avec la ligne courante en évidence */
+.codelines { background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: .6rem 0; font-family: var(--mono); font-size: .8rem; line-height: 1.6; overflow-x: auto; }
+.codelines div { padding: 0 1.1rem; white-space: pre; border-left: 3px solid transparent; }
+.codelines div.cur { background: rgba(110, 164, 215, .22); border-left-color: var(--blue); }
+.codelines div.paused { background: rgba(253, 253, 253, .06); border-left-color: var(--band-soft); }
+.codelines .ln { color: var(--band-soft); display: inline-block; width: 1.6rem; user-select: none; opacity: .7; }
+
+/* En-tête de niveau : surtitre + filet tricolore (usage autorisé du filet seul) */
+.part { display: flex; flex-direction: column; gap: .5rem; }
+.part .eyebrow { color: var(--red-ink); }
+.part h2 { font-size: clamp(1.6rem, 3.4vw, 2rem); letter-spacing: -.018em; margin: 0; }
+.part .lede { color: var(--ink-soft); }
+
+/* Sommaire */
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-4); }
+.toc ul { list-style: none; margin: .3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .2rem; font-size: .925rem; }
+.toc a { color: var(--ink-soft); text-decoration: none; }
+.toc a:hover { color: var(--ink); text-decoration: underline; }
+.toc h3 a { color: var(--ink); }
+
+/* Texte de section */
+.intro { margin: 0; color: var(--ink-soft); max-width: 48rem; }
+.sub { margin: 1.25rem 0 .5rem; }
+.prose { margin: 0; max-width: 52rem; }
+.prose + .prose { margin-top: .6rem; }
+ul.bul { margin: 0; padding-left: 1.2rem; }
+ul.bul li { margin: .2rem 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--s-4); }
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+@media (max-width: 52rem) { .split { grid-template-columns: minmax(0, 1fr); } }
+.tile pre { margin-top: .5rem; }
+.tile h3 { margin-bottom: .3rem; }
+
+/* Curseur (input range) : mêmes règles qu'un champ, libellé au-dessus */
+.field input[type="range"] { width: 100%; accent-color: var(--ink); margin: .35rem 0 0; }
+.field .val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Barre de pas pour les démonstrations pas à pas */
+.stepbar { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.stepbar .count { margin-left: auto; font-size: .875rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.note { min-height: 4.2rem; }
+
+/* Liste clé / valeur */
+.kv > li { justify-content: space-between; font-size: .925rem; }
+.kv > li > span:first-child { color: var(--ink-soft); }
+
+/* Workers du ThreadPool (simulateur) : tuile compacte à filet coloré */
+.threads { display: flex; flex-wrap: wrap; gap: 4px; }
+.th { width: 3.6rem; padding: .3rem .2rem; border-radius: var(--r-sm); background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--rule); font-size: .72rem; line-height: 1.25; text-align: center; color: var(--ink-soft); }
+.th b { display: block; color: var(--ink); }
+.th.cpu { background: var(--blue-wash); border-top-color: var(--blue); }
+.th.block { background: var(--red-wash); border-top-color: var(--red); }
+.th.new { box-shadow: 0 0 0 2px var(--blue); }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; min-height: .7rem; }
+.dot { width: .62rem; height: .62rem; border-radius: 50%; background: var(--ink-faint); }
+.dot.io { background: var(--green); }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .825rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+.zone h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-soft); margin-bottom: .5rem; }
+
+/* Ordonnanceur : une ligne par cœur, une case par tranche de temps */
+.corerow { display: flex; align-items: center; gap: .6rem; margin: 3px 0; }
+.corerow .lbl { width: 3.6rem; flex: 0 0 auto; font-size: .825rem; color: var(--ink-soft); }
+.cells { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.cell { flex: 1 1 0; min-width: 0; height: 1.5rem; border-radius: 3px; background: var(--surface-sunk); font-size: .65rem; font-weight: 700; color: var(--blue-ink); display: grid; place-items: center; overflow: hidden; }
+.cell.busy { background: var(--blue-wash); }
+.cell.sw { box-shadow: inset 3px 0 0 var(--red); }
+
+/* Barres de durée (Gantt, frises) */
+.gantt { display: flex; flex-direction: column; gap: .45rem; }
+.grow { display: flex; align-items: center; gap: .7rem; }
+.grow .lbl { width: 8.5rem; flex: 0 0 auto; font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); }
+.track { position: relative; flex: 1; height: 1.35rem; background: var(--surface-sunk); border-radius: var(--r-sm); overflow: hidden; }
+.track .bar { position: absolute; top: 0; height: 100%; background: var(--blue-wash); }
+.track .fill { position: absolute; top: 0; height: 100%; background: var(--blue); }
+.track .fill.total { background: var(--ink); }
+.segs { display: flex; flex: 1; height: 1.5rem; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-sunk); }
+.sg { height: 100%; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; color: var(--ink); }
+.sg.cpu { background: var(--blue-wash); box-shadow: inset 0 -3px 0 var(--blue); }
+.sg.ok { background: var(--green-wash); box-shadow: inset 0 -3px 0 var(--green); }
+.sg.bad { background: var(--red-wash); box-shadow: inset 0 -3px 0 var(--red); color: var(--red-ink); }
+.sg.free { color: var(--ink-soft); font-weight: 400; }
+.lanes { display: flex; flex-direction: column; gap: 2px; }
+.lane { position: relative; height: .55rem; background: var(--surface-sunk); border-radius: 2px; }
+.lane .job { position: absolute; top: 0; height: 100%; border-radius: 2px; background: var(--blue); }
+.lane .job.slow { background: var(--red); }
+
+/* Graphique SVG */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-soft); font-family: var(--font); font-size: 12px; }
+
+/* Vol de travail : files de tâches */
+.deque { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 2rem; padding: .3rem; border: 1px dashed var(--rule); border-radius: var(--r-sm); }
+.log { font-family: var(--mono); font-size: .8rem; display: flex; flex-direction: column; gap: .15rem; }
+.log div:first-child { color: var(--ink); font-weight: 700; }
+.log div { color: var(--ink-soft); }
+
+/* Objet en mémoire (pile et heap) : carte du kanban, avec repère pour le nouvel objet */
+.card.hot { box-shadow: var(--shadow), inset 3px 0 0 var(--blue); }
+.card.dead { opacity: .55; text-decoration: line-through; box-shadow: none; }
+.card.mono { font-family: var(--mono); font-size: .78rem; box-shadow: none; padding: .45rem .6rem; }
+.column .empty-note { font-size: .85rem; font-style: italic; color: var(--ink-soft); padding: .2rem .25rem; }
+
+/* Race condition et cache CPU */
+.ops { font-family: var(--mono); font-size: .82rem; display: flex; flex-direction: column; gap: 2px; }
+.ops div { padding: .2rem .45rem; border-radius: var(--r-xs); color: var(--ink-soft); }
+.ops div.done { text-decoration: line-through; }
+.ops div.next { background: var(--blue-wash); color: var(--ink); font-weight: 700; }
+.race { display: grid; grid-template-columns: minmax(0, 1fr) 11rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+@media (max-width: 44rem) { .race { grid-template-columns: minmax(0, 1fr); } }
+.mesi { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.mesi .full { grid-column: 1 / -1; }
+.cycle { display: flex; align-items: center; justify-content: center; gap: .6rem; flex-wrap: wrap; }
+.cycle .arr { color: var(--ink-faint); font-size: 1.2rem; }
+.cycle.on .arr { color: var(--red); }
+
+/* QCM : choix de réponse */
+.choice { display: block; width: 100%; overflow-wrap: anywhere; text-align: left; font: inherit; font-size: .95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .6rem .8rem; cursor: pointer; }
+.choice:hover { background: var(--surface-sunk); }
+.choice.right { background: var(--green-wash); border-color: var(--green-ink); font-weight: 700; }
+.choice.wrong { background: var(--red-wash); border-color: var(--red-ink); }
+.q .expl { display: none; }
+.q.answered .expl { display: block; }
+.qhead { position: sticky; top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + .5rem); z-index: 2; }
+.meter { height: 6px; background: var(--surface-sunk); border-radius: var(--r-pill); overflow: hidden; flex: 1; min-width: 8rem; }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
+.ste { font-size: .825rem; }
+
+/* Petits écrans : règles reprises de la documentation du design system */
+.segmented.segwrap { flex-wrap: wrap; }
+@media (max-width: 40rem) {
+  .band-head { flex-direction: column; }
+  .band-actions { margin-left: 0; align-self: flex-start; }
+  .band { padding: 1.6rem 1.4rem 1.5rem; }
+  .navlinks .segmented { display: none; }
+  .wrap { padding: 1.5rem 1rem 4rem; }
+  .tabs { gap: 1.2rem; }
+  .tabs .long { display: none; }
+  .tabs .short { display: inline; }
+  .qhead { position: static; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="carbon-hex" viewBox="0 0 768 840">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M369.5-0.5C378.5-0.5 387.5-0.5 396.5-0.5 421.557 2.18892 445.224 9.68892 467.5 22 537.5 62.6667 607.5 103.333 677.5 144 732.606 175.967 762.606 223.801 767.5 287.5 767.5 375.5 767.5 463.5 767.5 551.5 763.555 611.233 736.555 657.4 686.5 690 611.833 733.333 537.167 776.667 462.5 820 442.246 830.477 420.913 836.977 398.5 839.5 388.167 839.5 377.833 839.5 367.5 839.5 343.091 836.753 320.091 829.253 298.5 817 226.33 774.748 153.997 732.748 81.5 691 34.1078 661.067 6.77449 618.233-0.5 562.5-0.5 467.5-0.5 372.5-0.5 277.5 7.56046 217.532 37.8938 172.698 90.5 143 160.5 102.333 230.5 61.6667 300.5 21 322.212 9.25979 345.212 2.09313 369.5-0.5ZM376.5 89.5C393.288 88.7804 408.955 92.6137 423.5 101 495.67 143.252 568.003 185.252 640.5 227 661.1 240.677 673.267 259.843 677 284.5 677.667 374.5 677.667 464.5 677 554.5 673.178 580.671 660.011 600.505 637.5 614 567.5 654.667 497.5 695.333 427.5 736 399.572 753.199 371.239 753.866 342.5 738 269.167 695.333 195.833 652.667 122.5 610 102.63 595.097 91.4637 575.263 89 550.5 88.3333 463.167 88.3333 375.833 89 288.5 92.0014 261.521 104.835 240.688 127.5 226 199.997 184.252 272.33 142.252 344.5 100 354.682 94.6301 365.349 91.1301 376.5 89.5Z"/>
+  </symbol>
+</svg>
+
+<nav class="topbar wide">
+  <div class="topbar-inner">
+    <a class="brand" href="#haut">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      Cache et Redis .NET
+    </a>
+    <div class="navlinks">
+      <a href="#base" data-nav="base">Base</a>
+      <a href="#avance" data-nav="avance">Avancé</a>
+      <a href="#profond" data-nav="profond">Profond</a>
+      <span class="segmented" role="group" aria-label="Thème">
+        <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-theme-set="light" aria-pressed="false">Clair</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Sombre</button>
+      </span>
+      <a class="nav-cta" href="#qcm-base" id="ctaQcm">QCM</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap wide" id="haut">
+
+  <div class="band">
+    <svg class="hexmark band-watermark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+    <div class="band-head">
+      <div class="band-titles">
+        <p class="eyebrow">Carbon IT · Formation .NET</p>
+        <h1>Le cache et Redis en .NET</h1>
+        <p class="lede">La formation a trois niveaux : notions de base, notions avancées et notions profondes. Chaque niveau contient des simulateurs, des exemples de code et un QCM.</p>
+      </div>
+      <div class="band-actions">
+        <a class="btn secondary sm" href="#qcm-base">Aller au QCM</a>
+        <a class="btn sm" href="#base">Commencer</a>
+      </div>
+    </div>
+    <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <section class="panel raised stack" aria-labelledby="usage">
+    <h2 id="usage" style="margin:0">Utiliser cette page</h2>
+    <ol class="steps">
+      <li><h3>Choisissez un niveau</h3><p>Commencez par l'onglet « Notions de base ». Passez au niveau suivant quand le QCM de l'onglet donne au moins 80 %.</p></li>
+      <li><h3>Utilisez les simulateurs</h3><p>Changez les réglages. Les résultats changent immédiatement. Pour les démonstrations pas à pas, cliquez sur « Suivant ».</p></li>
+      <li><h3>Faites le QCM de l'onglet</h3><p>Chaque réponse affiche une explication. Pour un score inférieur à 80 %, refaites les simulateurs des thèmes en erreur.</p></li>
+    </ol>
+    <div class="toc" aria-label="Sommaire">
+      <div><h3><a href="#base">1 · Notions de base</a></h3><ul>
+        <li><a href="#pourquoi">Raisons d'utiliser un cache</a></li><li><a href="#glossaire">Glossaire</a></li><li><a href="#aside">Pattern cache-aside</a></li><li><a href="#hit">Simulateur de taux de hit</a></li><li><a href="#apis">IMemoryCache, IDistributedCache, HybridCache</a></li><li><a href="#expiration">Expiration et taille</a></li><li><a href="#redis">Redis avec StackExchange.Redis</a></li><li><a href="#cles">Clés et TTL</a></li><li><a href="#anti">Mauvaises pratiques</a></li><li><a href="#qcm-base">QCM de base</a></li>
+      </ul></div>
+      <div><h3><a href="#avance">2 · Notions avancées</a></h3><ul>
+        <li><a href="#stampede">Cache stampede</a></li><li><a href="#jitter">TTL et jitter</a></li><li><a href="#hybrid">HybridCache en détail</a></li><li><a href="#multi">Plusieurs instances et backplane</a></li><li><a href="#failsafe">Fail-safe et timeouts</a></li><li><a href="#eviction">Politiques d'éviction</a></li><li><a href="#httpcache">Output caching</a></li><li><a href="#lock">Verrou distribué</a></li><li><a href="#ratelimit">Rate limiting</a></li><li><a href="#serial">Sérialiseur</a></li><li><a href="#qcm-avance">QCM avancé</a></li>
+      </ul></div>
+      <div><h3><a href="#profond">3 · Notions profondes</a></h3><ul>
+        <li><a href="#single">Redis mono-thread</a></li><li><a href="#pipeline">Pipelining et multiplexage</a></li><li><a href="#bigkeys">Commandes O(N) et big keys</a></li><li><a href="#timeout">Lire un message de timeout</a></li><li><a href="#persist">Persistance RDB et AOF</a></li><li><a href="#topo">Réplication et Cluster</a></li><li><a href="#atomic">MULTI/EXEC et Lua</a></li><li><a href="#lru">LRU approximé</a></li><li><a href="#memoire">Mémoire et fragmentation</a></li><li><a href="#qcm-profond">QCM profond</a></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Niveau">
+    <button type="button" role="tab" id="tab-btn-base" aria-controls="base" aria-selected="true"><span class="long">Notions de base</span><span class="short">Base</span> <span class="pill count" title="Sections">9</span></button>
+    <button type="button" role="tab" id="tab-btn-avance" aria-controls="avance" aria-selected="false"><span class="long">Notions avancées</span><span class="short">Avancé</span> <span class="pill count" title="Sections">10</span></button>
+    <button type="button" role="tab" id="tab-btn-profond" aria-controls="profond" aria-selected="false"><span class="long">Notions profondes</span><span class="short">Profond</span> <span class="pill count" title="Sections">9</span></button>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS DE BASE ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="base" aria-labelledby="tab-btn-base" tabindex="-1">
+    <div class="part">
+      <p class="eyebrow">Niveau 1</p>
+      <h2>Notions de base</h2>
+      <p class="lede">Ces notions suffisent pour ajouter un cache correct à une API .NET. Elles expliquent le pattern cache-aside, les trois API de cache de .NET, l'expiration et l'utilisation de Redis.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="pourquoi" class="stack">
+      <h2>Raisons d'utiliser un cache</h2>
+      <p class="intro">Un cache garde une copie d'une donnée près du code qui la lit. Une lecture dans le cache est plus rapide qu'une lecture dans la source. Mais la copie peut être périmée.</p>
+      <div class="tiles">
+        <div class="tile red"><p class="eyebrow">Latence</p><h3>Réponse plus rapide</h3><p>Mémoire du process : moins de 1 µs. Redis sur le réseau local : environ 0,5 à 1 ms. Requête SQL avec jointures : 5 à 200 ms. Appel à une API partenaire : 50 à 500 ms.</p></div>
+        <div class="tile green"><p class="eyebrow">Charge</p><h3>Moins de travail pour la source</h3><p>Avec 95 % de hit, la base reçoit 20 fois moins de lectures. La base supporte donc un pic de trafic plus important.</p></div>
+        <div class="tile blue"><p class="eyebrow">Coût</p><h3>Fraîcheur des données</h3><p>Une donnée en cache peut être différente de la source. Pour chaque donnée, définissez la durée de périmé acceptable.</p></div>
+      </div>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Bons candidats</h3>
+          <ul class="bul">
+            <li>Données lues souvent et modifiées rarement : catalogue, référentiels, configuration.</li>
+            <li>Résultats de calculs coûteux : agrégats, rapports, pages de recherche fréquentes.</li>
+            <li>Réponses d'API externes lentes ou facturées à l'appel.</li>
+            <li>Données de session ou jetons, avec une durée limitée.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Mauvais candidats</h3>
+          <ul class="bul">
+            <li>Données qui doivent être exactes à chaque lecture : solde, stock au moment de la commande.</li>
+            <li>Données lues une seule fois : le taux de hit est proche de 0.</li>
+            <li>Données personnelles sensibles sans chiffrement ni durée courte.</li>
+            <li>Requêtes déjà rapides : le cache ajoute de la complexité sans gain mesurable.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="msg info"><p><strong>À retenir.</strong> Le cache échange de la fraîcheur contre de la vitesse. Mesurez d'abord la latence et la charge. Ajoutez ensuite un cache pour une lecture précise, avec un TTL choisi pour cette donnée.</p></div>
+    </section>
+
+    <section id="glossaire" class="stack">
+      <h2>Glossaire</h2>
+      <p class="intro">Cette page utilise ces termes avec ce sens uniquement.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+        <tbody>
+          <tr><td><b>Source</b></td><td class="secondary">Système qui contient la donnée de référence : base de données, API, fichier.</td></tr>
+          <tr><td><b>Hit</b></td><td class="secondary">Lecture servie par le cache.</td></tr>
+          <tr><td><b>Miss</b></td><td class="secondary">Lecture absente du cache. Le code lit alors la source.</td></tr>
+          <tr><td><b>Taux de hit</b></td><td class="secondary">Nombre de hits divisé par le nombre de lectures.</td></tr>
+          <tr><td><b>TTL</b></td><td class="secondary">Time To Live. Durée de vie d'une entrée. À la fin du TTL, l'entrée disparaît.</td></tr>
+          <tr><td><b>Expiration absolue</b></td><td class="secondary">L'entrée expire à une date fixe, même si le code la lit souvent.</td></tr>
+          <tr><td><b>Expiration glissante</b></td><td class="secondary">Chaque lecture repousse l'expiration. Une entrée lue souvent n'expire pas.</td></tr>
+          <tr><td><b>Invalidation</b></td><td class="secondary">Suppression volontaire d'une entrée, en général après une modification de la source.</td></tr>
+          <tr><td><b>Éviction</b></td><td class="secondary">Suppression d'une entrée par le cache lui-même, quand la mémoire est pleine.</td></tr>
+          <tr><td><b>L1, L2</b></td><td class="secondary">L1 : cache en mémoire du process, très rapide, propre à chaque instance. L2 : cache distribué partagé, par exemple Redis.</td></tr>
+          <tr><td><b>Sérialisation</b></td><td class="secondary">Transformation d'un objet en octets. Un cache distribué stocke des octets, pas des objets .NET.</td></tr>
+          <tr><td><b>Stampede</b></td><td class="secondary">Beaucoup de requêtes trouvent la même clé absente au même moment. Elles lisent toutes la source. Voir le <a href="#stampede">simulateur</a>.</td></tr>
+          <tr><td><b>Backplane</b></td><td class="secondary">Canal de messages entre instances. Il signale les invalidations pour vider les caches L1.</td></tr>
+          <tr><td><b>Multiplexer</b></td><td class="secondary">Objet <code>ConnectionMultiplexer</code> de StackExchange.Redis. Il partage une connexion entre tous les threads.</td></tr>
+          <tr><td><b>RTT</b></td><td class="secondary">Round-Trip Time. Durée d'un aller-retour réseau entre le client et Redis.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="aside" class="stack">
+      <h2>Pattern cache-aside</h2>
+      <p class="intro">Le code de l'application gère le cache. À la lecture, il essaie le cache puis la source. À l'écriture, il modifie la source puis supprime l'entrée du cache. C'est le pattern le plus courant.</p>
+      <div class="panel stack">
+        <div class="split">
+          <div class="codelines" id="caCode"></div>
+          <ul class="list kv">
+            <li><span>Clé dans Redis</span><span id="caCache"></span></li>
+            <li><span>Ligne en base</span><span id="caDb"></span></li>
+            <li><span>Latence de l'appel</span><span id="caLat"></span></li>
+            <li><span>Résultat</span><span id="caRes"></span></li>
+          </ul>
+        </div>
+        <div data-stepbar="ca"></div>
+      </div>
+      <h3 class="sub">Autres patterns</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Pattern</th><th>Fonctionnement</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr><td><b>Cache-aside</b></td><td class="secondary">L'application lit le cache, puis la source en cas de miss. Elle remplit le cache.</td><td class="secondary">Cas général. HybridCache et FusionCache appliquent ce pattern.</td></tr>
+          <tr><td><b>Read-through</b></td><td class="secondary">Le cache lit lui-même la source en cas de miss. L'application parle seulement au cache.</td><td class="secondary"><code>GetOrCreateAsync</code> donne ce comportement côté code.</td></tr>
+          <tr><td><b>Write-through</b></td><td class="secondary">Chaque écriture va dans le cache et dans la source.</td><td class="secondary">Données relues juste après l'écriture.</td></tr>
+          <tr><td><b>Write-behind</b></td><td class="secondary">L'écriture va dans le cache. Un processus écrit plus tard dans la source.</td><td class="secondary">Compteurs, métriques. Risque de perte si le cache tombe.</td></tr>
+          <tr><td><b>Refresh-ahead</b></td><td class="secondary">Le cache recharge une entrée populaire avant son expiration.</td><td class="secondary">Clés très lues. FusionCache : <code>EagerRefreshThreshold</code>.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Supprimer, ne pas écrire.</strong> Après une modification, supprimez la clé. N'écrivez pas la nouvelle valeur dans le cache. Deux écritures concurrentes peuvent arriver dans le cache dans un ordre différent de la base. Le cache garde alors l'ancienne valeur jusqu'au TTL. Une suppression n'a pas ce problème.</p></div>
+    </section>
+
+    <section id="hit" class="stack">
+      <h2>Simulateur : taux de hit, latence et charge de la base</h2>
+      <p class="intro">Une API lit des fiches produit. Quelques produits sont très lus, la plupart sont peu lus (distribution de Zipf). Le simulateur exécute 120 secondes de trafic. Les indicateurs portent sur les 60 dernières secondes (régime établi).</p>
+      <div class="panel stack">
+        <div class="field"><span class="label">Cache</span><span class="segmented segwrap" role="group" aria-label="Cache" id="hrMode"><button type="button" data-m="none" aria-pressed="false">Aucun</button><button type="button" data-m="local" aria-pressed="false">IMemoryCache (L1)</button><button type="button" data-m="redis" aria-pressed="true">Redis (L2)</button><button type="button" data-m="hybrid" aria-pressed="false">HybridCache (L1 + L2)</button></span></div>
+        <div class="toolbar">
+          <div class="field"><label for="hrKeys">Produits distincts : <span class="val" id="hrKeysO"></span></label><input type="range" id="hrKeys" min="100" max="20000" step="100" value="5000"></div>
+          <div class="field"><label for="hrTtl">TTL (s) : <span class="val" id="hrTtlO"></span></label><input type="range" id="hrTtl" min="5" max="600" step="5" value="60"></div>
+          <div class="field"><label for="hrRps">Requêtes par seconde : <span class="val" id="hrRpsO"></span></label><input type="range" id="hrRps" min="50" max="2000" step="50" value="500"></div>
+          <div class="field"><label for="hrInst">Instances de l'API : <span class="val" id="hrInstO"></span></label><input type="range" id="hrInst" min="1" max="8" value="4"></div>
+          <div class="field"><label for="hrDb">Latence de la base (ms) : <span class="val" id="hrDbO"></span></label><input type="range" id="hrDb" min="5" max="200" step="5" value="40"></div>
+        </div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Taux de hit</p><p class="value" id="hrHit">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Lectures en base / s</p><p class="value" id="hrDbQ">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Latence moyenne</p><p class="value" id="hrLat">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Copies en cache</p><p class="value" id="hrCopies">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Âge max. d'une donnée lue</p><p class="value" id="hrStale">–</p></div>
+        </div>
+        <div class="zone"><h3>Taux de hit par tranche de 10 s</h3><div class="chart" id="hrChart"></div></div>
+        <div class="msg" id="hrNote"></div>
+      </div>
+      <div class="msg info"><p><strong>Comparaison.</strong> Passez de 1 à 8 instances en mode IMemoryCache. Chaque instance a son propre cache. Chaque instance charge donc chaque produit depuis la base. Le taux de hit baisse. Avec Redis, le cache est partagé : le nombre d'instances ne change pas le taux de hit. HybridCache combine les deux : L1 pour la vitesse, L2 pour le partage.</p></div>
+    </section>
+
+    <section id="apis" class="stack">
+      <h2><code>IMemoryCache</code>, <code>IDistributedCache</code> et <code>HybridCache</code></h2>
+      <p class="intro">.NET propose trois abstractions. Elles ne stockent pas les données au même endroit et ne protègent pas contre les mêmes problèmes.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th></th><th><code>IMemoryCache</code></th><th><code>IDistributedCache</code></th><th><code>HybridCache</code></th></tr></thead>
+        <tbody>
+          <tr><td><b>Stockage</b></td><td class="secondary">Mémoire du process (L1)</td><td class="secondary">Serveur externe : Redis, SQL Server… (L2)</td><td class="secondary">L1 en mémoire + L2 si un <code>IDistributedCache</code> est enregistré</td></tr>
+          <tr><td><b>Valeur stockée</b></td><td class="secondary">Référence vers l'objet .NET</td><td class="secondary"><code>byte[]</code> : sérialisation obligatoire</td><td class="secondary">Objet typé. Sérialisation automatique (System.Text.Json par défaut)</td></tr>
+          <tr><td><b>Partagé entre instances</b></td><td class="secondary">Non</td><td class="secondary">Oui</td><td class="secondary">L2 oui, L1 non</td></tr>
+          <tr><td><b>Survit à un redémarrage</b></td><td class="secondary">Non</td><td class="secondary">Oui</td><td class="secondary">L2 oui</td></tr>
+          <tr><td><b>Protection stampede</b></td><td class="secondary">Non, même avec <code>GetOrCreateAsync</code></td><td class="secondary">Non</td><td class="secondary">Oui, par instance</td></tr>
+          <tr><td><b>Invalidation par tag</b></td><td class="secondary">Non (tokens d'expiration seulement)</td><td class="secondary">Non</td><td class="secondary">Oui : <code>RemoveByTagAsync</code></td></tr>
+          <tr><td><b>Package</b></td><td class="secondary">Inclus dans ASP.NET Core</td><td class="secondary"><code>Microsoft.Extensions.Caching.StackExchangeRedis</code></td><td class="secondary"><code>Microsoft.Extensions.Caching.Hybrid</code> (.NET 9, compatible .NET 8)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="grid2">
+<script type="text/x-csharp">
+// IMemoryCache : objet .NET en mémoire
+builder.Services.AddMemoryCache(o => o.SizeLimit = 10_000);
+
+var product = await _memory.GetOrCreateAsync($"product:{id}", async entry =>
+{
+    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+    entry.Size = 1; // obligatoire si SizeLimit est défini
+    return await _repo.FindAsync(id, ct);
+});
+</script>
+<script type="text/x-csharp">
+// IDistributedCache : octets dans Redis
+builder.Services.AddStackExchangeRedisCache(o =>
+{
+    o.Configuration = builder.Configuration.GetConnectionString("Redis");
+    o.InstanceName = "catalog:"; // préfixe de toutes les clés
+});
+
+var json = await _distributed.GetStringAsync($"product:{id}", ct);
+if (json is null)
+{
+    var p = await _repo.FindAsync(id, ct);
+    await _distributed.SetStringAsync($"product:{id}", JsonSerializer.Serialize(p),
+        new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }, ct);
+}
+</script>
+      </div>
+<script type="text/x-csharp">
+// HybridCache : L1 + L2, sérialisation et protection stampede incluses
+builder.Services.AddStackExchangeRedisCache(o => o.Configuration = "redis:6379"); // devient le L2
+builder.Services.AddHybridCache(o => o.DefaultEntryOptions = new HybridCacheEntryOptions
+{
+    Expiration = TimeSpan.FromMinutes(5),          // durée dans L2
+    LocalCacheExpiration = TimeSpan.FromMinutes(1) // durée dans L1
+});
+
+public async Task<ProductDto?> GetAsync(int id, CancellationToken ct) =>
+    await _cache.GetOrCreateAsync(
+        $"product:{id}",
+        async token => await _repo.FindAsync(id, token),
+        tags: ["products"],
+        cancellationToken: ct);
+</script>
+      <div class="msg warning"><p><strong>Référence partagée.</strong> <code>IMemoryCache</code> stocke une référence, pas une copie. Un appelant qui modifie l'objet lu modifie aussi l'objet en cache. Tous les autres appelants voient la modification. Mettez en cache des objets immuables (<code>record</code>, DTO en lecture seule). Ne mettez pas en cache une entité EF Core suivie.</p></div>
+    </section>
+
+    <section id="expiration" class="stack">
+      <h2>Expiration et taille</h2>
+      <p class="intro">Une entrée est lue toutes les N secondes. Choisissez le type d'expiration. La frise montre les périodes où l'entrée existe et les chargements depuis la base.</p>
+      <div class="panel stack">
+        <div class="field"><span class="label">Expiration</span><span class="segmented segwrap" role="group" aria-label="Expiration" id="exMode"><button type="button" data-m="abs" aria-pressed="true">Absolue</button><button type="button" data-m="slide" aria-pressed="false">Glissante</button><button type="button" data-m="both" aria-pressed="false">Glissante + absolue</button></span></div>
+        <div class="toolbar">
+          <div class="field"><label for="exTtl">Durée (absolue ou glissante) en s : <span class="val" id="exTtlO"></span></label><input type="range" id="exTtl" min="10" max="120" step="5" value="30"></div>
+          <div class="field"><label for="exGap">Intervalle entre deux lectures (s) : <span class="val" id="exGapO"></span></label><input type="range" id="exGap" min="2" max="60" value="10"></div>
+          <div class="field" id="exAbsWrap" hidden><label for="exAbs">Plafond absolu (s) : <span class="val" id="exAbsO"></span></label><input type="range" id="exAbs" min="30" max="300" step="10" value="90"></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--green)"></i>Entrée présente</span><span><i style="background:var(--red)"></i>Chargement depuis la base (miss)</span><span>Frise de 300 s</span></div>
+        <div class="track" id="exTrack" style="height:2rem"></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Lectures</p><p class="value" id="exReads">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Chargements base</p><p class="value" id="exLoads">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Âge max. de la donnée lue</p><p class="value" id="exAge">–</p></div>
+        </div>
+        <div class="msg" id="exNote"></div>
+      </div>
+<script type="text/x-csharp">
+var options = new MemoryCacheEntryOptions
+{
+    SlidingExpiration = TimeSpan.FromSeconds(30),                 // repoussée à chaque lecture
+    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(90),   // plafond : jamais plus de 90 s
+    Size = 1,                                                     // unité choisie par l'application
+    Priority = CacheItemPriority.Normal                           // ordre de suppression si la taille est dépassée
+};
+</script>
+      <div class="msg"><p><strong>Taille.</strong> Sans <code>SizeLimit</code>, <code>IMemoryCache</code> grandit sans limite jusqu'à l'expiration des entrées. Avec des clés très variées (par exemple une clé par recherche), la mémoire du process augmente. Définissez <code>SizeLimit</code> et une <code>Size</code> par entrée. Quand la limite est atteinte, le cache refuse les nouvelles entrées et lance un compactage.</p></div>
+    </section>
+
+    <section id="redis" class="stack">
+      <h2>Redis avec StackExchange.Redis</h2>
+      <p class="intro">Redis est un serveur de structures de données en mémoire. StackExchange.Redis est le client .NET le plus utilisé. <code>IDistributedCache</code> utilise ce client, mais il expose seulement des chaînes d'octets.</p>
+<script type="text/x-csharp">
+// Program.cs : un seul multiplexer pour toute l'application
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect("redis:6379,abortConnect=false,connectTimeout=5000"));
+
+public sealed class ProductCache(IConnectionMultiplexer redis)
+{
+    private readonly IDatabase _db = redis.GetDatabase(); // objet léger, pas de connexion
+
+    public async Task<string?> GetAsync(int id) =>
+        await _db.StringGetAsync($"product:{id}");           // RedisValue → string? (null si absent)
+
+    public Task<bool> SetAsync(int id, string json) =>
+        _db.StringSetAsync($"product:{id}", json, TimeSpan.FromMinutes(5));
+}
+</script>
+      <div class="msg warning"><p><strong>Un seul multiplexer.</strong> <code>ConnectionMultiplexer</code> est thread-safe et coûteux à créer : connexion TCP, TLS, découverte de la topologie. Créez-en un par application et par serveur Redis. Un multiplexer par requête ouvre des milliers de connexions et sature Redis. <code>abortConnect=false</code> permet au process de démarrer quand Redis est indisponible : le multiplexer se reconnecte en arrière-plan.</p></div>
+      <h3 class="sub">Types de données Redis</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Type</th><th>Contenu</th><th>Commandes</th><th>Usage</th><th>StackExchange.Redis</th></tr></thead>
+        <tbody>
+          <tr><td><b>String</b></td><td class="secondary">Octets, jusqu'à 512 Mo</td><td class="secondary"><code>GET</code> <code>SET</code> <code>INCR</code></td><td class="secondary">Valeur JSON en cache, compteur</td><td class="secondary"><code>StringGetAsync</code>, <code>StringIncrementAsync</code></td></tr>
+          <tr><td><b>Hash</b></td><td class="secondary">Champs et valeurs</td><td class="secondary"><code>HGET</code> <code>HSET</code> <code>HINCRBY</code></td><td class="secondary">Objet lu champ par champ, panier</td><td class="secondary"><code>HashGetAsync</code>, <code>HashSetAsync</code></td></tr>
+          <tr><td><b>List</b></td><td class="secondary">Liste ordonnée</td><td class="secondary"><code>LPUSH</code> <code>RPOP</code> <code>LRANGE</code></td><td class="secondary">File simple, derniers événements</td><td class="secondary"><code>ListLeftPushAsync</code></td></tr>
+          <tr><td><b>Set</b></td><td class="secondary">Valeurs uniques sans ordre</td><td class="secondary"><code>SADD</code> <code>SISMEMBER</code></td><td class="secondary">Visiteurs uniques, tags</td><td class="secondary"><code>SetAddAsync</code></td></tr>
+          <tr><td><b>Sorted set</b></td><td class="secondary">Valeurs uniques triées par score</td><td class="secondary"><code>ZADD</code> <code>ZRANGE</code> <code>ZREMRANGEBYSCORE</code></td><td class="secondary">Classement, fenêtre glissante de rate limiting</td><td class="secondary"><code>SortedSetAddAsync</code></td></tr>
+          <tr><td><b>Stream</b></td><td class="secondary">Journal d'entrées horodatées</td><td class="secondary"><code>XADD</code> <code>XREADGROUP</code></td><td class="secondary">File de messages légère</td><td class="secondary"><code>StreamAddAsync</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="cles" class="stack">
+      <h2>Conception des clés et TTL</h2>
+      <p class="intro">Redis n'a pas de tables. Toutes les clés sont dans un seul espace par base. Un nom de clé structuré évite les collisions et facilite le diagnostic.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Règles de nommage</h3>
+          <ul class="bul">
+            <li><b>Préfixe d'application</b> : <code>catalog:</code>. Plusieurs applications partagent souvent le même Redis.</li>
+            <li><b>Type d'objet et identifiant</b> : <code>catalog:product:42</code>.</li>
+            <li><b>Version du format</b> : <code>catalog:product:v2:42</code>. Après un changement du DTO, les anciennes valeurs ne sont plus lues. Elles expirent seules.</li>
+            <li><b>Pas de données brutes de l'utilisateur</b> : une recherche longue ou avec des caractères spéciaux donne une clé imprévisible. Utilisez un hash (SHA-256) du critère.</li>
+            <li><b>Clé courte</b> : chaque clé utilise de la mémoire. Évitez les clés de plusieurs centaines d'octets.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>TTL en Redis</h3>
+<script type="text/x-redis">
+SET catalog:product:v2:42 "{...}" EX 300   # TTL de 300 s
+TTL catalog:product:v2:42                  # 297 : secondes restantes
+PTTL catalog:product:v2:42                 # 296874 : millisecondes
+PERSIST catalog:product:v2:42              # supprime le TTL
+TTL catalog:product:v2:42                  # -1 : clé sans TTL
+TTL catalog:product:v2:999                 # -2 : clé absente
+</script>
+        </div>
+      </div>
+      <div class="msg warning"><p><strong>Clé sans TTL.</strong> Une clé de cache sans TTL reste en mémoire pour toujours. Redis se remplit. Avec la politique par défaut <code>noeviction</code>, Redis refuse ensuite les écritures. Donnez un TTL à chaque clé de cache.</p></div>
+    </section>
+
+    <section id="anti" class="stack">
+      <h2>Mauvaises pratiques : description, cause, correction</h2>
+      <p class="intro">Cliquez sur un titre pour afficher le détail.</p>
+      <div class="stack" id="antiList"></div>
+    </section>
+
+    <section id="qcm-base" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 1</p>
+        <h2>QCM : notions de base</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="b"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS AVANCÉES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="avance" aria-labelledby="tab-btn-avance" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 2</p>
+      <h2>Notions avancées</h2>
+      <p class="lede">Ces notions expliquent les incidents de production liés au cache : pics de charge à l'expiration, données différentes entre instances, Redis indisponible, mémoire pleine, verrous distribués incorrects.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="stampede" class="stack">
+      <h2>Simulateur : cache stampede</h2>
+      <p class="intro">Une clé très lue expire. Des requêtes arrivent pendant le rechargement. Sans protection, chaque requête trouve un miss et lance la même requête SQL. La base reçoit beaucoup de requêtes identiques. Elle ralentit, et le rechargement dure plus longtemps. Dans ce modèle, la base traite 10 requêtes à la fois sans ralentir.</p>
+      <div class="panel stack">
+        <div class="field"><span class="label">Protection</span><span class="segmented segwrap" role="group" aria-label="Protection" id="stMode"><button type="button" data-m="none" aria-pressed="true">Aucune</button><button type="button" data-m="coalesce" aria-pressed="false">Coalescing par instance (HybridCache)</button><button type="button" data-m="lock" aria-pressed="false">Verrou distribué</button></span></div>
+        <div class="toolbar">
+          <div class="field"><label for="stReq">Requêtes sur la clé : <span class="val" id="stReqO"></span></label><input type="range" id="stReq" min="10" max="500" step="10" value="200"></div>
+          <div class="field"><label for="stSpread">Arrivées réparties sur (ms) : <span class="val" id="stSpreadO"></span></label><input type="range" id="stSpread" min="0" max="2000" step="50" value="500"></div>
+          <div class="field"><label for="stInst">Instances : <span class="val" id="stInstO"></span></label><input type="range" id="stInst" min="1" max="10" value="4"></div>
+          <div class="field"><label for="stDb">Durée de la requête SQL seule (ms) : <span class="val" id="stDbO"></span></label><input type="range" id="stDb" min="50" max="1000" step="50" value="200"></div>
+        </div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Requêtes SQL</p><p class="value" id="stQ">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Requêtes SQL simultanées (pic)</p><p class="value" id="stPeak">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Latence moyenne</p><p class="value" id="stAvg">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Latence maximale</p><p class="value" id="stMax">–</p></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--red)"></i>Requête qui exécute le SQL</span><span><i style="background:var(--blue-wash);box-shadow:inset 0 0 0 1px var(--blue)"></i>Requête qui attend le résultat d'une autre</span><span><i style="background:var(--blue)"></i>Hit</span><span>Une ligne = une requête HTTP (50 au plus)</span></div>
+        <div class="lanes" id="stLanes"></div>
+        <div class="msg" id="stNote"></div>
+      </div>
+<script type="text/x-csharp">
+// Coalescing à la main (ce que fait HybridCache) : une seule Task par clé et par instance
+private readonly ConcurrentDictionary<string, Lazy<Task<ProductDto?>>> _inflight = new();
+
+public async Task<ProductDto?> GetAsync(int id, CancellationToken ct)
+{
+    var key = $"product:{id}";
+    if (_memory.TryGetValue(key, out ProductDto? hit)) return hit;
+
+    var lazy = _inflight.GetOrAdd(key, _ => new Lazy<Task<ProductDto?>>(() => LoadAsync(key, id)));
+    try { return await lazy.Value.WaitAsync(ct); }  // toutes les requêtes attendent la même Task
+    finally { _inflight.TryRemove(KeyValuePair.Create(key, lazy)); }
+}
+</script>
+      <div class="msg info"><p><strong>Limite du coalescing.</strong> HybridCache regroupe les appels <b>dans un process</b>. Avec 10 instances, la base reçoit au plus 10 requêtes, une par instance. C'est en général suffisant. Un verrou distribué réduit ce nombre à 1, mais il ajoute des allers-retours Redis et des attentes. Réservez-le aux rechargements très coûteux.</p></div>
+    </section>
+
+    <section id="jitter" class="stack">
+      <h2>TTL et jitter</h2>
+      <p class="intro">Après un déploiement ou un vidage de Redis, l'application recharge beaucoup de clés au même moment. Avec le même TTL, toutes ces clés expirent ensemble. La charge sur la base revient par vagues. Un jitter ajoute une variation aléatoire au TTL. Les expirations se répartissent dans le temps.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="jiKeys">Clés chargées au démarrage : <span class="val" id="jiKeysO"></span></label><input type="range" id="jiKeys" min="100" max="5000" step="100" value="2000"></div>
+          <div class="field"><label for="jiTtl">TTL (s) : <span class="val" id="jiTtlO"></span></label><input type="range" id="jiTtl" min="60" max="600" step="30" value="300"></div>
+          <div class="field"><label for="jiJit">Jitter (± %) : <span class="val" id="jiJitO"></span></label><input type="range" id="jiJit" min="0" max="50" value="0"></div>
+        </div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Pic de rechargements / s</p><p class="value" id="jiPeak">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Moyenne / s</p><p class="value" id="jiAvg">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Pic / moyenne</p><p class="value" id="jiRatio">–</p></div>
+        </div>
+        <div class="zone"><h3>Rechargements par tranche de 10 s, sur 30 minutes (hors chargement initial)</h3><div class="chart" id="jiChart"></div></div>
+      </div>
+<script type="text/x-csharp">
+// TTL de 5 min ± 10 %
+var ttl = TimeSpan.FromSeconds(300 * (0.9 + Random.Shared.NextDouble() * 0.2));
+await _db.StringSetAsync(key, json, ttl);
+</script>
+    </section>
+
+    <section id="hybrid" class="stack">
+      <h2><code>HybridCache</code> en détail</h2>
+      <p class="intro">HybridCache est l'API recommandée depuis .NET 9. Le package fonctionne aussi avec .NET 8. Il remplace le code cache-aside écrit à la main.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Fonction</th><th>Comportement</th></tr></thead>
+        <tbody>
+          <tr><td><code>GetOrCreateAsync</code></td><td class="secondary">Lit L1, puis L2, puis appelle la factory. Écrit le résultat dans L2 et L1. Un seul appel de factory par clé et par instance.</td></tr>
+          <tr><td><code>SetAsync</code></td><td class="secondary">Écrit dans L1 et L2 sans lire.</td></tr>
+          <tr><td><code>RemoveAsync</code></td><td class="secondary">Supprime la clé de L1 (instance courante) et de L2.</td></tr>
+          <tr><td><code>RemoveByTagAsync</code></td><td class="secondary">Invalide toutes les entrées qui ont ce tag. L'invalidation est logique : HybridCache ignore ces entrées aux lectures suivantes.</td></tr>
+          <tr><td><code>Expiration</code> / <code>LocalCacheExpiration</code></td><td class="secondary">Durée globale (L2) et durée dans L1. Un L1 court limite l'écart entre instances.</td></tr>
+          <tr><td><code>HybridCacheEntryFlags</code></td><td class="secondary">Désactive L1, L2 ou la compression pour une entrée. Exemple : <code>DisableLocalCache</code> pour une donnée qui change souvent.</td></tr>
+          <tr><td><code>MaximumPayloadBytes</code></td><td class="secondary">Taille maximale d'une valeur (1 Mo par défaut). Une valeur plus grande n'est pas mise en cache.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+public async Task<IReadOnlyList<ProductDto>> ListByCategoryAsync(int categoryId, CancellationToken ct) =>
+    await _cache.GetOrCreateAsync(
+        $"catalog:category:{categoryId}:products",
+        (repo: _repo, categoryId),                                  // état : évite une closure
+        static async (s, token) => await s.repo.ListAsync(s.categoryId, token),
+        new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(10) },
+        tags: ["products", $"category:{categoryId}"],
+        cancellationToken: ct);
+
+public async Task UpdateAsync(ProductDto dto, CancellationToken ct)
+{
+    await _repo.UpdateAsync(dto, ct);
+    await _cache.RemoveAsync($"product:{dto.Id}", ct);
+    await _cache.RemoveByTagAsync($"category:{dto.CategoryId}", ct); // toutes les listes de la catégorie
+}
+</script>
+      <div class="msg warning"><p><strong>Pas de backplane.</strong> HybridCache ne prévient pas les autres instances. Après <code>RemoveAsync</code>, les autres instances gardent leur L1 jusqu'à <code>LocalCacheExpiration</code>. Choisissez une durée L1 compatible avec l'écart acceptable. Pour une invalidation immédiate sur toutes les instances, utilisez une bibliothèque avec backplane (FusionCache) ou désactivez L1 pour cette donnée.</p></div>
+    </section>
+
+    <section id="multi" class="stack">
+      <h2>Plusieurs instances : cohérence des caches L1</h2>
+      <p class="intro">Deux instances A et B de l'API utilisent un cache L1 et Redis en L2. Un utilisateur modifie le prix d'un produit sur l'instance A. Choisissez le mode, puis avancez étape par étape.</p>
+      <div class="panel stack">
+        <span class="segmented segwrap" role="group" aria-label="Mode" id="mlMode"><button type="button" data-m="none" aria-pressed="true">Sans backplane</button><button type="button" data-m="bp" aria-pressed="false">Avec backplane Redis pub/sub</button></span>
+        <div class="board">
+          <div class="column"><div class="column-head"><h3>Instance A : L1</h3></div><div id="mlA"></div></div>
+          <div class="column"><div class="column-head"><h3>Instance B : L1</h3></div><div id="mlB"></div></div>
+          <div class="column"><div class="column-head"><h3>Redis (L2)</h3></div><div id="mlR"></div></div>
+          <div class="column"><div class="column-head"><h3>Base de données</h3></div><div id="mlD"></div></div>
+        </div>
+        <div data-stepbar="ml"></div>
+      </div>
+<script type="text/x-csharp">
+// FusionCache : L1 + L2 + backplane
+builder.Services.AddFusionCache()
+    .WithDefaultEntryOptions(new FusionCacheEntryOptions { Duration = TimeSpan.FromMinutes(5) })
+    .WithSerializer(new FusionCacheSystemTextJsonSerializer())
+    .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = "redis:6379" }))
+    .WithBackplane(new RedisBackplane(new RedisBackplaneOptions { Configuration = "redis:6379" }));
+</script>
+      <div class="msg info"><p><strong>Le backplane n'est pas une garantie.</strong> Redis pub/sub ne garde pas les messages. Une instance déconnectée pendant l'envoi ne reçoit pas l'invalidation. Gardez donc un TTL L1 court, même avec un backplane.</p></div>
+    </section>
+
+    <section id="failsafe" class="stack">
+      <h2>Fail-safe, timeouts et Redis indisponible</h2>
+      <p class="intro">Le cache doit accélérer l'application. Il ne doit pas la rendre indisponible. Deux questions : que fait l'API si Redis ne répond pas ? Que fait l'API si la base ne répond pas pendant un rechargement ?</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Redis indisponible</h3>
+          <ul class="bul">
+            <li><code>IDistributedCache</code> et <code>IDatabase</code> lèvent une <code>RedisConnectionException</code> ou une <code>RedisTimeoutException</code>.</li>
+            <li>Sans <code>try/catch</code>, chaque requête retourne une erreur 500, même si la base fonctionne.</li>
+            <li>Traitez une erreur de cache comme un miss : journalisez, puis lisez la source.</li>
+            <li>Réduisez <code>syncTimeout</code>/<code>asyncTimeout</code> (5 s par défaut). Un cache qui répond en 5 s n'a plus d'intérêt.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Source indisponible : fail-safe</h3>
+          <ul class="bul">
+            <li>La valeur expire. La factory échoue ou dépasse un délai.</li>
+            <li>Avec le fail-safe, le cache retourne l'ancienne valeur expirée. Il réessaie plus tard.</li>
+            <li>L'utilisateur reçoit une donnée un peu périmée au lieu d'une erreur.</li>
+            <li>FusionCache propose ce mécanisme. HybridCache ne le propose pas.</li>
+          </ul>
+        </div>
+      </div>
+<script type="text/x-csharp">
+var options = new FusionCacheEntryOptions
+{
+    Duration = TimeSpan.FromMinutes(5),
+    IsFailSafeEnabled = true,
+    FailSafeMaxDuration = TimeSpan.FromHours(2),         // durée max. d'utilisation d'une valeur expirée
+    FailSafeThrottleDuration = TimeSpan.FromSeconds(30), // délai avant un nouvel essai
+    FactorySoftTimeout = TimeSpan.FromMilliseconds(100), // au-delà : valeur expirée retournée, la factory continue
+    FactoryHardTimeout = TimeSpan.FromSeconds(2),        // au-delà : abandon, même sans valeur expirée
+    DistributedCacheSoftTimeout = TimeSpan.FromMilliseconds(50)
+};
+</script>
+      <div class="msg"><p><strong>Disjoncteur.</strong> Quand Redis tombe, chaque appel attend le timeout. Un disjoncteur (<code>DistributedCacheCircuitBreakerDuration</code> dans FusionCache, ou Polly) arrête les appels vers Redis pendant une durée courte. L'API fonctionne alors avec L1 et la base, sans attente.</p></div>
+    </section>
+
+    <section id="eviction" class="stack">
+      <h2>Mémoire pleine : politiques d'éviction</h2>
+      <p class="intro">Redis garde toutes les données en mémoire. Le paramètre <code>maxmemory</code> fixe la limite. Le paramètre <code>maxmemory-policy</code> décide de l'action quand la limite est atteinte.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Politique</th><th>Clés candidates</th><th>Choix de la clé</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td><code>noeviction</code> (défaut)</td><td class="secondary">Aucune</td><td class="secondary">Les écritures échouent : erreur <code>OOM command not allowed</code></td><td class="secondary">Redis utilisé comme stockage : files, sessions, verrous</td></tr>
+          <tr><td><code>allkeys-lru</code></td><td class="secondary">Toutes</td><td class="secondary">La moins récemment lue</td><td class="secondary">Cache pur. Choix conseillé par défaut pour un cache</td></tr>
+          <tr><td><code>allkeys-lfu</code></td><td class="secondary">Toutes</td><td class="secondary">La moins souvent lue</td><td class="secondary">Cache avec un ensemble stable de clés populaires</td></tr>
+          <tr><td><code>allkeys-random</code></td><td class="secondary">Toutes</td><td class="secondary">Au hasard</td><td class="secondary">Accès uniformes</td></tr>
+          <tr><td><code>volatile-lru</code> / <code>volatile-lfu</code></td><td class="secondary">Clés avec TTL</td><td class="secondary">LRU ou LFU</td><td class="secondary">Redis mixte : cache avec TTL + données sans TTL à protéger</td></tr>
+          <tr><td><code>volatile-ttl</code></td><td class="secondary">Clés avec TTL</td><td class="secondary">TTL restant le plus court</td><td class="secondary">Supprimer d'abord ce qui expire bientôt</td></tr>
+          <tr><td><code>volatile-random</code></td><td class="secondary">Clés avec TTL</td><td class="secondary">Au hasard</td><td class="secondary">Rare</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Politique <code>volatile-*</code> sans TTL.</strong> Si aucune clé n'a de TTL, Redis ne trouve aucune clé candidate. Il se comporte comme <code>noeviction</code> et refuse les écritures. Sur un service Redis managé, vérifiez la politique par défaut du fournisseur.</p></div>
+    </section>
+
+    <section id="httpcache" class="stack">
+      <h2>Output caching et response caching</h2>
+      <p class="intro">ASP.NET Core peut mettre en cache la réponse HTTP complète. Deux middlewares existent. Ils ne fonctionnent pas de la même façon.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th></th><th>Response caching (<code>AddResponseCaching</code>)</th><th>Output caching (<code>AddOutputCache</code>, .NET 7+)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Règles</b></td><td class="secondary">En-têtes HTTP <code>Cache-Control</code> (RFC 9111)</td><td class="secondary">Configuration du serveur : politiques, durées</td></tr>
+          <tr><td><b>Contrôle du client</b></td><td class="secondary">Le client peut forcer un rechargement avec <code>no-cache</code></td><td class="secondary">Le client ne contourne pas le cache</td></tr>
+          <tr><td><b>Invalidation</b></td><td class="secondary">Non</td><td class="secondary">Par tag : <code>EvictByTagAsync</code></td></tr>
+          <tr><td><b>Protection stampede</b></td><td class="secondary">Non</td><td class="secondary">Oui : verrouillage par ressource, activé par défaut</td></tr>
+          <tr><td><b>Stockage</b></td><td class="secondary">Mémoire</td><td class="secondary">Mémoire ou Redis (<code>AddStackExchangeRedisOutputCache</code>, .NET 8+)</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+builder.Services.AddStackExchangeRedisOutputCache(o => o.Configuration = "redis:6379");
+builder.Services.AddOutputCache(o =>
+    o.AddPolicy("Catalog", p => p.Expire(TimeSpan.FromMinutes(2)).SetVaryByQuery("page").Tag("catalog")));
+
+app.UseOutputCache();
+app.MapGet("/products", ListProducts).CacheOutput("Catalog");
+app.MapPut("/products/{id}", async (int id, ProductDto dto, IOutputCacheStore store, CancellationToken ct) =>
+{
+    await UpdateProduct(id, dto, ct);
+    await store.EvictByTagAsync("catalog", ct);
+    return Results.NoContent();
+});
+</script>
+      <div class="msg warning"><p><strong>Données par utilisateur.</strong> Par défaut, l'output caching ne met pas en cache une requête authentifiée ni une réponse qui pose un cookie. Si vous changez cette règle, ajoutez l'utilisateur à la clé (<code>VaryByValue</code>). Sinon, un utilisateur reçoit la page d'un autre.</p></div>
+    </section>
+
+    <section id="lock" class="stack">
+      <h2>Verrou distribué avec Redis</h2>
+      <p class="intro">Un verrou distribué empêche deux instances d'exécuter le même travail en même temps. La base du verrou Redis est <code>SET clé jeton NX PX durée</code>. Mais une pause du process peut casser le verrou. Avancez étape par étape.</p>
+<script type="text/x-csharp">
+var token = Guid.NewGuid().ToString();                              // identifie le propriétaire
+if (await _db.LockTakeAsync("lock:invoice:2026-11", token, TimeSpan.FromSeconds(30)))  // SET NX PX
+{
+    try { await GenerateInvoicesAsync(ct); }
+    finally { await _db.LockReleaseAsync("lock:invoice:2026-11", token); } // supprime seulement si le jeton correspond
+}
+</script>
+      <div class="panel stack">
+        <span class="segmented segwrap" role="group" aria-label="Protection" id="lkMode"><button type="button" data-m="plain" aria-pressed="true">Verrou seul</button><button type="button" data-m="fence" aria-pressed="false">Verrou + fencing token</button></span>
+        <div class="board">
+          <div class="column"><div class="column-head"><h3>Instance A</h3></div><div id="lkA"></div></div>
+          <div class="column"><div class="column-head"><h3>Instance B</h3></div><div id="lkB"></div></div>
+          <div class="column"><div class="column-head"><h3>Redis</h3></div><div id="lkR"></div></div>
+          <div class="column"><div class="column-head"><h3>Stockage</h3></div><div id="lkS"></div></div>
+        </div>
+        <div data-stepbar="lk"></div>
+      </div>
+      <div class="msg info"><p><strong>Redlock.</strong> L'algorithme Redlock prend le verrou sur une majorité de 5 serveurs Redis indépendants. Il protège contre la panne d'un serveur. Il ne protège pas contre une pause du process ni contre un décalage d'horloge. Pour une exclusion stricte, utilisez une contrainte de la base (clé unique, version) ou un fencing token. Pour éviter un travail en double sans conséquence grave, un verrou Redis simple suffit.</p></div>
+    </section>
+
+    <section id="ratelimit" class="stack">
+      <h2>Rate limiting avec Redis</h2>
+      <p class="intro">Le middleware <code>Microsoft.AspNetCore.RateLimiting</code> compte en mémoire, dans chaque instance. Avec 4 instances derrière un load balancer, une limite de 100 requêtes par minute devient environ 400. Redis donne un compteur partagé.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Fenêtre fixe : <code>INCR</code> + <code>EXPIRE</code></h3>
+<script type="text/x-csharp">
+var key = $"rl:{clientId}:{DateTime.UtcNow:yyyyMMddHHmm}";
+var count = await _db.StringIncrementAsync(key);
+if (count == 1) await _db.KeyExpireAsync(key, TimeSpan.FromMinutes(1));
+if (count > 100) return Results.StatusCode(429);
+// Simple. Défaut : 200 requêtes possibles autour du changement de minute.
+// Défaut : si le process s'arrête entre INCR et EXPIRE, la clé n'a pas de TTL. Utilisez un script Lua.
+</script>
+        </div>
+        <div class="panel stack">
+          <h3>Fenêtre glissante : sorted set</h3>
+<script type="text/x-redis">
+# Un script Lua exécute ces commandes de façon atomique
+ZREMRANGEBYSCORE rl:client42 0 (now-60000)   # retire les requêtes de plus de 60 s
+ZCARD rl:client42                            # compte les requêtes restantes
+ZADD rl:client42 now now-uuid                # ajoute la requête si count < 100
+PEXPIRE rl:client42 60000
+</script>
+        </div>
+      </div>
+      <div class="msg"><p><strong>Coût.</strong> Chaque requête HTTP ajoute un aller-retour Redis. Si Redis tombe, choisissez la règle : laisser passer (fail-open) ou refuser (fail-closed). Pour une protection contre les abus, fail-open est en général le bon choix.</p></div>
+    </section>
+
+    <section id="serial" class="stack">
+      <h2>Choix du sérialiseur</h2>
+      <p class="intro">Un cache distribué stocke des octets. Le sérialiseur décide de la taille de la valeur, du temps CPU et de la compatibilité entre versions de l'application.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Format</th><th>Taille</th><th>Vitesse</th><th>Lisible</th><th>Évolution du DTO</th></tr></thead>
+        <tbody>
+          <tr><td><b>System.Text.Json</b></td><td class="secondary">Moyenne</td><td class="secondary">Bonne, meilleure avec la génération de source</td><td class="secondary">Oui (<code>redis-cli GET</code>)</td><td class="secondary">Propriété ajoutée : ignorée par l'ancienne version. Propriété renommée : perdue</td></tr>
+          <tr><td><b>MessagePack</b></td><td class="secondary">Petite</td><td class="secondary">Très bonne</td><td class="secondary">Non</td><td class="secondary">Par index de clé : stable si les index ne changent pas</td></tr>
+          <tr><td><b>Protobuf</b></td><td class="secondary">Petite</td><td class="secondary">Très bonne</td><td class="secondary">Non</td><td class="secondary">Par numéro de champ : bonne compatibilité</td></tr>
+          <tr class="is-alert"><td><b>BinaryFormatter</b></td><td class="secondary">–</td><td class="secondary">–</td><td class="secondary">Non</td><td class="secondary">Supprimé de .NET 9. Faille de sécurité connue. Ne pas utiliser</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+// HybridCache : sérialiseur personnalisé pour un type
+builder.Services.AddHybridCache().AddSerializer<ProductDto, ProductProtobufSerializer>();
+</script>
+      <div class="msg warning"><p><strong>Déploiement progressif.</strong> Pendant un déploiement, l'ancienne et la nouvelle version lisent le même Redis. Un DTO modifié peut donner une erreur de désérialisation dans l'une des versions. Ajoutez une version dans la clé (<code>product:v3:42</code>) à chaque changement incompatible.</p></div>
+    </section>
+
+    <section id="qcm-avance" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 2</p>
+        <h2>QCM : notions avancées</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="a"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS PROFONDES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="profond" aria-labelledby="tab-btn-profond" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 3</p>
+      <h2>Notions profondes</h2>
+      <p class="lede">Ces notions expliquent le fonctionnement interne de Redis et du client StackExchange.Redis : boucle d'événements, multiplexage, timeouts, persistance, topologie et gestion de la mémoire.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="single" class="stack">
+      <h2>Redis mono-thread : la boucle d'événements</h2>
+      <p class="intro">Redis exécute les commandes sur un seul thread. Ce thread prend les commandes l'une après l'autre dans une boucle d'événements (epoll sous Linux). Chaque commande est donc atomique. Aucun verrou n'est nécessaire.</p>
+      <div class="tiles">
+        <div class="tile green"><p class="eyebrow">Avantage</p><h3>Rapide et simple</h3><p>Les données sont en mémoire. Une commande simple dure environ 1 µs. Un thread traite plus de 100 000 commandes par seconde. Le réseau limite le débit avant le CPU.</p></div>
+        <div class="tile red"><p class="eyebrow">Risque</p><h3>Une commande lente bloque tout</h3><p>Pendant un <code>KEYS *</code> de 2 secondes, Redis ne traite aucune autre commande. Tous les clients attendent. Les clients .NET reçoivent des timeouts.</p></div>
+        <div class="tile blue"><p class="eyebrow">Redis 6+</p><h3>Threads d'I/O</h3><p>L'option <code>io-threads</code> répartit la lecture et l'écriture sur les sockets entre plusieurs threads. L'exécution des commandes reste sur un seul thread.</p></div>
+      </div>
+      <div class="msg"><p><strong>Autres threads.</strong> Redis utilise aussi des threads de fond : suppression asynchrone (<code>UNLINK</code>, <code>lazyfree</code>), fermeture de fichiers, <code>fsync</code> de l'AOF. La sauvegarde RDB utilise un process enfant (<code>fork</code>). Pour utiliser plusieurs cœurs, déployez plusieurs instances Redis (Cluster).</p></div>
+    </section>
+
+    <section id="pipeline" class="stack">
+      <h2>Simulateur : round-trips, pipelining et multiplexage</h2>
+      <p class="intro">Le code lit N clés. Chaque commande dure quelques µs sur le serveur. Le réseau ajoute un RTT par aller-retour. En séquentiel, le client attend chaque réponse avant d'envoyer la commande suivante. En pipeline, le client envoie toutes les commandes, puis lit toutes les réponses.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+// Séquentiel : N allers-retours
+foreach (var id in ids)
+    results.Add(await _db.StringGetAsync($"product:{id}"));
+</script>
+<script type="text/x-csharp">
+// Pipeline : les commandes partent ensemble
+var tasks = ids.Select(id => _db.StringGetAsync($"product:{id}")).ToArray();
+var results = await Task.WhenAll(tasks);
+// Ou une seule commande : MGET
+var values = await _db.StringGetAsync(ids.Select(id => (RedisKey)$"product:{id}").ToArray());
+</script>
+      </div>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="plN">Nombre de clés : <span class="val" id="plNO"></span></label><input type="range" id="plN" min="1" max="100" value="20"></div>
+          <div class="field"><label for="plRtt">RTT (ms) : <span class="val" id="plRttO"></span></label><input type="range" id="plRtt" min="0.2" max="20" step="0.2" value="1"></div>
+          <div class="field"><label for="plSrv">Temps serveur par commande (µs) : <span class="val" id="plSrvO"></span></label><input type="range" id="plSrv" min="1" max="500" value="5"></div>
+          <div class="field"><label for="plBig">Valeur volumineuse sur la connexion (Mo) : <span class="val" id="plBigO"></span></label><input type="range" id="plBig" min="0" max="50" value="0"></div>
+        </div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Séquentiel</p><p class="value" id="plTs">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Pipeline</p><p class="value" id="plTp">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Gain</p><p class="value" id="plGain">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Retard ajouté par la grosse valeur</p><p class="value" id="plHol">–</p></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--blue-wash)"></i>Attente réseau</span><span><i style="background:var(--blue)"></i>Exécution sur le serveur</span><span><i style="background:var(--red)"></i>Transfert de la grosse valeur</span><span>Même échelle pour les deux frises (12 premières commandes)</span></div>
+        <div class="grid2">
+          <div class="stack" style="gap:.5rem"><h3 style="margin:0">Séquentiel</h3><div class="gantt" id="plSeq"></div></div>
+          <div class="stack" style="gap:.5rem"><h3 style="margin:0">Pipeline</h3><div class="gantt" id="plPipe"></div></div>
+        </div>
+        <div class="msg" id="plNote"></div>
+      </div>
+      <h3 class="sub">Multiplexage dans StackExchange.Redis</h3>
+      <p class="prose">Le multiplexer utilise une seule connexion TCP pour toutes les commandes de tous les threads. Il écrit les commandes dans la socket dans l'ordre d'arrivée. Redis répond dans le même ordre. Le multiplexer associe chaque réponse à la Task en attente. Le pipelining est donc automatique : plusieurs requêtes HTTP concurrentes partagent les allers-retours.</p>
+      <div class="msg warning"><p><strong>Blocage en tête de file.</strong> Les réponses arrivent dans l'ordre. Une valeur de 20 Mo occupe la connexion pendant son transfert (environ 160 ms à 1 Gbit/s). Toutes les commandes envoyées après elle attendent, même un petit <code>GET</code>. Gardez les valeurs petites (moins de 100 Ko). Pour les grosses valeurs, utilisez un stockage objet et gardez seulement la référence dans Redis.</p></div>
+    </section>
+
+    <section id="bigkeys" class="stack">
+      <h2>Commandes O(N) et big keys</h2>
+      <p class="intro">Une commande O(1) dure le même temps pour 10 clés ou 10 millions de clés. Une commande O(N) dure plus longtemps quand les données grandissent. Sur un serveur mono-thread, elle bloque tous les clients.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>À éviter en production</th><th>Problème</th><th>Alternative</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td><code>KEYS pattern</code></td><td class="secondary">Parcourt toutes les clés de la base en une fois</td><td class="secondary"><code>SCAN</code> avec curseur (<code>server.KeysAsync</code> utilise <code>SCAN</code>). Ou un set d'index tenu à jour</td></tr>
+          <tr><td><code>HGETALL</code>, <code>SMEMBERS</code>, <code>LRANGE 0 -1</code> sur une grosse collection</td><td class="secondary">Retourne tous les éléments. Bloque le serveur et le réseau</td><td class="secondary"><code>HSCAN</code>, <code>SSCAN</code>, pagination avec <code>LRANGE</code></td></tr>
+          <tr><td><code>DEL</code> d'une clé de plusieurs millions d'éléments</td><td class="secondary">La libération de mémoire est synchrone</td><td class="secondary"><code>UNLINK</code> : suppression dans un thread de fond</td></tr>
+          <tr><td><code>FLUSHALL</code>, <code>FLUSHDB</code></td><td class="secondary">Vide tout, de façon synchrone par défaut</td><td class="secondary"><code>FLUSHDB ASYNC</code>, et désactiver la commande en production (<code>rename-command</code> ou ACL)</td></tr>
+          <tr><td>Script Lua long</td><td class="secondary">Le script bloque le serveur jusqu'à sa fin</td><td class="secondary">Scripts courts. Traitement par lots côté client</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-redis">
+SLOWLOG GET 10                  # 10 dernières commandes plus longues que slowlog-log-slower-than (10 ms par défaut)
+redis-cli --bigkeys             # cherche les plus grosses clés par type (utilise SCAN)
+MEMORY USAGE catalog:report:2026  # octets utilisés par une clé
+LATENCY DOCTOR                  # diagnostic des pics de latence (après CONFIG SET latency-monitor-threshold 100)
+</script>
+      <div class="msg info"><p><strong>Big key.</strong> Une clé est grosse si sa valeur dépasse environ 1 Mo, ou si sa collection contient plus de quelques milliers d'éléments. Une big key cause des blocages, des transferts lents et une mauvaise répartition en Cluster : un seul nœud porte toute la clé.</p></div>
+    </section>
+
+    <section id="timeout" class="stack">
+      <h2>Lire un message de timeout StackExchange.Redis</h2>
+      <p class="intro">Une <code>RedisTimeoutException</code> contient un état complet du client. Le problème vient souvent du client, pas de Redis. Choisissez un cas, puis lisez les champs mis en évidence.</p>
+      <div class="panel stack">
+        <span class="segmented segwrap" role="group" aria-label="Cas" id="toCase"><button type="button" data-m="starv" aria-pressed="true">Cas 1</button><button type="button" data-m="big" aria-pressed="false">Cas 2</button><button type="button" data-m="server" aria-pressed="false">Cas 3</button></span>
+        <pre id="toMsg" style="white-space:pre-wrap"></pre>
+        <div class="table-wrap"><table class="table dense" id="toTable"></table></div>
+        <div class="msg" id="toNote"></div>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Champ</th><th>Sens</th></tr></thead>
+        <tbody>
+          <tr><td><code>qu</code></td><td class="secondary">Commandes en file, pas encore écrites dans la socket.</td></tr>
+          <tr><td><code>qs</code></td><td class="secondary">Commandes envoyées, réponse pas encore traitée.</td></tr>
+          <tr><td><code>in</code></td><td class="secondary">Octets reçus dans la socket, pas encore lus par le client.</td></tr>
+          <tr><td><code>aw</code>, <code>rs</code>, <code>ws</code></td><td class="secondary">État de l'écrivain et du lecteur de la connexion.</td></tr>
+          <tr><td><code>WORKER: (Busy=…, Min=…)</code></td><td class="secondary">Workers occupés et minimum du ThreadPool. <code>Busy</code> supérieur à <code>Min</code> : le ThreadPool ajoute les workers lentement.</td></tr>
+          <tr><td><code>POOL: (QueuedItems=…)</code></td><td class="secondary">Éléments en attente dans la file du ThreadPool.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg"><p><strong>Lien avec l'async.</strong> La starvation du ThreadPool est la cause la plus fréquente de ces timeouts. Le code bloque des workers avec <code>.Result</code> ou <code>.Wait()</code>. Les réponses de Redis arrivent, mais aucun worker ne termine les Tasks. Voir le simulateur de starvation dans la page <a href="async-dotnet.html#pool">Async et threads .NET</a>.</p></div>
+    </section>
+
+    <section id="persist" class="stack">
+      <h2>Persistance : RDB et AOF</h2>
+      <p class="intro">Redis garde les données en mémoire. La persistance écrit une copie sur disque pour un redémarrage. Pour un cache pur, la persistance est souvent inutile : un cache vide se remplit à nouveau.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th></th><th>RDB (snapshot)</th><th>AOF (journal)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Principe</b></td><td class="secondary">Photo complète de la mémoire à intervalle régulier</td><td class="secondary">Chaque commande d'écriture est ajoutée à un fichier</td></tr>
+          <tr><td><b>Perte possible</b></td><td class="secondary">Toutes les écritures depuis le dernier snapshot (minutes)</td><td class="secondary">Environ 1 s avec <code>appendfsync everysec</code> (défaut)</td></tr>
+          <tr><td><b>Redémarrage</b></td><td class="secondary">Rapide : chargement d'un fichier compact</td><td class="secondary">Plus lent : relecture du journal (réduit par la réécriture de l'AOF)</td></tr>
+          <tr><td><b>Coût</b></td><td class="secondary"><code>fork</code> du process. Copy-on-write : la mémoire peut presque doubler si beaucoup de pages changent pendant la sauvegarde</td><td class="secondary">Écritures disque continues. Réécriture périodique avec un <code>fork</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Pic de latence au <code>fork</code>.</strong> Sur une instance de plusieurs dizaines de Go, le <code>fork</code> copie les tables de pages. Il peut bloquer Redis plusieurs centaines de ms. Prévoyez de la mémoire libre (copy-on-write) et regardez <code>latest_fork_usec</code> dans <code>INFO persistence</code>.</p></div>
+    </section>
+
+    <section id="topo" class="stack">
+      <h2>Réplication, Sentinel et Cluster</h2>
+      <p class="intro">Un serveur Redis seul est un point de défaillance unique. Trois topologies existent.</p>
+      <div class="tiles">
+        <div class="tile blue"><p class="eyebrow">Réplication</p><h3>Primaire et réplicas</h3><p>Le primaire envoie ses écritures aux réplicas de façon asynchrone. Une écriture confirmée peut être perdue si le primaire tombe. <code>WAIT</code> attend la copie sur N réplicas, mais ne garantit pas la cohérence forte.</p></div>
+        <div class="tile green"><p class="eyebrow">Sentinel</p><h3>Bascule automatique</h3><p>Des processus Sentinel surveillent le primaire. Si le primaire tombe, ils promeuvent un réplica. Le client demande l'adresse du primaire à Sentinel (<code>serviceName=</code> dans la configuration).</p></div>
+        <div class="tile red"><p class="eyebrow">Cluster</p><h3>Partitionnement</h3><p>Les clés sont réparties sur plusieurs primaires, avec 16 384 hash slots. Chaque primaire a ses réplicas. Le client calcule le slot de chaque clé et envoie la commande au bon nœud.</p></div>
+      </div>
+      <h3 class="sub">Calculer le hash slot d'une clé</h3>
+      <p class="prose">Slot = CRC16(clé) mod 16384. Si la clé contient <code>{…}</code>, seul le texte entre accolades est haché : c'est un hash tag. Les commandes multi-clés (<code>MGET</code>, transactions, scripts Lua) exigent des clés du même slot. Sinon, Redis répond <code>CROSSSLOT</code>.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field" style="min-width:16rem;flex:1"><label for="csK1">Clé 1</label><input class="input" id="csK1" value="{user:42}:profile" spellcheck="false"></div>
+          <div class="field" style="min-width:16rem;flex:1"><label for="csK2">Clé 2</label><input class="input" id="csK2" value="{user:42}:cart" spellcheck="false"></div>
+        </div>
+        <div class="row" id="csPresets"><span class="muted" style="font-size:.875rem">Exemples :</span><button class="btn ghost sm" type="button" data-a="user:42:profile" data-b="user:42:cart">Sans hash tag</button><button class="btn ghost sm" type="button" data-a="{user:42}:profile" data-b="{user:42}:cart">Avec hash tag</button><button class="btn ghost sm" type="button" data-a="{}product:1" data-b="{}product:2">Accolades vides</button></div>
+        <div class="table-wrap"><table class="table dense" id="csOut"></table></div>
+        <div class="msg" id="csNote"></div>
+      </div>
+      <div class="msg"><p><strong>MOVED et ASK.</strong> Si le client envoie une commande au mauvais nœud, Redis répond <code>MOVED slot adresse</code>. StackExchange.Redis met à jour sa carte des slots et renvoie la commande. Pendant une migration de slot, Redis répond <code>ASK</code> pour une clé déjà déplacée. Le client suit ces redirections sans code applicatif. Attention : un hash tag trop utilisé place beaucoup de clés sur un seul nœud (hot shard).</p></div>
+    </section>
+
+    <section id="atomic" class="stack">
+      <h2>Atomicité : <code>MULTI/EXEC</code> et scripts Lua</h2>
+      <p class="intro">Chaque commande Redis est atomique. Une suite de commandes ne l'est pas. Deux mécanismes groupent des commandes.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Transaction avec conditions</h3>
+<script type="text/x-csharp">
+// StackExchange.Redis n'expose pas WATCH directement :
+// il utilise des conditions, vérifiées par WATCH côté serveur
+var tran = _db.CreateTransaction();
+tran.AddCondition(Condition.StringEqual("stock:42", "5"));
+_ = tran.StringDecrementAsync("stock:42");
+_ = tran.ListRightPushAsync("orders", orderJson);
+bool committed = await tran.ExecuteAsync();  // false si la condition échoue
+</script>
+          <p class="muted" style="margin:0;font-size:.9rem"><code>MULTI/EXEC</code> exécute les commandes en bloc. Il n'y a pas de rollback : si une commande échoue, les autres s'exécutent quand même. Les commandes du bloc ne peuvent pas lire le résultat d'une commande précédente.</p>
+        </div>
+        <div class="panel stack">
+          <h3>Script Lua</h3>
+<script type="text/x-csharp">
+const string Script = @"
+    local v = tonumber(redis.call('GET', KEYS[1]) or '0')
+    if v < tonumber(ARGV[1]) then return -1 end
+    return redis.call('DECRBY', KEYS[1], ARGV[1])";
+var left = (long)await _db.ScriptEvaluateAsync(Script, ["stock:42"], [2]);
+</script>
+          <p class="muted" style="margin:0;font-size:.9rem">Le script s'exécute en entier, sans autre commande au milieu. Il peut lire puis écrire. Il bloque le serveur pendant son exécution. Passez toutes les clés dans <code>KEYS</code> : Redis Cluster en a besoin pour router le script.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="lru" class="stack">
+      <h2>Éviction : LRU approximé par échantillonnage</h2>
+      <p class="intro">Un LRU exact demande une liste chaînée de toutes les clés, mise à jour à chaque lecture. Redis évite ce coût. Chaque clé garde l'heure de son dernier accès sur 24 bits. Pour évincer, Redis tire au hasard <code>maxmemory-samples</code> clés (5 par défaut) et supprime la plus ancienne. Un pool d'éviction garde les meilleurs candidats entre deux tirages.</p>
+      <div class="panel stack">
+        <div class="toolbar"><div class="field"><label for="lrS">maxmemory-samples : <span class="val" id="lrSO"></span></label><input type="range" id="lrS" min="1" max="20" value="5"></div></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Rang moyen de la clé évincée</p><p class="value" id="lrRank">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Probabilité : clé parmi les 10 % les plus anciennes</p><p class="value" id="lrOld">–</p></div>
+          <div class="tile neutral"><p class="eyebrow">Probabilité : clé parmi les 50 % les plus récentes</p><p class="value" id="lrBad">–</p></div>
+        </div>
+        <div class="msg" id="lrNote"></div>
+      </div>
+      <p class="prose">Calcul sans le pool d'éviction : le rang est 0 % pour la clé la plus récente et 100 % pour la plus ancienne. Le pool améliore le résultat réel. Avec 10 échantillons, le résultat est très proche d'un LRU exact. Le LFU utilise un compteur logarithmique de 8 bits par clé. Ce compteur diminue avec le temps (<code>lfu-decay-time</code>).</p>
+    </section>
+
+    <section id="memoire" class="stack">
+      <h2>Mémoire : surcoût et fragmentation</h2>
+      <p class="intro">La mémoire utilisée par Redis est plus grande que la taille des valeurs. Chaque clé a un surcoût. L'allocateur (jemalloc) laisse des trous après les suppressions.</p>
+<script type="text/x-redis">
+INFO memory
+used_memory_human:6.20G          # mémoire allouée par Redis pour les données
+used_memory_rss_human:8.90G      # mémoire réelle du process vue par le système
+mem_fragmentation_ratio:1.44     # rss / used : au-dessus de 1,5 la fragmentation est élevée
+maxmemory_human:7.00G
+maxmemory_policy:allkeys-lru
+</script>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Réduire la mémoire</h3>
+          <ul class="bul">
+            <li>Surcoût d'une clé : environ 50 à 70 octets en plus de la clé et de la valeur.</li>
+            <li>Petits hash et sorted sets : encodage compact (listpack) sous les seuils <code>hash-max-listpack-entries</code> (128) et <code>hash-max-listpack-value</code> (64 octets).</li>
+            <li>Regrouper beaucoup de petites valeurs dans des hash peut réduire fortement la mémoire.</li>
+            <li>Compresser les grosses valeurs côté client.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Fragmentation</h3>
+          <ul class="bul">
+            <li>Ratio supérieur à 1,5 : beaucoup de mémoire libre non réutilisée, souvent après des suppressions massives.</li>
+            <li><code>activedefrag yes</code> : Redis déplace les données en arrière-plan pour combler les trous.</li>
+            <li>Ratio inférieur à 1 : le système a déplacé une partie de Redis dans le swap. La latence devient très mauvaise.</li>
+            <li>Réglez <code>maxmemory</code> sous la mémoire du conteneur : gardez de la marge pour la fragmentation, les buffers clients et le <code>fork</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="qcm-profond" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 3</p>
+        <h2>QCM : notions profondes</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="p"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-brand">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      Carbon IT · Formation .NET
+    </span>
+    <span class="ste">Rédaction : règles ASD-STE100 appliquées au français. Références : documentation Microsoft (caching dans .NET, HybridCache, output caching), documentation Redis, documentation StackExchange.Redis, documentation FusionCache, Martin Kleppmann (« How to do distributed locking »).</span>
+  </footer>
+</main>
+
+<script>
+/* ───────── Utilitaires ───────── */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const HL = /(\/\/.*)|(\$?@?"(?:[^"\\]|\\.)*")|\b(async|await|var|public|private|protected|internal|return|new|using|static|void|lock|for|foreach|while|do|if|else|true|false|null|try|finally|catch|throw|class|struct|record|sealed|readonly|object|override|switch|case|is|not|or|and|when|in|out|const|default|get|set|init)\b|\b(Task|ValueTask|int|long|string|bool|double|CancellationToken|TimeSpan|DateTime|Guid|Random|Exception|IMemoryCache|IDistributedCache|HybridCache|MemoryCacheEntryOptions|DistributedCacheEntryOptions|HybridCacheEntryOptions|HybridCacheEntryFlags|CacheItemPriority|ConnectionMultiplexer|IConnectionMultiplexer|IDatabase|IServer|RedisKey|RedisValue|RedisResult|ISubscriber|Condition|RedisConnectionException|RedisTimeoutException|RedisCache|RedisCacheOptions|IFusionCache|FusionCacheEntryOptions|FusionCacheSystemTextJsonSerializer|RedisBackplane|RedisBackplaneOptions|JsonSerializer|ProductDto|IReadOnlyList|ConcurrentDictionary|Lazy|KeyValuePair|IOutputCacheStore|Results|ThreadPool)\b/g;
+function hl(src){
+  let out='',last=0,m; HL.lastIndex=0;
+  while((m=HL.exec(src))){
+    out+=esc(src.slice(last,m.index));
+    const cls=m[1]?'c':m[2]?'s':m[3]?'k':'t';
+    out+=`<span class="${cls}">${esc(m[0])}</span>`; last=HL.lastIndex;
+  }
+  return out+esc(src.slice(last));
+}
+document.querySelectorAll('script[type="text/x-csharp"]').forEach(s=>{
+  const pre=document.createElement('pre');
+  pre.innerHTML=hl(s.textContent.replace(/^\s*\n/,'').replace(/\s+$/,''));
+  s.replaceWith(pre);
+});
+const HEX='<svg viewBox="0 0 32 32" aria-hidden="true"><path class="fill" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/><path class="edge" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/></svg>';
+const st=(state,label)=>`<span class="status" data-state="${state}">${HEX}<span class="label">${label}</span></span>`;
+document.querySelectorAll('.status[data-label]').forEach(el=>{el.innerHTML=HEX+`<span class="label">${el.dataset.label}</span>`;});
+document.querySelectorAll('[data-stepbar]').forEach(el=>{
+  const p=el.dataset.stepbar;
+  el.outerHTML=`<div class="msg note" id="${p}Note"></div><div class="stepbar"><button class="btn secondary sm" type="button" id="${p}Prev">Précédent</button><button class="btn sm" type="button" id="${p}Next">Suivant</button><button class="btn ghost sm" type="button" id="${p}Reset">Recommencer</button><span class="count" id="${p}Cnt"></span></div>`;
+});
+function bindRange(id){const r=$('#'+id),o=$('#'+id+'O');const f=()=>{if(o)o.textContent=r.value;};r.addEventListener('input',f);f();return r;}
+function seg(id,cb){const el=$('#'+id);el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');cb(b.dataset.m);}));}
+const TONE={good:'msg success note',warn:'msg warning note',mid:'msg info note','':'msg note'};
+function setMsg(el,tone,html){const keep=el.classList.contains('note');el.className=(TONE[tone]||'msg note').replace(' note',keep?' note':'');el.innerHTML=html;}
+
+/* Démonstration pas à pas : préfixe p → #pCode #pNote #pCnt #pPrev #pNext #pReset */
+function stepper(p,cfg){
+  let i=0;
+  const lines=cfg.code?cfg.code.split('\n'):null;
+  function draw(){
+    const s=cfg.steps[i];
+    if(lines) $('#'+p+'Code').innerHTML=lines.map((l,n)=>{
+      const cls=s.line===n?'cur':(s.paused||[]).includes(n)?'paused':'';
+      return `<div class="${cls}"><span class="ln">${n+1}</span>${hl(l)||' '}</div>`;
+    }).join('');
+    cfg.render(s,i);
+    const note=$('#'+p+'Note'); note.className=TONE[s.tone||'']; note.innerHTML=`<p>${s.note}</p>`;
+    $('#'+p+'Cnt').textContent=`Étape ${i+1} sur ${cfg.steps.length}`;
+    $('#'+p+'Prev').disabled=i===0; $('#'+p+'Next').disabled=i===cfg.steps.length-1;
+  }
+  $('#'+p+'Prev').onclick=()=>{if(i>0){i--;draw();}};
+  $('#'+p+'Next').onclick=()=>{if(i<cfg.steps.length-1){i++;draw();}};
+  $('#'+p+'Reset').onclick=()=>{i=0;draw();};
+  draw();
+}
+
+/* ───────── Thème (repris du design system) ───────── */
+(()=>{
+  const root=document.documentElement;
+  const apply=v=>{
+    if(v==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
+    document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===v)));
+  };
+  let saved='auto';
+  try{saved=localStorage.getItem('cds-theme')||'auto';}catch(_){}
+  apply(saved);
+  document.querySelectorAll('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>{
+    apply(b.dataset.themeSet);
+    try{localStorage.setItem('cds-theme',b.dataset.themeSet);}catch(_){}
+  }));
+})();
+
+/* ───────── Onglets de niveau ───────── */
+const syncHeights=()=>{
+  const r=document.documentElement.style;
+  r.setProperty('--topbar-h',$('.topbar').offsetHeight+'px');
+  r.setProperty('--tabs-h',$('.tabs').offsetHeight+'px');
+};
+syncHeights(); window.addEventListener('resize',syncHeights);
+const Tabs=(()=>{
+  const IDS=['base','avance','profond'];
+  let current='base';
+  const panelOf=el=>el&&el.closest('.tabpanel');
+  function show(id){
+    current=id;
+    IDS.forEach(t=>{
+      $('#'+t).hidden=t!==id;
+      $('#tab-btn-'+t).setAttribute('aria-selected',String(t===id));
+      const nav=document.querySelector(`[data-nav="${t}"]`); if(nav){ if(t===id) nav.setAttribute('aria-current','page'); else nav.removeAttribute('aria-current'); }
+    });
+    $('#ctaQcm').setAttribute('href','#qcm-'+id);
+    try{localStorage.setItem('cache-tab',id);}catch(_){}
+  }
+  function go(hash,push){
+    const id=hash.replace(/^#/,'');
+    if(!id||id==='haut'){ window.scrollTo({top:0}); return; }
+    let target;
+    if(IDS.includes(id)){ show(id); target=document.querySelector('.tabs'); }
+    else{
+      target=document.getElementById(id); if(!target) return;
+      const p=panelOf(target); if(p) show(p.id);
+    }
+    if(push) history.replaceState(null,'','#'+id);
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  }
+  IDS.forEach(t=>$('#tab-btn-'+t).addEventListener('click',()=>{show(t);history.replaceState(null,'','#'+t);}));
+  $('.tabs').addEventListener('keydown',e=>{
+    if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return;
+    const i=IDS.indexOf(current), n=IDS[(i+(e.key==='ArrowRight'?1:IDS.length-1))%IDS.length];
+    show(n); $('#tab-btn-'+n).focus();
+  });
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#"]'); if(!a) return;
+    e.preventDefault(); go(a.getAttribute('href'),true);
+  });
+  window.addEventListener('hashchange',()=>go(location.hash,false));
+  let start='base';
+  try{start=localStorage.getItem('cache-tab')||'base';}catch(_){}
+  show(IDS.includes(start)?start:'base');
+  if(location.hash) go(location.hash,false);
+  return {show};
+})();
+
+
+/* ───────── Exemples redis-cli : commentaires # et commande en évidence ───────── */
+document.querySelectorAll('script[type="text/x-redis"]').forEach(s=>{
+  const pre=document.createElement('pre');
+  pre.innerHTML=s.textContent.replace(/^\s*\n/,'').replace(/\s+$/,'').split('\n').map(l=>{
+    const i=l.indexOf('#'); const code=i<0?l:l.slice(0,i), com=i<0?'':l.slice(i);
+    const m=code.match(/^(\s*)([A-Za-z-]+(?:\s+--?[a-z]+)?)(.*)$/);
+    const c=m?`${esc(m[1])}<span class="k">${esc(m[2])}</span>${esc(m[3])}`:esc(code);
+    return c+(com?`<span class="c">${esc(com)}</span>`:'');
+  }).join('\n');
+  s.replaceWith(pre);
+});
+
+/* ───────── Outils communs ───────── */
+function rng(seed){return ()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const fmt=(v,d=0)=>v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const ms=v=>v<1?fmt(v,2)+' ms':v<10?fmt(v,1)+' ms':v<10000?fmt(v)+' ms':fmt(v/1000,1)+' s';
+function bars(sel,vals,o={}){
+  const W=600,H=140,P=34,n=vals.length,mx=o.max||Math.max(1,...vals),bw=(W-P)/n;
+  let s=`<svg viewBox="0 0 ${W} ${H+20}" role="img" aria-label="${o.label||''}">`;
+  s+=`<line x1="${P}" y1="${H}" x2="${W}" y2="${H}" style="stroke:var(--rule)"/>`;
+  s+=`<text x="0" y="12">${o.top||fmt(mx)}</text><text x="0" y="${H}">0</text>`;
+  vals.forEach((v,i)=>{const h=Math.max(0,v/mx*(H-8));s+=`<rect x="${(P+i*bw+1).toFixed(1)}" y="${(H-h).toFixed(1)}" width="${Math.max(1,bw-2).toFixed(1)}" height="${h.toFixed(1)}" rx="1" style="fill:${o.color?o.color(v,i):'var(--blue)'}"/>`;});
+  (o.ticks||[]).forEach(([i,t])=>{s+=`<text x="${(P+i*bw).toFixed(1)}" y="${H+15}">${t}</text>`;});
+  $(sel).innerHTML=s+'</svg>';
+}
+const card=(t,c)=>`<div class="card mono${c?' '+c:''}">${t}</div>`;
+const none=t=>`<div class="empty-note">${t}</div>`;
+
+/* ───────── Cache-aside pas à pas ───────── */
+stepper('ca',{
+  code:`public async Task<ProductDto?> GetAsync(int id, CancellationToken ct)
+{
+    var key = $"product:v2:{id}";
+    RedisValue cached = await _db.StringGetAsync(key);
+    if (cached.HasValue)
+        return JsonSerializer.Deserialize<ProductDto>(cached.ToString());
+
+    var product = await _repo.FindAsync(id, ct);
+    if (product is null) return null;
+
+    await _db.StringSetAsync(key, JsonSerializer.Serialize(product),
+        TimeSpan.FromMinutes(10));
+    return product;
+}
+
+public async Task UpdateAsync(ProductDto dto, CancellationToken ct)
+{
+    await _repo.UpdateAsync(dto, ct);
+    await _db.KeyDeleteAsync($"product:v2:{dto.Id}");
+}`,
+  steps:[
+    {line:2,c:['todo','absente'],d:['done','prix = 20 €'],l:'0 ms',r:['todo','–'],note:`Première lecture du produit 42. Le code construit la clé. La clé contient un préfixe, une version de format et l'identifiant.`},
+    {line:3,c:['todo','absente'],d:['done','prix = 20 €'],l:'1 ms',r:['alert','miss'],note:`<code>GET product:v2:42</code> : Redis ne trouve pas la clé. <code>RedisValue.HasValue</code> vaut <code>false</code>. Le coût est un aller-retour réseau, environ 1 ms.`},
+    {line:7,c:['todo','absente'],d:['progress','lecture'],l:'41 ms',r:['alert','miss'],note:`Le code lit la source. La requête SQL dure 40 ms. Pendant ce temps, aucune autre requête ne voit la valeur dans le cache.`},
+    {line:10,c:['done','prix = 20 €, TTL 600 s'],d:['done','prix = 20 €'],l:'42 ms',r:['alert','miss'],note:`<code>SET product:v2:42 "{…}" EX 600</code> : le code écrit la valeur sérialisée avec un TTL. Sans TTL, la clé reste en mémoire pour toujours.`},
+    {line:12,c:['done','prix = 20 €, TTL 600 s'],d:['done','prix = 20 €'],l:'42 ms',r:['done','20 € (source)'],note:`La première lecture coûte plus cher que sans cache : un aller-retour Redis s'ajoute à la requête SQL.`},
+    {line:3,c:['done','prix = 20 €, TTL 540 s'],d:['done','prix = 20 €'],l:'1 ms',r:['progress','hit'],note:`Une minute plus tard, une autre requête lit le produit 42. Redis trouve la clé. Le TTL restant est de 540 s.`},
+    {line:5,c:['done','prix = 20 €, TTL 540 s'],d:['done','prix = 20 €'],l:'1 ms',r:['done','20 € (cache)'],tone:'good',note:`<b>Hit.</b> Le code désérialise le JSON et retourne la valeur. La base n'est pas sollicitée. La latence passe de 42 ms à environ 1 ms.`},
+    {line:17,c:['done','prix = 20 €, TTL 500 s'],d:['done','prix = 25 €'],l:'15 ms',r:['todo','–'],tone:'warn',note:`Un administrateur change le prix à 25 €. La base contient 25 €. Le cache contient encore 20 €. Entre cette ligne et la suivante, un lecteur peut recevoir l'ancien prix.`},
+    {line:18,c:['todo','absente'],d:['done','prix = 25 €'],l:'16 ms',r:['todo','–'],note:`<code>DEL product:v2:42</code> : le code supprime la clé. Il n'écrit pas la nouvelle valeur. La prochaine lecture rechargera la valeur depuis la source.`},
+    {line:7,c:['done','prix = 25 €, TTL 600 s'],d:['done','prix = 25 €'],l:'42 ms',r:['done','25 € (source)'],tone:'good',note:`Lecture suivante : miss, lecture de la base, écriture dans le cache. Le cache contient maintenant 25 €. Si la suppression échoue (Redis indisponible), le TTL limite la durée de l'erreur à 10 minutes.`}
+  ],
+  render(s){ $('#caCache').innerHTML=st(...s.c); $('#caDb').innerHTML=st(...s.d); $('#caLat').innerHTML=`<b class="num">${s.l}</b>`; $('#caRes').innerHTML=st(...s.r); }
+});
+
+/* ───────── Taux de hit ───────── */
+(function(){
+  const K=bindRange('hrKeys'),T=bindRange('hrTtl'),R=bindRange('hrRps'),I=bindRange('hrInst'),D=bindRange('hrDb');
+  let mode='redis'; seg('hrMode',m=>{mode=m;run();});
+  const DUR=120000, W=12, L1=0.05, L2=1;
+  function run(){
+    const k=+K.value, ttl=+T.value*1000, rps=+R.value, inst=+I.value, db=+D.value;
+    const cdf=new Float64Array(k); let sum=0;
+    for(let i=0;i<k;i++){sum+=1/Math.pow(i+1,0.9);cdf[i]=sum;}
+    const rnd=rng(42);
+    const pick=()=>{const x=rnd()*sum;let lo=0,hi=k-1;while(lo<hi){const m=(lo+hi)>>1;if(cdf[m]<x)lo=m+1;else hi=m;}return lo;};
+    const l1=Array.from({length:inst},()=>new Float64Array(k)), l2=new Float64Array(k);
+    const win=Array.from({length:W},()=>({n:0,h:0}));
+    const n=Math.round(rps*DUR/1000);
+    let nS=0,hS=0,dbS=0,latS=0;
+    for(let r=0;r<n;r++){
+      const t=r*1000/rps, key=pick(), ins=r%inst, w=Math.min(W-1,Math.floor(t/10000));
+      let lat, hit=false;
+      if(mode==='none') lat=db;
+      else if(mode==='local'){ if(l1[ins][key]>t){lat=L1;hit=true;} else {lat=db;l1[ins][key]=t+ttl;} }
+      else if(mode==='redis'){ if(l2[key]>t){lat=L2;hit=true;} else {lat=L2+db;l2[key]=t+ttl;} }
+      else {
+        if(l1[ins][key]>t){lat=L1;hit=true;}
+        else if(l2[key]>t){lat=L2;hit=true;l1[ins][key]=l2[key];}
+        else {lat=L2+db;l2[key]=t+ttl;l1[ins][key]=t+ttl;}
+      }
+      win[w].n++; if(hit) win[w].h++;
+      if(t>=DUR/2){nS++;latS+=lat;if(hit)hS++;else dbS++;}
+    }
+    let copies=0;
+    if(mode==='local'||mode==='hybrid') l1.forEach(a=>{for(let i=0;i<k;i++) if(a[i]>DUR) copies++;});
+    if(mode==='redis'||mode==='hybrid') for(let i=0;i<k;i++) if(l2[i]>DUR) copies++;
+    const hr=nS?hS/nS:0, dbq=dbS/(DUR/2000), lat=latS/Math.max(1,nS);
+    $('#hrHit').textContent=mode==='none'?'0 %':fmt(hr*100,1)+' %';
+    $('#hrDbQ').textContent=fmt(dbq);
+    $('#hrLat').textContent=ms(lat);
+    $('#hrCopies').textContent=mode==='none'?'0':fmt(copies);
+    $('#hrStale').textContent=mode==='none'?'0 s':fmt(ttl/1000)+' s';
+    bars('#hrChart',win.map(x=>x.n?x.h/x.n*100:0),{max:100,top:'100 %',label:'Taux de hit par tranche de 10 secondes',ticks:[[0,'0 s'],[6,'60 s'],[11,'110 s']],color:(v,i)=>i>=6?'var(--blue)':'var(--blue-wash)'});
+    const note=$('#hrNote');
+    if(mode==='none') setMsg(note,'warn',`<p><strong>Sans cache.</strong> Chaque requête lit la base : ${fmt(rps)} lectures par seconde, ${db} ms par requête. Un pic de trafic arrive directement sur la base.</p>`);
+    else if(mode==='local') setMsg(note,inst>1?'warn':'good',`<p><strong>IMemoryCache.</strong> La lecture en mémoire est presque gratuite. Mais chacune des ${inst} instances a son propre cache : ${fmt(copies)} copies. Chaque instance charge chaque produit depuis la base. ${inst>1?`Après une modification, les instances peuvent retourner des prix différents pendant ${fmt(ttl/1000)} s au plus.`:''}</p>`);
+    else if(mode==='redis') setMsg(note,'mid',`<p><strong>Redis.</strong> Le cache est partagé : une seule copie par produit, quel que soit le nombre d'instances. Chaque lecture coûte un aller-retour réseau (~1 ms) et une désérialisation. La base reçoit ${fmt(dbq)} lectures par seconde au lieu de ${fmt(rps)}.</p>`);
+    else setMsg(note,'good',`<p><strong>HybridCache.</strong> Les produits populaires sont servis par L1, sans réseau. Une instance qui démarre ou qui n'a pas la clé lit L2 avant la base. La base reçoit ${fmt(dbq)} lectures par seconde. Les copies L1 restent propres à chaque instance : réglez <code>LocalCacheExpiration</code> pour limiter l'écart.</p>`);
+  }
+  [K,T,R,I,D].forEach(r=>r.addEventListener('input',run));
+  run();
+})();
+
+/* ───────── Expiration ───────── */
+(function(){
+  const T=bindRange('exTtl'),G=bindRange('exGap'),A=bindRange('exAbs');
+  let mode='abs'; seg('exMode',m=>{mode=m;$('#exAbsWrap').hidden=m!=='both';run();});
+  const DUR=300;
+  function run(){
+    const ttl=+T.value,gap=+G.value,abs=+A.value;
+    let created=null,exp=-1,loads=0,reads=0,maxAge=0; const alive=[], miss=[];
+    for(let t=0;t<DUR;t+=gap){
+      reads++;
+      if(t>=exp){ if(created!==null) alive.push([created,exp]); created=t; loads++; miss.push(t); }
+      maxAge=Math.max(maxAge,t-created);
+      if(mode==='abs') exp=created+ttl;
+      else if(mode==='slide') exp=t+ttl;
+      else exp=Math.min(t+ttl,created+abs);
+    }
+    if(created!==null) alive.push([created,Math.min(exp,DUR)]);
+    const pct=v=>(Math.min(v,DUR)/DUR*100).toFixed(2)+'%';
+    $('#exTrack').innerHTML=alive.map(([a,b])=>`<div class="bar" style="left:${pct(a)};width:calc(${pct(b-a)} - 2px);background:var(--green-wash);box-shadow:inset 0 -3px 0 var(--green)"></div>`).join('')
+      +miss.map(t=>`<div class="fill" style="left:${pct(t)};width:3px;background:var(--red)"></div>`).join('');
+    $('#exReads').textContent=reads; $('#exLoads').textContent=loads; $('#exAge').textContent=maxAge+' s';
+    const note=$('#exNote');
+    if(mode==='slide'&&gap<ttl) setMsg(note,'warn',`<p><strong>L'entrée n'expire jamais.</strong> Une lecture arrive toutes les ${gap} s, avant la fin de la fenêtre de ${ttl} s. Chaque lecture repousse l'expiration. La donnée lue a ${maxAge} s, et elle continuera de vieillir. Une modification en base n'est jamais visible. Ajoutez un plafond absolu.</p>`);
+    else if(mode==='slide') setMsg(note,'mid',`<p><strong>Expiration glissante.</strong> Les lectures sont plus espacées que la fenêtre de ${ttl} s. L'entrée expire entre deux lectures : presque chaque lecture est un miss. L'expiration glissante sert à garder les données lues souvent et à libérer les autres.</p>`);
+    else if(mode==='abs') setMsg(note,'good',`<p><strong>Expiration absolue.</strong> L'entrée expire ${ttl} s après sa création, même si elle est lue souvent. La donnée lue a au plus ${ttl} s. C'est le bon choix par défaut pour une donnée qui change.</p>`);
+    else setMsg(note,'good',`<p><strong>Glissante + absolue.</strong> L'entrée reste en cache tant qu'elle est lue, mais jamais plus de ${abs} s. Les données peu lues sortent du cache rapidement. L'âge maximal reste borné à ${abs} s.</p>`);
+  }
+  [T,G,A].forEach(r=>r.addEventListener('input',run));
+  run();
+})();
+
+/* ───────── Cache stampede ───────── */
+(function(){
+  const N=bindRange('stReq'),SP=bindRange('stSpread'),IN=bindRange('stInst'),DB=bindRange('stDb');
+  let mode='none'; seg('stMode',m=>{mode=m;run();});
+  const CAP=10, LOCK_RTT=2;
+  function run(){
+    const n=+N.value,sp=+SP.value,inst=+IN.value,db=+DB.value;
+    const req=Array.from({length:n},(_,i)=>({at:n>1?Math.round(sp*i/(n-1)):0,ins:i%inst,end:null,kind:'hit'}));
+    const queries=[], inflight=new Map();
+    let cached=false,t=0,ri=0,peak=0;
+    while(t<600000){
+      while(ri<n&&req[ri].at<=t){
+        const r=req[ri++];
+        if(cached){r.end=t+1;r.kind='hit';continue;}
+        if(mode==='none'){queries.push({rem:db,waiters:[r]});r.kind='own';continue;}
+        const k=mode==='coalesce'?r.ins:'g', q=inflight.get(k);
+        if(q){q.waiters.push(r);r.kind='wait';}
+        else{const nq={rem:db+(mode==='lock'?LOCK_RTT:0),waiters:[r],k};inflight.set(k,nq);queries.push(nq);r.kind='own';}
+      }
+      const active=queries.filter(q=>q.rem>0);
+      peak=Math.max(peak,active.length);
+      if(!active.length&&ri>=n) break;
+      const speed=Math.min(1,CAP/Math.max(1,active.length));
+      for(const q of active){
+        q.rem-=speed;
+        if(q.rem<=0){cached=true;q.waiters.forEach(w=>{w.end=t+1+(mode==='lock'&&w.kind==='wait'?LOCK_RTT*2:0);});if(q.k!==undefined)inflight.delete(q.k);}
+      }
+      t++;
+    }
+    const lats=req.map(r=>r.end-r.at), avg=lats.reduce((a,b)=>a+b,0)/n, max=Math.max(...lats);
+    $('#stQ').textContent=fmt(queries.length);
+    $('#stPeak').textContent=fmt(peak);
+    $('#stAvg').textContent=ms(avg);
+    $('#stMax').textContent=ms(max);
+    const end=Math.max(...req.map(r=>r.end)), shown=[];
+    const step=Math.max(1,n/50); for(let i=0;i<n&&shown.length<50;i+=step) shown.push(req[Math.floor(i)]);
+    $('#stLanes').innerHTML=shown.map(r=>{
+      const l=(r.at/end*100).toFixed(2), w=Math.max(.4,(r.end-r.at)/end*100).toFixed(2);
+      const style=r.kind==='own'?'':r.kind==='wait'?'background:var(--blue-wash);box-shadow:inset 0 0 0 1px var(--blue)':'background:var(--blue)';
+      return `<div class="lane"><div class="job${r.kind==='own'?' slow':''}" style="left:${l}%;width:${w}%;${style}"></div></div>`;
+    }).join('');
+    const note=$('#stNote');
+    if(mode==='none') setMsg(note,queries.length>CAP?'warn':'mid',`<p><strong>Sans protection.</strong> ${fmt(queries.length)} requêtes SQL identiques pour une seule valeur. Au pic, ${peak} requêtes s'exécutent en même temps. La base dépasse sa capacité de ${CAP} : chaque requête ralentit. La latence maximale passe de ${db} ms à ${ms(max)}.</p>`);
+    else if(mode==='coalesce') setMsg(note,'good',`<p><strong>Coalescing.</strong> Une requête SQL par instance : ${queries.length} au total. Les autres requêtes HTTP attendent la même Task. La base n'est pas surchargée. La latence maximale reste proche de ${db} ms.</p>`);
+    else setMsg(note,'good',`<p><strong>Verrou distribué.</strong> Une seule requête SQL pour toutes les instances. Le verrou ajoute des allers-retours Redis : prise du verrou, puis attente et nouvelle lecture du cache pour les autres requêtes. Le gain par rapport au coalescing est faible ici (${inst} requêtes évitées au plus).</p>`);
+  }
+  [N,SP,IN,DB].forEach(r=>r.addEventListener('input',run));
+  run();
+})();
+
+/* ───────── Jitter ───────── */
+(function(){
+  const K=bindRange('jiKeys'),T=bindRange('jiTtl'),J=bindRange('jiJit');
+  function run(){
+    const k=+K.value,ttl=+T.value,j=+J.value/100,DUR=1800,B=10,nb=DUR/B;
+    const h=new Array(nb).fill(0), rnd=rng(7);
+    for(let i=0;i<k;i++){let t=0;while(true){t+=ttl*(1+(rnd()*2-1)*j);if(t>=DUR)break;h[Math.floor(t/B)]++;}}
+    const peak=Math.max(...h)/B, avg=h.reduce((a,b)=>a+b,0)/DUR;
+    $('#jiPeak').textContent=fmt(peak); $('#jiAvg').textContent=fmt(avg,1); $('#jiRatio').textContent=avg?'× '+fmt(peak/avg,1):'–';
+    bars('#jiChart',h.map(v=>v/B),{label:'Rechargements par seconde',top:fmt(Math.max(...h)/B)+' /s',ticks:[[0,'0'],[60,'10 min'],[120,'20 min'],[174,'29 min']],color:v=>v>avg*3?'var(--red)':'var(--blue)'});
+  }
+  [K,T,J].forEach(r=>r.addEventListener('input',run));
+  run();
+})();
+
+/* ───────── Plusieurs instances : L1 et backplane ───────── */
+(function(){
+  const S={
+    none:[
+      {a:[card('product:42 = 20 € (L1, 60 s)')],b:[card('product:42 = 20 € (L1, 60 s)')],r:[card('product:42 = 20 €')],d:[card('prix = 20 €')],note:`Les deux instances ont lu le produit 42. Chaque instance a une copie dans son L1. Redis a la copie partagée.`},
+      {a:[card('product:42 = 20 € (L1)')],b:[card('product:42 = 20 € (L1)')],r:[card('product:42 = 20 €')],d:[card('prix = 25 €','hot')],note:`Un utilisateur modifie le prix sur l'instance A. L'instance A écrit 25 € en base.`},
+      {a:[none('product:42 supprimé')],b:[card('product:42 = 20 € (L1)')],r:[none('product:42 supprimé')],d:[card('prix = 25 €')],note:`L'instance A appelle <code>RemoveAsync</code>. La clé disparaît du L1 de A et de Redis. L'instance B ne reçoit aucun signal.`},
+      {a:[card('product:42 = 25 € (L1)','hot')],b:[card('product:42 = 20 € (L1)','dead')],r:[card('product:42 = 25 €','hot')],d:[card('prix = 25 €')],tone:'warn',note:`<b>Incohérence.</b> Une lecture sur A recharge 25 €. Une lecture sur B retourne 20 € depuis son L1. Le même client voit deux prix différents selon l'instance choisie par le load balancer.`},
+      {a:[card('product:42 = 25 € (L1)')],b:[card('product:42 = 25 € (L1)','hot')],r:[card('product:42 = 25 €')],d:[card('prix = 25 €')],note:`À la fin de <code>LocalCacheExpiration</code>, le L1 de B expire. B lit Redis et obtient 25 €. L'écart a duré jusqu'à 60 s. La durée du L1 est donc la durée maximale de l'incohérence.`}
+    ],
+    bp:[
+      {a:[card('product:42 = 20 € (L1, 60 s)')],b:[card('product:42 = 20 € (L1, 60 s)')],r:[card('product:42 = 20 €'),card('canal : fusioncache.backplane')],d:[card('prix = 20 €')],note:`Les deux instances sont abonnées à un canal Redis pub/sub : le backplane.`},
+      {a:[card('product:42 = 20 € (L1)')],b:[card('product:42 = 20 € (L1)')],r:[card('product:42 = 20 €'),card('canal : fusioncache.backplane')],d:[card('prix = 25 €','hot')],note:`L'instance A écrit 25 € en base.`},
+      {a:[none('product:42 supprimé')],b:[card('product:42 = 20 € (L1)')],r:[none('product:42 supprimé'),card('PUBLISH : remove product:42','hot')],d:[card('prix = 25 €')],note:`L'instance A supprime la clé de son L1 et de Redis. Elle publie un message d'invalidation sur le canal.`},
+      {a:[none('product:42 absent')],b:[none('product:42 supprimé (message reçu)')],r:[none('product:42 absent'),card('canal : fusioncache.backplane')],d:[card('prix = 25 €')],tone:'good',note:`L'instance B reçoit le message en quelques ms. Elle supprime la clé de son L1.`},
+      {a:[card('product:42 = 25 € (L1)','hot')],b:[card('product:42 = 25 € (L1)','hot')],r:[card('product:42 = 25 €')],d:[card('prix = 25 €')],tone:'good',note:`Les lectures suivantes rechargent 25 € sur les deux instances. L'incohérence a duré quelques ms. Si B était déconnecté de Redis pendant le message, son L1 garderait 20 € jusqu'à son expiration.`}
+    ]
+  };
+  const go=m=>stepper('ml',{steps:S[m],render(s){$('#mlA').innerHTML=s.a.join('');$('#mlB').innerHTML=s.b.join('');$('#mlR').innerHTML=s.r.join('');$('#mlD').innerHTML=s.d.join('');}});
+  seg('mlMode',go); go('none');
+})();
+
+/* ───────── Verrou distribué ───────── */
+(function(){
+  const S={
+    plain:[
+      {a:[card('LockTake → OK','hot')],b:[none('Attend')],r:[card('lock:job = A, PX 30000')],s:[card('fichier v1')],note:`L'instance A prend le verrou avec un TTL de 30 s. Le TTL libère le verrou si A s'arrête.`},
+      {a:[card('Pause GC / process gelé (40 s)','dead')],b:[none('Attend')],r:[card('lock:job = A, PX 12000')],s:[card('fichier v1')],note:`A subit une longue pause : garbage collection, conteneur gelé, machine virtuelle migrée. A ne s'exécute plus, mais A croit toujours avoir le verrou.`},
+      {a:[card('Toujours en pause','dead')],b:[card('LockTake → OK','hot')],r:[card('lock:job = B, PX 30000','hot')],s:[card('fichier v1')],tone:'warn',note:`Le TTL expire. Redis supprime le verrou. B prend le verrou de façon correcte.`},
+      {a:[card('Reprise : écrit le résultat','hot')],b:[card('Écrit le résultat','hot')],r:[card('lock:job = B')],s:[card('fichier écrit par A','dead'),card('fichier écrit par B','dead')],tone:'warn',note:`<b>Deux propriétaires.</b> A reprend et termine son travail sans vérifier le verrou. A et B écrivent tous les deux. Le résultat est corrompu. Redis ne peut pas empêcher ce cas : le problème est côté client.`}
+    ],
+    fence:[
+      {a:[card('LockTake → OK, jeton 33','hot')],b:[none('Attend')],r:[card('lock:job = A, PX 30000'),card('INCR fence:job → 33')],s:[card('dernier jeton accepté : 32')],note:`À chaque prise du verrou, le client obtient un numéro croissant : le fencing token (<code>INCR</code>).`},
+      {a:[card('Pause GC (40 s)','dead')],b:[none('Attend')],r:[card('lock:job = A, PX 12000')],s:[card('dernier jeton accepté : 32')],note:`A est en pause, comme dans le premier scénario.`},
+      {a:[card('Toujours en pause','dead')],b:[card('LockTake → OK, jeton 34','hot')],r:[card('lock:job = B'),card('INCR fence:job → 34')],s:[card('écriture jeton 34 : acceptée','hot')],note:`B prend le verrou avec le jeton 34. B écrit. Le stockage mémorise le jeton 34.`},
+      {a:[card('Reprise : écrit avec le jeton 33')],b:[card('Terminé')],r:[card('lock:job = B')],s:[card('écriture jeton 33 : refusée (33 &lt; 34)','dead')],tone:'good',note:`<b>Protection.</b> Le stockage refuse un jeton plus petit que le dernier accepté. En base, c'est une colonne de version : <code>UPDATE … WHERE version &lt; @token</code>. La sécurité vient du stockage, pas du verrou.`}
+    ]
+  };
+  const go=m=>stepper('lk',{steps:S[m],render(s){$('#lkA').innerHTML=s.a.join('');$('#lkB').innerHTML=s.b.join('');$('#lkR').innerHTML=s.r.join('');$('#lkS').innerHTML=s.s.join('');}});
+  seg('lkMode',go); go('plain');
+})();
+
+/* ───────── Pipelining ───────── */
+(function(){
+  const N=bindRange('plN'),R=bindRange('plRtt'),S=bindRange('plSrv'),B=bindRange('plBig');
+  function run(){
+    const n=+N.value,rtt=+R.value,srv=+S.value/1000,big=+B.value,hol=big*8;
+    const seq=n*(rtt+srv)+hol, pipe=rtt+n*srv+hol, scale=seq, rows=Math.min(n,12);
+    const pc=v=>(v/scale*100).toFixed(2)+'%';
+    const row=(i,start,dur,extra)=>`<div class="grow"><span class="lbl">GET k${i+1}</span><div class="track">${extra||''}<div class="bar" style="left:${pc(start)};width:${pc(dur)}"></div><div class="fill" style="left:${pc(start+dur/2-srv/2)};width:max(2px,${pc(srv)})"></div></div></div>`;
+    const bigBar=`<div class="fill" style="left:0;width:${pc(hol)};background:var(--red)"></div>`;
+    let s='',p='';
+    for(let i=0;i<rows;i++){
+      s+=row(i,hol+i*(rtt+srv),rtt+srv,i===0&&hol?bigBar:'');
+      p+=row(i,hol,rtt+(i+1)*srv,i===0&&hol?bigBar:'');
+    }
+    $('#plSeq').innerHTML=s; $('#plPipe').innerHTML=p;
+    $('#plTs').textContent=ms(seq); $('#plTp').textContent=ms(pipe); $('#plGain').textContent='× '+fmt(seq/pipe,1); $('#plHol').textContent=hol?ms(hol):'0 ms';
+    const note=$('#plNote');
+    if(hol) setMsg(note,'warn',`<p><strong>Blocage en tête de file.</strong> Une valeur de ${big} Mo passe avant ces commandes sur la même connexion. Son transfert dure environ ${ms(hol)} à 1 Gbit/s. Toutes les commandes attendent ce transfert, même en pipeline.</p>`);
+    else if(n===1) setMsg(note,'mid',`<p>Avec une seule commande, le pipeline n'apporte rien : le coût est un RTT.</p>`);
+    else setMsg(note,'good',`<p><strong>Pipeline.</strong> ${n} commandes coûtent un seul RTT au lieu de ${n}. Le temps serveur est négligeable : ${n} × ${fmt(srv*1000)} µs. Le réseau domine. Plus le RTT est grand (Redis managé dans une autre zone), plus le gain est grand.</p>`);
+  }
+  [N,R,S,B].forEach(r=>r.addEventListener('input',run));
+  run();
+})();
+
+/* ───────── Message de timeout ───────── */
+(function(){
+  const C={
+    starv:{msg:`StackExchange.Redis.RedisTimeoutException: Timeout performing GET (5000ms), next: GET catalog:product:v2:42, inst: 0, qu: 0, [[qs: 187]], aw: False, bw: SpinningDown, rs: ReadAsync, ws: Idle, [[in: 65536]], last-in: 0, cur-in: 0, sync-ops: 2, async-ops: 918211, serverEndpoint: redis:6379, conn-sec: 3812.4, aoc: 1, mc: 1/1/0, mgr: 10 of 10 available, clientName: api-7f9c(SE.Redis-v2.8.16), [[WORKER: (Busy=212,Free=32555,Min=4,Max=32767)]], [[POOL: (Threads=212,QueuedItems=1408,CompletedItems=7712045)]], v: 2.8.16.0`,
+      rows:[['in: 65536','Redis a déjà répondu. 64 Ko de réponses attendent dans la socket. Redis n\'est pas lent.'],['qs: 187','187 commandes attendent le traitement de leur réponse.'],['WORKER Busy=212, Min=4','212 workers occupés pour un minimum de 4. Le ThreadPool ajoute les workers lentement.'],['QueuedItems=1408','1 408 éléments attendent un worker. Les continuations des Tasks Redis sont dans cette file.']],
+      tone:'warn',note:`<strong>Diagnostic : starvation du ThreadPool.</strong> Les workers sont bloqués, en général par <code>.Result</code>, <code>.Wait()</code> ou un appel synchrone. Les réponses de Redis arrivent, mais aucun worker ne termine les Tasks. Correction : supprimer le code bloquant (async de bout en bout). En urgence : <code>ThreadPool.SetMinThreads</code>.`},
+    big:{msg:`StackExchange.Redis.RedisTimeoutException: Timeout performing GET (5000ms), [[next: GET catalog:report:2026:full]], inst: 0, qu: 0, [[qs: 1]], aw: False, bw: SpinningDown, [[rs: ReadAsync]], ws: Idle, in: 0, [[last-in: 1048576, cur-in: 31457280]], sync-ops: 0, async-ops: 1520, serverEndpoint: redis:6379, conn-sec: 120.5, aoc: 0, mc: 1/1/0, mgr: 10 of 10 available, clientName: api-7f9c(SE.Redis-v2.8.16), WORKER: (Busy=3,Free=32764,Min=4,Max=32767), POOL: (Threads=8,QueuedItems=0,CompletedItems=88123), v: 2.8.16.0`,
+      rows:[['next: GET catalog:report:2026:full','La commande concernée lit un rapport complet.'],['cur-in: 31457280','Le client lit une réponse de 30 Mo. La lecture est en cours.'],['qs: 1','Une seule commande en attente. Le client n\'est pas surchargé.'],['WORKER Busy=3, Min=4','Le ThreadPool est sain.']],
+      tone:'warn',note:`<strong>Diagnostic : valeur trop grosse.</strong> Le transfert de 30 Mo dépasse le délai. Toutes les commandes suivantes sur la connexion attendent aussi. Vérifiez avec <code>MEMORY USAGE</code> ou <code>redis-cli --bigkeys</code>. Correction : découper ou compresser la valeur, ou la stocker ailleurs.`},
+    server:{msg:`StackExchange.Redis.RedisTimeoutException: Timeout performing HGET (5000ms), next: HGET catalog:cart:9912 items, inst: 0, qu: 0, [[qs: 45]], aw: False, bw: SpinningDown, rs: ReadAsync, ws: Idle, [[in: 0]], last-in: 0, cur-in: 0, sync-ops: 0, async-ops: 520113, serverEndpoint: redis:6379, conn-sec: 9120.1, aoc: 0, mc: 1/1/0, mgr: 10 of 10 available, clientName: api-7f9c(SE.Redis-v2.8.16), [[WORKER: (Busy=6,Free=32761,Min=8,Max=32767)]], POOL: (Threads=10,QueuedItems=0,CompletedItems=4412387), v: 2.8.16.0`,
+      rows:[['qs: 45','45 commandes envoyées sans réponse.'],['in: 0','Rien n\'attend dans la socket : la réponse n\'est pas arrivée.'],['WORKER Busy=6, Min=8','Le ThreadPool est sain : le client n\'est pas en cause.']],
+      tone:'mid',note:`<strong>Diagnostic : serveur ou réseau lent.</strong> Redis ne répond pas. Vérifiez <code>SLOWLOG GET</code> (commande O(N) comme <code>KEYS</code>), le CPU de Redis, un <code>fork</code> de sauvegarde (<code>latest_fork_usec</code>), une bascule Sentinel, ou la latence réseau.`}
+  };
+  function show(m){
+    const c=C[m];
+    $('#toMsg').innerHTML=esc(c.msg).replace(/\[\[(.+?)\]\]/g,'<span class="k">$1</span>');
+    $('#toTable').innerHTML='<thead><tr><th>Champ</th><th>Lecture</th></tr></thead><tbody>'+c.rows.map(r=>`<tr><td><code>${esc(r[0])}</code></td><td class="secondary">${esc(r[1])}</td></tr>`).join('')+'</tbody>';
+    setMsg($('#toNote'),c.tone,`<p>${c.note}</p>`);
+  }
+  seg('toCase',show); show('starv');
+})();
+
+/* ───────── Hash slot du Cluster ───────── */
+(function(){
+  function crc16(s){const b=new TextEncoder().encode(s);let c=0;for(const x of b){c^=x<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021)&0xffff:(c<<1)&0xffff;}return c;}
+  function part(k){const a=k.indexOf('{');if(a<0)return k;const z=k.indexOf('}',a+1);if(z<0||z===a+1)return k;return k.slice(a+1,z);}
+  const node=s=>s<=5460?'Primaire 1 (0 à 5460)':s<=10922?'Primaire 2 (5461 à 10922)':'Primaire 3 (10923 à 16383)';
+  const k1=$('#csK1'),k2=$('#csK2');
+  function run(){
+    const rows=[k1.value,k2.value].map(k=>{const p=part(k),s=crc16(p)%16384;return {k,p,s};});
+    $('#csOut').innerHTML='<thead><tr><th>Clé</th><th>Texte haché</th><th class="num">Slot</th><th>Nœud (cluster de 3 primaires)</th></tr></thead><tbody>'+rows.map(r=>`<tr><td><code>${esc(r.k)}</code></td><td><code>${esc(r.p)}</code></td><td class="num">${r.s}</td><td class="secondary">${node(r.s)}</td></tr>`).join('')+'</tbody>';
+    const same=rows[0].s===rows[1].s;
+    setMsg($('#csNote'),same?'good':'warn',same?`<p><strong>Même slot.</strong> <code>MGET</code>, une transaction ou un script Lua sur ces deux clés fonctionne en Cluster.</p>`:`<p><strong>Slots différents.</strong> Une commande multi-clés sur ces deux clés retourne <code>CROSSSLOT Keys in request don't hash to the same slot</code>. Ajoutez un hash tag commun : <code>{user:42}</code>.</p>`);
+  }
+  [k1,k2].forEach(i=>i.addEventListener('input',run));
+  document.querySelectorAll('#csPresets button').forEach(b=>b.addEventListener('click',()=>{k1.value=b.dataset.a;k2.value=b.dataset.b;run();}));
+  run();
+})();
+
+/* ───────── LRU approximé ───────── */
+(function(){
+  const S=bindRange('lrS');
+  function run(){
+    const s=+S.value, rank=s/(s+1), old=1-Math.pow(.9,s), bad=Math.pow(.5,s);
+    $('#lrRank').textContent=fmt(rank*100,1)+' %';
+    $('#lrOld').textContent=fmt(old*100,1)+' %';
+    $('#lrBad').textContent=fmt(bad*100,s>6?2:1)+' %';
+    setMsg($('#lrNote'),s<3?'warn':s>=10?'good':'mid',s<3?`<p><strong>${s} échantillon(s).</strong> Redis évince souvent une clé récente. Le taux de hit baisse.</p>`:s>=10?`<p><strong>${s} échantillons.</strong> Le résultat est très proche d'un LRU exact. Chaque éviction coûte un peu plus de CPU.</p>`:`<p><strong>${s} échantillons.</strong> Bon compromis entre précision et CPU. La valeur par défaut est 5.</p>`);
+  }
+  S.addEventListener('input',run); run();
+})();
+
+/* ───────── Mauvaises pratiques ───────── */
+const ANTI=[
+  {t:`Créer un ConnectionMultiplexer par requête`,why:`Chaque création ouvre une connexion TCP, négocie TLS et découvre la topologie. Avec du trafic, Redis reçoit des milliers de connexions. Les connexions non fermées restent ouvertes. La latence et la mémoire de Redis augmentent.`,bad:`public async Task<string?> GetAsync(string key)
+{
+    using var redis = await ConnectionMultiplexer.ConnectAsync("redis:6379");
+    return await redis.GetDatabase().StringGetAsync(key);
+}`,good:`// Program.cs
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    _ => ConnectionMultiplexer.Connect("redis:6379,abortConnect=false"));
+// Service : injecte IConnectionMultiplexer, appelle GetDatabase()`},
+  {t:`Clé de cache sans TTL`,why:`La clé reste en mémoire pour toujours. Redis se remplit. Avec noeviction, Redis refuse ensuite les écritures. Une donnée périmée n'est jamais corrigée si l'invalidation échoue.`,bad:`await _db.StringSetAsync($"product:{id}", json);`,good:`await _db.StringSetAsync($"product:{id}", json, TimeSpan.FromMinutes(10));`},
+  {t:`Écrire la nouvelle valeur dans le cache après une modification`,why:`Deux modifications concurrentes peuvent écrire dans le cache dans un ordre différent de la base. Le cache garde alors l'ancienne valeur jusqu'au TTL. Une suppression n'a pas ce problème : la lecture suivante recharge la valeur exacte.`,bad:`await _repo.UpdateAsync(dto, ct);
+await _db.StringSetAsync(key, JsonSerializer.Serialize(dto), ttl);`,good:`await _repo.UpdateAsync(dto, ct);
+await _db.KeyDeleteAsync(key);`},
+  {t:`Mettre en cache un objet modifiable dans IMemoryCache`,why:`IMemoryCache garde une référence. Un appelant qui modifie l'objet lu modifie le cache pour tous les autres appelants. Une entité EF Core suivie garde aussi une référence vers son DbContext.`,bad:`var product = await _db.Products.FindAsync(id); // entité suivie
+_memory.Set(key, product);
+// plus loin : product.Price = 0; → le cache contient 0`,good:`var dto = await _db.Products.AsNoTracking()
+    .Where(p => p.Id == id)
+    .Select(p => new ProductDto(p.Id, p.Name, p.Price)) // record immuable
+    .FirstOrDefaultAsync(ct);
+_memory.Set(key, dto, TimeSpan.FromMinutes(5));`},
+  {t:`Expiration glissante seule sur une donnée qui change`,why:`Une donnée lue plus souvent que la fenêtre glissante n'expire jamais. Une modification en base n'est jamais visible si l'invalidation échoue.`,bad:`new MemoryCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(5) }`,good:`new MemoryCacheEntryOptions
+{
+    SlidingExpiration = TimeSpan.FromMinutes(5),
+    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+}`},
+  {t:`KEYS en production`,why:`KEYS parcourt toutes les clés en une seule commande. Redis est mono-thread : tous les clients attendent. Avec des millions de clés, le blocage dure plusieurs secondes et cause des timeouts.`,bad:`var keys = (RedisResult[])await _db.ExecuteAsync("KEYS", "product:*");`,good:`var server = _redis.GetServer(_redis.GetEndPoints()[0]);
+await foreach (var key in server.KeysAsync(pattern: "product:*", pageSize: 500))
+    await _db.KeyDeleteAsync(key); // SCAN par pages
+// Mieux : invalidation par tag ou par version de clé`},
+  {t:`Bloquer sur un appel Redis avec .Result`,why:`Le worker reste bloqué pendant l'aller-retour. Sous charge, le ThreadPool manque de workers. Les réponses Redis arrivent, mais aucun worker ne termine les Tasks. Le client lève des RedisTimeoutException alors que Redis est rapide.`,bad:`var json = _db.StringGetAsync(key).Result;`,good:`var json = await _db.StringGetAsync(key);`},
+  {t:`Laisser une panne de Redis arrêter l'API`,why:`Sans gestion d'erreur, chaque requête attend le timeout (5 s par défaut), puis retourne une erreur 500. Le cache devient un point de défaillance alors que la base fonctionne.`,bad:`var cached = await _db.StringGetAsync(key);
+if (cached.HasValue) return Deserialize(cached);`,good:`try
+{
+    var cached = await _db.StringGetAsync(key);
+    if (cached.HasValue) return Deserialize(cached);
+}
+catch (Exception ex) when (ex is RedisConnectionException or RedisTimeoutException)
+{
+    _log.LogWarning(ex, "Cache indisponible, lecture de la source");
+}
+return await _repo.FindAsync(id, ct);`},
+  {t:`Stocker de grosses valeurs`,why:`Une valeur de plusieurs Mo bloque la connexion multiplexée pendant son transfert. Toutes les autres commandes attendent. En Cluster, elle charge un seul nœud.`,bad:`await _db.StringSetAsync("report:2026", JsonSerializer.Serialize(allRows)); // 30 Mo`,good:`// Valeurs < 100 Ko : découper par page, ou stocker le fichier ailleurs
+await _db.StringSetAsync($"report:2026:page:{page}", JsonSerializer.Serialize(rows), ttl);`},
+  {t:`Clé sans version de format`,why:`Après un changement du DTO, la nouvelle version de l'application lit des valeurs écrites par l'ancienne. La désérialisation échoue ou donne des champs vides. Pendant un déploiement progressif, les deux versions s'écrasent mutuellement.`,bad:`var key = $"product:{id}";`,good:`var key = $"catalog:product:v3:{id}"; // v3 : format actuel du ProductDto`}
+];
+
+/* ───────── QCM (un par niveau : b = base, a = avancé, p = profond) ───────── */
+const QCM=[
+  {lv:'b',th:'Principes',q:`Quel est le principal coût d'un cache ?`,o:[`Une latence plus élevée à chaque lecture`,`Le risque de lire une donnée périmée`,`L'impossibilité d'utiliser une base relationnelle`,`Une consommation CPU plus élevée sur la base`],a:1,e:`Le cache échange de la fraîcheur contre de la vitesse. Pour chaque donnée, définissez la durée de périmé acceptable, puis choisissez le TTL.`},
+  {lv:'b',th:'Principes',q:`Quelle donnée est un mauvais candidat pour un cache ?`,o:[`La liste des pays`,`La fiche d'un produit du catalogue`,`Le stock exact au moment de valider une commande`,`La configuration de l'application`],a:2,e:`Le stock doit être exact à la validation. Une valeur en cache peut être périmée. Lisez la source, avec un contrôle transactionnel.`},
+  {lv:'b',th:'Cache-aside',q:`Avec le pattern cache-aside, que fait le code après la modification d'un produit en base ?`,o:[`Il écrit la nouvelle valeur dans le cache`,`Il ne fait rien : le TTL suffit`,`Il vide tout le cache`,`Il supprime la clé du produit dans le cache`],a:3,e:`La suppression évite qu'une écriture concurrente laisse une ancienne valeur dans le cache. La lecture suivante recharge la valeur exacte.`},
+  {lv:'b',th:'Cache-aside',q:`La première lecture d'une clé absente avec Redis coûte :`,o:[`Un aller-retour Redis, puis la requête à la source, puis l'écriture dans Redis`,`Seulement la requête à la source`,`Rien : Redis charge la valeur lui-même`,`Deux requêtes à la source`],a:0,e:`Un miss coûte plus cher que sans cache. Le gain vient des hits suivants. Un taux de hit faible peut donc rendre le cache contre-productif.`},
+  {lv:'b',th:'API .NET',q:`Quelle différence existe entre IMemoryCache et IDistributedCache ?`,o:[`IMemoryCache est plus lent`,`IDistributedCache stocke des objets .NET sans sérialisation`,`IMemoryCache est local au process, IDistributedCache est partagé et stocke des octets`,`Il n'y a pas de différence avec Redis`],a:2,e:`IMemoryCache garde une référence dans la mémoire du process. IDistributedCache stocke des byte[] sur un serveur partagé : la sérialisation est obligatoire.`},
+  {lv:'b',th:'API .NET',q:`L'API tourne sur 6 instances avec IMemoryCache. Un produit très lu est chargé depuis la base combien de fois par période de TTL ?`,o:[`Une fois`,`Jusqu'à 6 fois, une par instance`,`Jamais`,`Une fois par requête`],a:1,e:`Chaque instance a son propre cache. Chaque instance charge donc la donnée. Les copies peuvent aussi être différentes après une modification.`},
+  {lv:'b',th:'API .NET',q:`Quelles fonctions HybridCache ajoute-t-il par rapport à IDistributedCache ?`,o:[`L1 + L2, sérialisation automatique, protection contre le stampede, invalidation par tag`,`Un backplane entre instances`,`Le fail-safe automatique en cas de panne de la base`,`Le chiffrement des valeurs`],a:0,e:`HybridCache combine L1 et L2, sérialise, regroupe les appels concurrents par clé et gère les tags. Il n'a pas de backplane ni de fail-safe : FusionCache les propose.`},
+  {lv:'b',th:'API .NET',q:`Un code met en cache une entité EF Core dans IMemoryCache. Un appelant change sa propriété Price. Quel est l'effet ?`,o:[`Aucun : le cache contient une copie`,`Une exception est levée`,`Le changement est enregistré en base automatiquement`,`Tous les appelants suivants lisent le prix modifié`],a:3,e:`IMemoryCache stocke une référence. L'objet en cache est le même objet. Mettez en cache des objets immuables, sans suivi EF Core.`},
+  {lv:'b',th:'Expiration',q:`Une entrée a une expiration glissante de 30 s. Elle est lue toutes les 10 s. Quand expire-t-elle ?`,o:[`Après 30 s`,`Jamais, tant que les lectures continuent`,`Après 3 lectures`,`Après 10 s`],a:1,e:`Chaque lecture repousse l'expiration de 30 s. Ajoutez une expiration absolue pour borner l'âge de la donnée.`},
+  {lv:'b',th:'Expiration',q:`IMemoryCache a un SizeLimit. Un code ajoute une entrée sans définir Size. Que se passe-t-il ?`,o:[`L'entrée prend la taille 1`,`L'entrée est ignorée sans erreur`,`Une InvalidOperationException est levée`,`La limite est désactivée`],a:2,e:`Avec SizeLimit, chaque entrée doit avoir une Size. L'unité est choisie par l'application (nombre d'entrées, octets estimés).`},
+  {lv:'b',th:'Redis',q:`Quelle est la bonne durée de vie pour un ConnectionMultiplexer ?`,o:[`Un par requête HTTP`,`Un par méthode`,`Un par thread`,`Un par application et par serveur Redis (singleton)`],a:3,e:`Le multiplexer est thread-safe et coûteux à créer. Il partage une connexion entre tous les threads. GetDatabase() est léger et peut être appelé souvent.`},
+  {lv:'b',th:'Redis',q:`Quelle structure Redis convient à un classement des meilleurs scores ?`,o:[`Sorted set`,`List`,`String`,`Set`],a:0,e:`Un sorted set trie ses éléments par score. ZADD ajoute ou met à jour un score. ZRANGE (avec REV) lit le classement.`},
+  {lv:'b',th:'Redis',q:`TTL sur une clé retourne -1. Quel est le sens ?`,o:[`La clé n'existe pas`,`La clé expire dans 1 s`,`La clé existe et n'a pas de TTL`,`Erreur de syntaxe`],a:2,e:`-1 : clé sans TTL. -2 : clé absente. Une clé de cache sans TTL reste en mémoire pour toujours.`},
+  {lv:'b',th:'Redis',q:`Pourquoi ajouter une version dans la clé, par exemple product:v2:42 ?`,o:[`Redis l'exige`,`Pour invalider toutes les anciennes valeurs après un changement de format du DTO`,`Pour accélérer les lectures`,`Pour activer la réplication`],a:1,e:`La nouvelle version de l'application lit seulement les clés v2. Les clés v1 ne sont plus lues et expirent avec leur TTL.`},
+
+  {lv:'a',th:'Stampede',q:`Qu'est-ce qu'un cache stampede ?`,o:[`Une saturation de la mémoire de Redis`,`Beaucoup de requêtes trouvent la même clé absente et rechargent toutes la source en même temps`,`Une perte de connexion à Redis`,`Une boucle de réplication`],a:1,e:`Une clé populaire expire. Les requêtes concurrentes lancent toutes la même requête coûteuse. La source ralentit, et le rechargement dure plus longtemps.`},
+  {lv:'a',th:'Stampede',q:`IMemoryCache.GetOrCreateAsync protège-t-il contre le stampede ?`,o:[`Oui, avec un verrou par clé`,`Oui, mais seulement avec SizeLimit`,`Non : plusieurs appels concurrents exécutent la factory`,`Non, et il lève une exception en cas d'appels concurrents`],a:2,e:`GetOrCreateAsync n'a pas de verrou. HybridCache, FusionCache et l'output caching regroupent les appels concurrents.`},
+  {lv:'a',th:'Stampede',q:`10 instances utilisent HybridCache. Une clé populaire expire. Combien d'appels à la factory au plus ?`,o:[`1`,`10, un par instance`,`Un par requête HTTP`,`0`],a:1,e:`Le coalescing de HybridCache fonctionne dans un process. Chaque instance appelle la factory une fois. Un verrou distribué peut réduire ce nombre à 1.`},
+  {lv:'a',th:'Stampede',q:`Pourquoi ajouter un jitter au TTL ?`,o:[`Pour répartir les expirations de clés créées au même moment`,`Pour réduire la mémoire`,`Pour chiffrer les clés`,`Pour garantir l'ordre des écritures`],a:0,e:`Sans jitter, les clés chargées ensemble expirent ensemble. La charge sur la source revient par vagues. Une variation de ±10 % lisse ces pics.`},
+  {lv:'a',th:'Instances',q:`HybridCache avec L1 de 60 s. L'instance A appelle RemoveAsync. Que se passe-t-il sur l'instance B ?`,o:[`B supprime aussi sa copie L1 immédiatement`,`B lève une exception`,`B garde sa copie L1 jusqu'à son expiration`,`B vide tout son cache`],a:2,e:`HybridCache n'a pas de backplane. L'écart entre instances dure au plus LocalCacheExpiration. FusionCache propose un backplane Redis pub/sub.`},
+  {lv:'a',th:'Instances',q:`Pourquoi garder un TTL L1 court, même avec un backplane ?`,o:[`Le backplane est trop lent`,`Redis pub/sub ne garde pas les messages : une instance déconnectée perd l'invalidation`,`Le backplane désactive L2`,`Le TTL L1 est ignoré avec un backplane`],a:1,e:`Pub/sub est « fire and forget ». Un message envoyé pendant une déconnexion est perdu. Le TTL limite la durée de l'erreur.`},
+  {lv:'a',th:'Résilience',q:`Que fait le fail-safe de FusionCache ?`,o:[`Il retourne une valeur expirée quand la factory échoue`,`Il redémarre Redis`,`Il désactive le cache en cas d'erreur`,`Il réessaie la factory sans limite`],a:0,e:`L'utilisateur reçoit une donnée un peu périmée au lieu d'une erreur. FailSafeMaxDuration borne l'âge de cette donnée.`},
+  {lv:'a',th:'Résilience',q:`Redis tombe. Le code appelle StringGetAsync sans try/catch. Quel est l'effet ?`,o:[`La méthode retourne null`,`Les appels attendent le timeout puis lèvent une exception : l'API retourne des erreurs`,`Le multiplexer bascule sur la base`,`Rien : le multiplexer met les commandes en file pour toujours`],a:1,e:`Le cache devient un point de défaillance. Traitez une erreur de cache comme un miss, réduisez le timeout et ajoutez un disjoncteur.`},
+  {lv:'a',th:'Mémoire',q:`Quelle est la politique d'éviction par défaut de Redis ?`,o:[`allkeys-lru`,`volatile-lru`,`allkeys-lfu`,`noeviction`],a:3,e:`Avec noeviction, Redis refuse les écritures quand maxmemory est atteint (erreur OOM). Pour un cache pur, choisissez allkeys-lru ou allkeys-lfu.`},
+  {lv:'a',th:'Mémoire',q:`Politique volatile-lru, mémoire pleine, aucune clé n'a de TTL. Que fait Redis ?`,o:[`Il supprime les clés les plus anciennes`,`Il supprime des clés au hasard`,`Il refuse les écritures, comme noeviction`,`Il ajoute un TTL automatiquement`],a:2,e:`volatile-* ne considère que les clés avec TTL. Sans candidate, Redis ne peut rien évincer.`},
+  {lv:'a',th:'HTTP',q:`Quelle différence existe entre output caching et response caching ?`,o:[`L'output caching suit seulement les en-têtes Cache-Control`,`Le response caching gère l'invalidation par tag`,`Il n'y a pas de différence depuis .NET 8`,`L'output caching est configuré côté serveur, gère les tags et le stampede, et le client ne peut pas le contourner`],a:3,e:`Le response caching suit les règles HTTP : le client peut demander no-cache. L'output caching est contrôlé par le serveur, avec EvictByTagAsync et un stockage Redis possible.`},
+  {lv:'a',th:'Verrou',q:`Pourquoi libérer un verrou Redis avec une vérification du jeton (LockRelease) et pas avec un simple DEL ?`,o:[`DEL est plus lent`,`Le verrou a pu expirer et être pris par un autre client : DEL supprimerait son verrou`,`DEL ne fonctionne pas sur une clé avec TTL`,`Pour libérer la mémoire plus vite`],a:1,e:`Le jeton identifie le propriétaire. La vérification et la suppression doivent être atomiques (script Lua). LockReleaseAsync le fait.`},
+  {lv:'a',th:'Verrou',q:`Quel mécanisme protège contre deux propriétaires après une pause GC plus longue que le TTL du verrou ?`,o:[`Un TTL plus long`,`Redlock sur 5 serveurs`,`Un fencing token vérifié par le stockage`,`Un appel à GC.Collect avant le travail`],a:2,e:`Le stockage refuse une écriture avec un jeton plus petit que le dernier accepté. Redlock ne protège pas contre une pause du process.`},
+  {lv:'a',th:'Divers',q:`Le rate limiter intégré d'ASP.NET Core fixe 100 requêtes/min. L'API a 4 instances. Quelle est la limite réelle pour un client ?`,o:[`100`,`25`,`Environ 400`,`Illimitée`],a:2,e:`Le middleware compte en mémoire, dans chaque instance. Pour une limite globale, utilisez un compteur partagé dans Redis.`},
+
+  {lv:'p',th:'Serveur',q:`Pourquoi une commande Redis est-elle atomique sans verrou ?`,o:[`Redis exécute les commandes sur un seul thread, l'une après l'autre`,`Redis utilise des transactions SQL`,`Le client .NET pose un verrou`,`Redis copie les données avant chaque commande`],a:0,e:`La boucle d'événements exécute une commande à la fois. C'est aussi pourquoi une commande lente bloque tous les clients.`},
+  {lv:'p',th:'Serveur',q:`Que fait l'option io-threads de Redis 6+ ?`,o:[`Elle exécute les commandes sur plusieurs threads`,`Elle répartit la lecture et l'écriture des sockets sur plusieurs threads`,`Elle active le Cluster`,`Elle accélère la persistance RDB`],a:1,e:`L'exécution des commandes reste sur un seul thread. Les threads d'I/O réduisent le coût réseau avec beaucoup de clients.`},
+  {lv:'p',th:'Client',q:`Le code lit 50 clés avec un await par clé dans une boucle. RTT = 1 ms. Quelle durée approximative ?`,o:[`1 ms`,`5 ms`,`50 µs`,`50 ms`],a:3,e:`Chaque await attend un aller-retour : 50 × 1 ms. Avec Task.WhenAll ou MGET, les commandes partent ensemble : environ 1 ms.`},
+  {lv:'p',th:'Client',q:`Comment StackExchange.Redis partage-t-il la connexion entre threads ?`,o:[`Un pool de connexions, une par thread`,`Une connexion par commande`,`Une connexion multiplexée : les commandes sont écrites dans l'ordre et les réponses associées aux Tasks dans le même ordre`,`Un verrou global par commande, sans pipelining`],a:2,e:`Le multiplexage donne un pipelining automatique entre requêtes concurrentes. Une grosse réponse retarde toutes les commandes suivantes.`},
+  {lv:'p',th:'Client',q:`Une RedisTimeoutException indique in: 65536 et WORKER: (Busy=212, Min=4). Quelle est la cause probable ?`,o:[`Redis est lent`,`Starvation du ThreadPool côté client`,`La clé n'existe pas`,`Le réseau est coupé`],a:1,e:`Les réponses sont arrivées (in > 0), mais aucun worker ne les traite. Cherchez du code bloquant : .Result, .Wait(), I/O synchrone.`},
+  {lv:'p',th:'Client',q:`Une RedisTimeoutException indique qs: 45, in: 0 et un ThreadPool sain. Où chercher ?`,o:[`Côté serveur ou réseau : SLOWLOG, CPU de Redis, fork, bascule`,`Dans le ThreadPool du client`,`Dans la sérialisation JSON`,`Dans le pool de connexions SQL`],a:0,e:`Les commandes sont envoyées, mais aucune réponse n'arrive. Le client est sain. Le serveur ou le réseau est lent.`},
+  {lv:'p',th:'Serveur',q:`Quelle commande remplace KEYS en production ?`,o:[`FLUSHDB`,`SCAN avec un curseur`,`DEL *`,`MONITOR`],a:1,e:`SCAN parcourt les clés par petites pages. Chaque appel est court. server.KeysAsync de StackExchange.Redis utilise SCAN.`},
+  {lv:'p',th:'Serveur',q:`Quel avantage UNLINK a-t-il sur DEL pour une très grosse clé ?`,o:[`Il supprime aussi les réplicas`,`Il garde une copie`,`Il libère la mémoire dans un thread de fond`,`Il est réversible`],a:2,e:`DEL libère la mémoire de façon synchrone et bloque le serveur. UNLINK retire la clé immédiatement et libère la mémoire en arrière-plan.`},
+  {lv:'p',th:'Persistance',q:`Pendant une sauvegarde RDB, pourquoi la mémoire peut-elle augmenter fortement ?`,o:[`Redis charge le fichier en mémoire`,`Le fork utilise le copy-on-write : chaque page modifiée est copiée`,`Redis désactive l'éviction`,`Les clients envoient plus de commandes`],a:1,e:`Le process enfant partage les pages avec le parent. Chaque page modifiée pendant la sauvegarde est dupliquée. Gardez de la marge sous la limite du conteneur.`},
+  {lv:'p',th:'Topologie',q:`Combien de hash slots a un Redis Cluster ?`,o:[`1 024`,`65 536`,`Un par nœud`,`16 384`],a:3,e:`Slot = CRC16(clé) mod 16384. Chaque primaire porte une plage de slots.`},
+  {lv:'p',th:'Topologie',q:`Quelles clés sont sûrement dans le même slot ?`,o:[`{order:7}:lines et {order:7}:total`,`order:7:lines et order:7:total`,`{}order:7 et {}order:8`,`order:{7 et order:{7}`],a:0,e:`Avec un hash tag non vide, seul le texte entre la première { et la } suivante est haché. Des accolades vides ne forment pas de hash tag.`},
+  {lv:'p',th:'Topologie',q:`Le primaire confirme une écriture puis tombe avant la réplication. Que devient l'écriture ?`,o:[`Elle est toujours conservée`,`Elle peut être perdue : la réplication est asynchrone`,`Elle est rejouée par Sentinel`,`Le client reçoit une erreur`],a:1,e:`Redis confirme avant la copie sur les réplicas. WAIT réduit le risque mais ne garantit pas la cohérence forte.`},
+  {lv:'p',th:'Atomicité',q:`Dans un bloc MULTI/EXEC, une commande échoue à l'exécution. Que se passe-t-il ?`,o:[`Toutes les commandes sont annulées`,`Le bloc recommence`,`Les autres commandes s'exécutent quand même : il n'y a pas de rollback`,`Redis s'arrête`],a:2,e:`MULTI/EXEC garantit qu'aucune autre commande ne s'intercale. Il ne garantit pas le rollback. Pour lire puis écrire selon une condition, utilisez un script Lua.`},
+  {lv:'p',th:'Mémoire',q:`Comment Redis choisit-il la clé à évincer avec allkeys-lru ?`,o:[`Il trie toutes les clés par date d'accès`,`Il supprime la première clé créée`,`Il échantillonne maxmemory-samples clés et supprime la plus ancienne`,`Il supprime la plus grosse clé`],a:2,e:`Le LRU est approximé. Avec 5 échantillons (défaut) et le pool d'éviction, le résultat est proche d'un LRU exact, pour un coût faible.`},
+  {lv:'p',th:'Mémoire',q:`mem_fragmentation_ratio vaut 0,8. Quel est le sens ?`,o:[`La mémoire est très bien utilisée`,`Une partie de Redis est dans le swap : la latence est mauvaise`,`La défragmentation est active`,`La persistance est désactivée`],a:1,e:`RSS inférieure à la mémoire utilisée : le système a déplacé des pages sur disque. Réduisez maxmemory ou augmentez la mémoire. Au-dessus de 1,5, la fragmentation est élevée.`}
+];
+$('#antiList').innerHTML=ANTI.map((a,i)=>`<details class="disclosure"><summary>${i+1}. ${esc(a.t)}</summary><div class="disclosure-body stack" style="padding-top:.8rem"><p style="margin:0">${esc(a.why)}</p><div class="tiles"><div class="tile red"><h3>À éviter</h3><pre>${hl(a.bad)}</pre></div><div class="tile green"><h3>À faire</h3><pre>${hl(a.good)}</pre></div></div></div></details>`).join('');
+
+document.querySelectorAll('.qroot').forEach(root=>{
+  const lv=root.dataset.level, key={b:'base',a:'avance',p:'profond'}[lv];
+  const items=QCM.filter(q=>q.lv===lv);
+  let answered=0, good=0, theme='';
+  root.innerHTML=`<div class="panel qhead"><div class="row">
+      <span class="pill count" data-r="score">0 / 0</span><span class="muted" data-r="total"></span>
+      <div class="meter" aria-hidden="true"><i data-r="prog"></i></div>
+      <div class="field" style="min-width:12rem"><label for="qt-${key}" class="muted" style="font-weight:400">Thème</label><select class="select" id="qt-${key}" data-r="sel"><option value="">Tous les thèmes</option>${[...new Set(items.map(q=>q.th))].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <button class="btn ghost sm" type="button" data-r="reset">Recommencer</button></div></div>
+    <div class="stack" data-r="list"></div><div class="msg" data-r="final" hidden></div>`;
+  const R=n=>root.querySelector(`[data-r="${n}"]`);
+  const list=()=>items.filter(q=>!theme||q.th===theme);
+  function render(){
+    answered=0; good=0;
+    R('list').innerHTML=list().map((q,n)=>`<div class="panel stack q" data-i="${QCM.indexOf(q)}">
+      <div class="row"><span class="pill">${q.th}</span><span class="muted num" style="font-size:.85rem">Question ${n+1}</span></div>
+      <h3 style="margin:0">${esc(q.q)}</h3>
+      <div class="stack" style="gap:.4rem">${q.o.map((o,j)=>`<button class="choice" type="button" data-j="${j}">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join('')}</div>
+      <p class="msg info expl"></p></div>`).join('');
+    R('list').querySelectorAll('.q').forEach(el=>{
+      el.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+        if(el.classList.contains('answered')) return;
+        const q=QCM[+el.dataset.i], j=+b.dataset.j;
+        el.classList.add('answered'); answered++;
+        el.querySelectorAll('.choice')[q.a].classList.add('right');
+        const ok=j===q.a; if(ok) good++; else b.classList.add('wrong');
+        const ex=el.querySelector('.expl'); ex.className='msg expl '+(ok?'success':'warning');
+        ex.innerHTML=`<strong>${ok?'Bonne réponse.':'Réponse incorrecte.'}</strong> ${esc(q.e)}`;
+        score();
+      });
+    });
+    score();
+  }
+  function score(){
+    const total=list().length;
+    R('score').textContent=`${good} / ${answered}`;
+    R('total').textContent=`${answered} réponse(s) sur ${total} question(s)`;
+    R('prog').style.width=(answered/total*100)+'%';
+    const f=R('final');
+    if(answered===total){
+      const p=good/total; f.hidden=false;
+      f.className='msg '+(p>=.8?'success':p<.5?'warning':'info');
+      f.innerHTML=`<p><strong>Score final : ${good} sur ${total}.</strong> `+(p>=.8?(lv==='p'?`Ce résultat est solide. Vous maîtrisez les mécanismes internes.`:`Ce résultat est solide. Passez au niveau suivant.`):p>=.5?`La base est correcte. Lisez les explications des erreurs. Refaites les simulateurs de ces thèmes.`:`Refaites les sections de cet onglet. Ensuite, recommencez le QCM.`)+'</p>';
+    } else f.hidden=true;
+  }
+  R('sel').addEventListener('change',e=>{theme=e.target.value;render();});
+  R('reset').onclick=()=>{render(); root.scrollIntoView();};
+  render();
+});
+</script>
+</body>
+</html>

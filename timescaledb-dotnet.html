@@ -1,0 +1,1756 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TimescaleDB et EF Core</title>
+<meta name="description" content="Formation interactive sur TimescaleDB avec EF Core et Npgsql en .NET, en trois niveaux, avec simulateurs et QCM.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap">
+
+<!--
+  Design : Carbon Design System v1.0 (design-system/carbon-design-system.html).
+  - <style id="carbon-ds"> : copie du bloc du design system (composants utilisés par cette page).
+  - <style id="page">      : adaptations pour les composants absents du design system.
+                              Elles utilisent seulement les tokens du design system.
+  Rédaction : règles ASD-STE100 appliquées au français.
+-->
+
+<style id="carbon-ds">
+:root {
+  --ground: #f3f4f4; --surface: #fdfdfd; --surface-sunk: #ebebeb;
+  --ink: #282b2a; --ink-soft: #666867; --ink-faint: #9b9c9c;
+  --rule: #dbdbdb; --rule-soft: #ececec; --control-edge: #8a8c8b;
+  --red: #e53f49; --green: #00bb7e; --blue: #5b98d2;
+  --red-ink: #bd2f39; --green-ink: #007049; --blue-ink: #386a9b;
+  --red-wash: #fbeaeb; --green-wash: #e4f6f0; --blue-wash: #edf3f9;
+  --action: #d4353f; --on-action: #fdfdfd;
+  --band: #282b2a; --band-ink: #fdfdfd; --band-soft: #b9bab9; --band-rule: #535554; --band-red: #ff6b73;
+  --shadow: 0 1px 2px rgba(40, 43, 42, .07), 0 10px 28px -18px rgba(40, 43, 42, .28);
+  --shadow-overlay: 0 2px 6px rgba(40, 43, 42, .12), 0 24px 60px -24px rgba(40, 43, 42, .45);
+  --scrim: rgba(40, 43, 42, .45);
+  --font: "Calibri", "Carlito", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r-xs: 3px; --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; --r-2xl: 14px; --r-pill: 999px;
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.25rem; --s-6: 1.5rem; --s-7: 2.25rem; --s-8: 3rem;
+  --w-content: 56rem; --w-wide: 76rem;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+    --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+    --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+    --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+    --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+    --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+    --action: #d4353f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+    --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+    --scrim: rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+  --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+  --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+  --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+  --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+  --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+  --action: #d4353f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+  --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+  --scrim: rgba(0, 0, 0, .6);
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+h1 { font-weight: 700; font-size: clamp(2.1rem, 5.4vw, 3rem); letter-spacing: -.018em; line-height: 1.06; text-wrap: balance; margin: 0; }
+h2 { font-weight: 700; font-size: 1.35rem; letter-spacing: -.008em; line-height: 1.25; margin: 0 0 1rem; }
+h3 { font-weight: 700; font-size: 1rem; line-height: 1.35; margin: 0 0 .3rem; }
+a { color: var(--green-ink); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+code, kbd { font-family: var(--mono); font-size: .85em; background: var(--surface-sunk); padding: .1em .34em; border-radius: var(--r-xs); overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin: 0; }
+.lede { max-width: 40rem; margin: 0; font-size: 1.075rem; }
+.muted { color: var(--ink-soft); }
+.hexmark { display: block; fill: currentColor; }
+.accent-rule { display: flex; height: 3px; width: 100%; border-radius: 2px; overflow: hidden; }
+.accent-rule i { display: block; height: 100%; }
+.accent-rule i:nth-child(1) { background: var(--red); flex: 0 0 3.5rem; }
+.accent-rule i:nth-child(2) { background: var(--green); flex: 0 0 1.5rem; }
+.accent-rule i:nth-child(3) { background: var(--blue); flex: 0 0 .75rem; }
+.accent-rule i:nth-child(4) { background: var(--band-rule); flex: 1 1 0; }
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--ground) 90%, transparent); backdrop-filter: saturate(140%) blur(10px); border-bottom: 1px solid var(--rule); }
+.topbar-inner { max-width: var(--w-content); margin: 0 auto; padding: .55rem 1.5rem; display: flex; align-items: center; gap: 1.1rem; }
+.topbar.wide .topbar-inner { max-width: var(--w-wide); }
+.brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1rem; letter-spacing: -.005em; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand .hexmark { width: 20px; color: var(--ink); }
+.navlinks { display: flex; align-items: center; gap: 1.1rem; margin-left: auto; font-size: .9rem; }
+.navlinks a:not(.nav-cta) { color: var(--ink-soft); text-decoration: none; }
+.navlinks a:not(.nav-cta):hover { color: var(--ink); text-decoration: underline; text-underline-offset: .2em; }
+.navlinks a[aria-current="page"] { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: .45em; }
+.nav-cta { padding: .3rem .85rem; border-radius: var(--r-pill); background: var(--action); color: var(--on-action); font-weight: 700; text-decoration: none; font-size: .875rem; white-space: nowrap; }
+.nav-cta:hover { filter: brightness(1.07); }
+@media (max-width: 40rem) { .navlinks a:not(.nav-cta) { display: none; } }
+.wrap { max-width: var(--w-content); margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+.wrap.wide { max-width: var(--w-wide); }
+section { scroll-margin-top: 4.5rem; }
+.stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.band { position: relative; overflow: hidden; background: var(--band); color: var(--band-ink); border: 1px solid var(--band-rule); border-radius: var(--r-2xl); padding: 2.25rem 2.25rem 1.9rem; }
+.band-watermark { position: absolute; right: -3.5rem; top: 50%; transform: translateY(-50%); width: 17rem; color: var(--band-ink); opacity: .05; pointer-events: none; }
+.band-head { position: relative; display: flex; align-items: flex-start; gap: 1.4rem; }
+.band-titles { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.band .eyebrow { color: var(--band-red); }
+.band .lede { color: var(--band-soft); }
+.band .accent-rule { margin-top: 1.75rem; }
+.band-actions { position: relative; margin-left: auto; display: flex; gap: var(--s-2); align-self: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; font: inherit; font-weight: 700; font-size: 1rem; line-height: 1.2; padding: .7rem 1.25rem; border-radius: var(--r-md); border: 1px solid transparent; background: var(--action); color: var(--on-action); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.btn:hover { filter: brightness(1.07); }
+.btn.sm { font-size: .875rem; padding: .4rem .8rem; }
+.btn.secondary { background: var(--surface); color: var(--ink); border-color: var(--control-edge); }
+.btn.secondary:hover { filter: none; background: var(--surface-sunk); }
+.btn.ghost { background: transparent; color: var(--ink-soft); }
+.btn.ghost:hover { filter: none; background: var(--surface-sunk); color: var(--ink); }
+.band .btn.secondary { background: transparent; color: var(--band-ink); border-color: var(--band-soft); }
+.band .btn.secondary:hover { background: rgba(253, 253, 253, .08); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; filter: none; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 1.25rem 1.4rem; }
+.panel.raised { border-radius: var(--r-xl); padding: 1.35rem 1.5rem; box-shadow: var(--shadow); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.tile { background: var(--surface); padding: 1rem 1.1rem; border-top: 3px solid transparent; }
+.tile.red { border-top-color: var(--red); }
+.tile.green { border-top-color: var(--green); }
+.tile.blue { border-top-color: var(--blue); }
+.tile.neutral { border-top-color: var(--rule); }
+.tile p { margin: 0; color: var(--ink-soft); font-size: .925rem; }
+.tile .value { font-size: 2.1rem; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--ink); margin: .2rem 0 .15rem; }
+.tile .eyebrow { color: var(--ink-soft); letter-spacing: .12em; }
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.steps > li { counter-increment: step; background: var(--surface); padding: 1.15rem 1.3rem 1.25rem 3.5rem; position: relative; }
+.steps > li::before { content: counter(step); position: absolute; left: 1.15rem; top: 1.1rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--ink); color: var(--ground); font-weight: 700; font-size: .875rem; display: flex; align-items: center; justify-content: center; }
+.steps p { margin: .35rem 0 0; color: var(--ink-soft); }
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.list > li { display: flex; align-items: center; gap: var(--s-3); padding: .75rem 1.1rem; border-top: 1px solid var(--rule-soft); }
+.list > li:first-child { border-top: 0; }
+.list > li .meta { margin-left: auto; color: var(--ink-soft); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.disclosure { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 0 1.3rem; }
+.disclosure > summary { cursor: pointer; padding: 1rem 0; font-weight: 700; font-size: 1.05rem; list-style-position: inside; }
+.disclosure > summary::marker { color: var(--red); }
+.disclosure-body { padding: .2rem 0 .9rem; border-top: 1px solid var(--rule-soft); color: var(--ink-soft); }
+.msg { margin: 0; padding: .65rem .9rem; border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: .925rem; line-height: 1.45; background: var(--surface-sunk); border-left: 3px solid var(--control-edge); color: var(--ink-soft); }
+.msg p { margin: 0; }
+.msg p + p { margin-top: .5rem; }
+.msg strong { color: var(--ink); }
+.msg.info { background: var(--blue-wash); border-left-color: var(--blue); }
+.msg.success { background: var(--blue-wash); border-left-color: var(--green); }
+.msg.warning { background: var(--red-wash); border-left-color: var(--red); }
+.msg.warning strong { color: var(--red-ink); }
+.pill { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .55rem; border-radius: var(--r-pill); font-size: .78rem; font-weight: 700; line-height: 1.5; white-space: nowrap; background: var(--surface-sunk); color: var(--ink-soft); }
+.pill.red { background: var(--red-wash); color: var(--red-ink); }
+.pill.green { background: var(--green-wash); color: var(--green-ink); }
+.pill.blue { background: var(--blue-wash); color: var(--blue-ink); }
+.pill.count { min-width: 1.5rem; justify-content: center; padding: .05rem .45rem; font-variant-numeric: tabular-nums; }
+.status { display: inline-flex; align-items: center; gap: .45rem; font-size: .925rem; white-space: nowrap; color: var(--ink); }
+.status svg { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; overflow: visible; }
+.status .edge { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linejoin: round; }
+.status .fill { fill: var(--ink); }
+.status[data-state="todo"] .fill { display: none; }
+.status[data-state="alert"] .fill { display: none; }
+.status[data-state="alert"] .edge { stroke: var(--red); }
+.status[data-state="alert"] .label { color: var(--red-ink); font-weight: 700; }
+.status[data-state="progress"] .fill { clip-path: inset(50% 0 0 0); }
+.status[data-state="done"] .fill { fill: var(--green); }
+.status[data-state="done"] .edge { stroke: var(--green-ink); }
+.status[data-state="past"] .fill { fill: var(--ink-faint); }
+.status[data-state="past"] .edge { stroke: var(--ink-faint); }
+.status[data-state="past"] .label { color: var(--ink-soft); }
+.status[data-state="cancelled"] .fill { display: none; }
+.status[data-state="cancelled"] .edge { stroke: var(--ink-faint); }
+.status[data-state="cancelled"] .label { color: var(--ink-soft); text-decoration: line-through; }
+.field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.field > label, .field > .label { font-size: .875rem; font-weight: 700; color: var(--ink); }
+.input, .select { width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .55rem .75rem; min-height: 2.6rem; }
+.select { appearance: none; padding-right: 2.2rem; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%); background-position: calc(100% - 1.05rem) 52%, calc(100% - .75rem) 52%; background-size: .32rem .32rem; background-repeat: no-repeat; }
+.input:hover, .select:hover { border-color: var(--ink-soft); }
+.input:focus, .select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 30%, transparent); }
+.field .hint { font-size: .825rem; color: var(--ink-soft); }
+.check { display: inline-flex; align-items: center; gap: .5rem; font-size: .95rem; cursor: pointer; }
+.check input { width: 1.05rem; height: 1.05rem; accent-color: var(--ink); margin: 0; }
+.segmented { display: inline-flex; background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: 2px; gap: 2px; }
+.segmented button { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--ink-soft); padding: .35rem .8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.segmented button:hover { color: var(--ink); background: var(--surface-sunk); }
+.segmented button[aria-pressed="true"] { background: var(--ink); color: var(--ground); font-weight: 700; }
+.toolbar { display: flex; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap; }
+.toolbar .field { min-width: 12rem; }
+.toolbar .spacer { flex: 1; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); }
+.table { width: 100%; border-collapse: collapse; font-size: .925rem; }
+.table th, .table td { text-align: left; vertical-align: top; padding: .7rem .85rem; border-bottom: 1px solid var(--rule-soft); }
+.table th { font-weight: 700; font-size: .75rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .09em; white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+.table td.secondary { color: var(--ink-soft); }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table.dense th, .table.dense td { padding: .5rem .75rem; vertical-align: middle; }
+.table tr.is-alert td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--s-4); align-items: start; }
+.column { background: var(--surface-sunk); border-radius: var(--r-lg); padding: .75rem; display: flex; flex-direction: column; gap: .6rem; }
+.column-head { display: flex; align-items: center; gap: .5rem; padding: .15rem .25rem .35rem; }
+.column-head h3 { margin: 0; font-size: .95rem; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: .8rem .95rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .3rem; }
+.card h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.card .meta { font-size: .85rem; color: var(--ink-soft); }
+.card.is-alert { border-left: 3px solid var(--red); }
+.footer { border-top: 1px solid var(--rule); padding-top: 1.4rem; font-size: .875rem; color: var(--ink-soft); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.footer-brand { display: flex; align-items: center; gap: .5rem; }
+.footer-brand .hexmark { width: 16px; color: var(--red); }
+</style>
+
+<style id="page">
+/* ─── Adaptations : composants absents du design system. Tokens du design system uniquement. ─── */
+[hidden] { display: none !important; }
+section { scroll-margin-top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + 1rem); }
+
+/* Onglets de niveau : même règle que le lien actif de la barre (texte --ink gras, trait rouge) */
+.tabs { position: sticky; top: var(--topbar-h, 3.65rem); z-index: 9; display: flex; gap: 1.75rem; background: var(--ground); border-bottom: 1px solid var(--rule); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-top: -1.5rem; }
+.tabs .short { display: none; }
+.tabs button { font: inherit; font-size: 1rem; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: .75rem 0 .65rem; color: var(--ink-soft); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: .5rem; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--red); }
+.tabpanel { display: flex; flex-direction: column; gap: 3rem; }
+.tabpanel:focus-visible { outline: none; }
+
+/* Code : même rendu que le bloc .code de la documentation du design system (fond --band) */
+pre { margin: 0; background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: 1rem 1.1rem; overflow: auto; font-family: var(--mono); font-size: .8rem; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: inherit; }
+/* Coloration : valeurs « encre sombre » du design system, lisibles sur --band dans les deux thèmes */
+.k { color: var(--band-red); } .t { color: #8dbae3; } .s { color: #23c490; } .c { color: var(--band-soft); font-style: italic; }
+
+/* Code ligne par ligne, avec la ligne courante en évidence */
+.codelines { background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: .6rem 0; font-family: var(--mono); font-size: .8rem; line-height: 1.6; overflow-x: auto; }
+.codelines div { padding: 0 1.1rem; white-space: pre; border-left: 3px solid transparent; }
+.codelines div.cur { background: rgba(110, 164, 215, .22); border-left-color: var(--blue); }
+.codelines div.paused { background: rgba(253, 253, 253, .06); border-left-color: var(--band-soft); }
+.codelines .ln { color: var(--band-soft); display: inline-block; width: 1.6rem; user-select: none; opacity: .7; }
+
+/* En-tête de niveau : surtitre + filet tricolore (usage autorisé du filet seul) */
+.part { display: flex; flex-direction: column; gap: .5rem; }
+.part .eyebrow { color: var(--red-ink); }
+.part h2 { font-size: clamp(1.6rem, 3.4vw, 2rem); letter-spacing: -.018em; margin: 0; }
+.part .lede { color: var(--ink-soft); }
+
+/* Sommaire */
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-4); }
+.toc ul { list-style: none; margin: .3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .2rem; font-size: .925rem; }
+.toc a { color: var(--ink-soft); text-decoration: none; }
+.toc a:hover { color: var(--ink); text-decoration: underline; }
+.toc h3 a { color: var(--ink); }
+
+/* Texte de section */
+.intro { margin: 0; color: var(--ink-soft); max-width: 48rem; }
+.sub { margin: 1.25rem 0 .5rem; }
+.prose { margin: 0; max-width: 52rem; }
+.prose + .prose { margin-top: .6rem; }
+ul.bul { margin: 0; padding-left: 1.2rem; }
+ul.bul li { margin: .2rem 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--s-4); }
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+@media (max-width: 52rem) { .split { grid-template-columns: minmax(0, 1fr); } }
+.tile pre { margin-top: .5rem; }
+.tile h3 { margin-bottom: .3rem; }
+
+/* Curseur (input range) : mêmes règles qu'un champ, libellé au-dessus */
+.field input[type="range"] { width: 100%; accent-color: var(--ink); margin: .35rem 0 0; }
+.field .val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Barre de pas pour les démonstrations pas à pas */
+.stepbar { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.stepbar .count { margin-left: auto; font-size: .875rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.note { min-height: 4.2rem; }
+
+/* Liste clé / valeur */
+.kv > li { justify-content: space-between; font-size: .925rem; }
+.kv > li > span:first-child { color: var(--ink-soft); }
+
+/* Workers du ThreadPool (simulateur) : tuile compacte à filet coloré */
+.threads { display: flex; flex-wrap: wrap; gap: 4px; }
+.th { width: 3.6rem; padding: .3rem .2rem; border-radius: var(--r-sm); background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--rule); font-size: .72rem; line-height: 1.25; text-align: center; color: var(--ink-soft); }
+.th b { display: block; color: var(--ink); }
+.th.cpu { background: var(--blue-wash); border-top-color: var(--blue); }
+.th.block { background: var(--red-wash); border-top-color: var(--red); }
+.th.new { box-shadow: 0 0 0 2px var(--blue); }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; min-height: .7rem; }
+.dot { width: .62rem; height: .62rem; border-radius: 50%; background: var(--ink-faint); }
+.dot.io { background: var(--green); }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .825rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+.zone h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-soft); margin-bottom: .5rem; }
+
+/* Ordonnanceur : une ligne par cœur, une case par tranche de temps */
+.corerow { display: flex; align-items: center; gap: .6rem; margin: 3px 0; }
+.corerow .lbl { width: 3.6rem; flex: 0 0 auto; font-size: .825rem; color: var(--ink-soft); }
+.cells { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.cell { flex: 1 1 0; min-width: 0; height: 1.5rem; border-radius: 3px; background: var(--surface-sunk); font-size: .65rem; font-weight: 700; color: var(--blue-ink); display: grid; place-items: center; overflow: hidden; }
+.cell.busy { background: var(--blue-wash); }
+.cell.sw { box-shadow: inset 3px 0 0 var(--red); }
+
+/* Barres de durée (Gantt, frises) */
+.gantt { display: flex; flex-direction: column; gap: .45rem; }
+.grow { display: flex; align-items: center; gap: .7rem; }
+.grow .lbl { width: 8.5rem; flex: 0 0 auto; font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); }
+.track { position: relative; flex: 1; height: 1.35rem; background: var(--surface-sunk); border-radius: var(--r-sm); overflow: hidden; }
+.track .bar { position: absolute; top: 0; height: 100%; background: var(--blue-wash); }
+.track .fill { position: absolute; top: 0; height: 100%; background: var(--blue); }
+.track .fill.total { background: var(--ink); }
+.segs { display: flex; flex: 1; height: 1.5rem; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-sunk); }
+.sg { height: 100%; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; color: var(--ink); }
+.sg.cpu { background: var(--blue-wash); box-shadow: inset 0 -3px 0 var(--blue); }
+.sg.ok { background: var(--green-wash); box-shadow: inset 0 -3px 0 var(--green); }
+.sg.bad { background: var(--red-wash); box-shadow: inset 0 -3px 0 var(--red); color: var(--red-ink); }
+.sg.free { color: var(--ink-soft); font-weight: 400; }
+.lanes { display: flex; flex-direction: column; gap: 2px; }
+.lane { position: relative; height: .55rem; background: var(--surface-sunk); border-radius: 2px; }
+.lane .job { position: absolute; top: 0; height: 100%; border-radius: 2px; background: var(--blue); }
+.lane .job.slow { background: var(--red); }
+
+/* Graphique SVG */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-soft); font-family: var(--font); font-size: 12px; }
+
+/* Vol de travail : files de tâches */
+.deque { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 2rem; padding: .3rem; border: 1px dashed var(--rule); border-radius: var(--r-sm); }
+.log { font-family: var(--mono); font-size: .8rem; display: flex; flex-direction: column; gap: .15rem; }
+.log div:first-child { color: var(--ink); font-weight: 700; }
+.log div { color: var(--ink-soft); }
+
+/* Objet en mémoire (pile et heap) : carte du kanban, avec repère pour le nouvel objet */
+.card.hot { box-shadow: var(--shadow), inset 3px 0 0 var(--blue); }
+.card.dead { opacity: .55; text-decoration: line-through; box-shadow: none; }
+.card.mono { font-family: var(--mono); font-size: .78rem; box-shadow: none; padding: .45rem .6rem; }
+.column .empty-note { font-size: .85rem; font-style: italic; color: var(--ink-soft); padding: .2rem .25rem; }
+
+/* Race condition et cache CPU */
+.ops { font-family: var(--mono); font-size: .82rem; display: flex; flex-direction: column; gap: 2px; }
+.ops div { padding: .2rem .45rem; border-radius: var(--r-xs); color: var(--ink-soft); }
+.ops div.done { text-decoration: line-through; }
+.ops div.next { background: var(--blue-wash); color: var(--ink); font-weight: 700; }
+.race { display: grid; grid-template-columns: minmax(0, 1fr) 11rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+@media (max-width: 44rem) { .race { grid-template-columns: minmax(0, 1fr); } }
+.mesi { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.mesi .full { grid-column: 1 / -1; }
+.cycle { display: flex; align-items: center; justify-content: center; gap: .6rem; flex-wrap: wrap; }
+.cycle .arr { color: var(--ink-faint); font-size: 1.2rem; }
+.cycle.on .arr { color: var(--red); }
+
+/* QCM : choix de réponse */
+.choice { display: block; width: 100%; overflow-wrap: anywhere; text-align: left; font: inherit; font-size: .95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .6rem .8rem; cursor: pointer; }
+.choice:hover { background: var(--surface-sunk); }
+.choice.right { background: var(--green-wash); border-color: var(--green-ink); font-weight: 700; }
+.choice.wrong { background: var(--red-wash); border-color: var(--red-ink); }
+.q .expl { display: none; }
+.q.answered .expl { display: block; }
+.qhead { position: sticky; top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + .5rem); z-index: 2; }
+.meter { height: 6px; background: var(--surface-sunk); border-radius: var(--r-pill); overflow: hidden; flex: 1; min-width: 8rem; }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
+.ste { font-size: .825rem; }
+
+/* Petits écrans : règles reprises de la documentation du design system */
+.segmented.segwrap { flex-wrap: wrap; }
+@media (max-width: 40rem) {
+  .band-head { flex-direction: column; }
+  .band-actions { margin-left: 0; align-self: flex-start; }
+  .band { padding: 1.6rem 1.4rem 1.5rem; }
+  .navlinks .segmented { display: none; }
+  .wrap { padding: 1.5rem 1rem 4rem; }
+  .tabs { gap: 1.2rem; }
+  .tabs .long { display: none; }
+  .tabs .short { display: inline; }
+  .qhead { position: static; }
+}
+
+/* ─── TimescaleDB : chunks, segments de vue matérialisée, colonnes compressées. Tokens uniquement. ─── */
+.chunks { display: flex; flex-wrap: wrap; gap: 3px; }
+.ck { width: 2.6rem; height: 1.9rem; border-radius: var(--r-xs); background: var(--surface-sunk); border: 1px solid var(--rule); font-size: .62rem; color: var(--ink-faint); display: grid; place-items: center; overflow: hidden; }
+.chunks.dense .ck { width: .8rem; height: .8rem; font-size: 0; }
+.chunks.mid .ck { width: 1.3rem; height: 1.3rem; font-size: 0; }
+.ck.scan { background: var(--blue-wash); border-color: var(--blue); color: var(--blue-ink); font-weight: 700; }
+.ck.seq { background: var(--red-wash); border-color: var(--red); color: var(--red-ink); font-weight: 700; }
+.ck.skip { opacity: .5; }
+.cell.mat { background: var(--green-wash); color: var(--green-ink); }
+.cell.rt { background: var(--blue-wash); color: var(--blue-ink); }
+.cell.inv { background: var(--red-wash); color: var(--red-ink); }
+.cell.raw { background: var(--surface); border: 1px dashed var(--rule); color: var(--ink-faint); }
+.colstore { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--s-3); }
+.colstore .card { box-shadow: none; }
+.arr { font-family: var(--mono); font-size: .8rem; overflow-wrap: anywhere; color: var(--ink); }
+.arr .hi { background: var(--blue-wash); color: var(--blue-ink); font-weight: 700; padding: 0 .15em; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="carbon-hex" viewBox="0 0 768 840">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M369.5-0.5C378.5-0.5 387.5-0.5 396.5-0.5 421.557 2.18892 445.224 9.68892 467.5 22 537.5 62.6667 607.5 103.333 677.5 144 732.606 175.967 762.606 223.801 767.5 287.5 767.5 375.5 767.5 463.5 767.5 551.5 763.555 611.233 736.555 657.4 686.5 690 611.833 733.333 537.167 776.667 462.5 820 442.246 830.477 420.913 836.977 398.5 839.5 388.167 839.5 377.833 839.5 367.5 839.5 343.091 836.753 320.091 829.253 298.5 817 226.33 774.748 153.997 732.748 81.5 691 34.1078 661.067 6.77449 618.233-0.5 562.5-0.5 467.5-0.5 372.5-0.5 277.5 7.56046 217.532 37.8938 172.698 90.5 143 160.5 102.333 230.5 61.6667 300.5 21 322.212 9.25979 345.212 2.09313 369.5-0.5ZM376.5 89.5C393.288 88.7804 408.955 92.6137 423.5 101 495.67 143.252 568.003 185.252 640.5 227 661.1 240.677 673.267 259.843 677 284.5 677.667 374.5 677.667 464.5 677 554.5 673.178 580.671 660.011 600.505 637.5 614 567.5 654.667 497.5 695.333 427.5 736 399.572 753.199 371.239 753.866 342.5 738 269.167 695.333 195.833 652.667 122.5 610 102.63 595.097 91.4637 575.263 89 550.5 88.3333 463.167 88.3333 375.833 89 288.5 92.0014 261.521 104.835 240.688 127.5 226 199.997 184.252 272.33 142.252 344.5 100 354.682 94.6301 365.349 91.1301 376.5 89.5Z"/>
+  </symbol>
+</svg>
+
+<nav class="topbar wide">
+  <div class="topbar-inner">
+    <a class="brand" href="#haut">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      TimescaleDB et EF Core
+    </a>
+    <div class="navlinks">
+      <a href="#base" data-nav="base">Base</a>
+      <a href="#avance" data-nav="avance">Avancé</a>
+      <a href="#profond" data-nav="profond">Profond</a>
+      <span class="segmented" role="group" aria-label="Thème">
+        <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-theme-set="light" aria-pressed="false">Clair</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Sombre</button>
+      </span>
+      <a class="nav-cta" href="#qcm-base" id="ctaQcm">QCM</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap wide" id="haut">
+
+  <div class="band">
+    <svg class="hexmark band-watermark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+    <div class="band-head">
+      <div class="band-titles">
+        <p class="eyebrow">Carbon IT · Formation .NET</p>
+        <h1>TimescaleDB et EF Core en .NET</h1>
+        <p class="lede">La formation a trois niveaux : notions de base, notions avancées et notions profondes. Chaque niveau contient des simulateurs, des exemples de code C# et SQL, et un QCM.</p>
+      </div>
+      <div class="band-actions">
+        <a class="btn secondary sm" href="#qcm-base">Aller au QCM</a>
+        <a class="btn sm" href="#base">Commencer</a>
+      </div>
+    </div>
+    <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <section class="panel raised stack" aria-labelledby="usage">
+    <h2 id="usage" style="margin:0">Utiliser cette page</h2>
+    <ol class="steps">
+      <li><h3>Choisissez un niveau</h3><p>Commencez par l'onglet « Notions de base ». Passez au niveau suivant quand le QCM de l'onglet donne au moins 80 %.</p></li>
+      <li><h3>Utilisez les simulateurs</h3><p>Changez les réglages. Cliquez sur « Suivant » pour avancer d'une étape. Lisez le message sous chaque simulateur. Les chiffres des simulateurs sont des ordres de grandeur : mesurez toujours sur vos données.</p></li>
+      <li><h3>Faites le QCM de l'onglet</h3><p>Chaque réponse affiche une explication. Pour un score inférieur à 80 %, refaites les simulateurs des thèmes en erreur.</p></li>
+    </ol>
+    <div class="toc" aria-label="Sommaire">
+      <div><h3><a href="#base">1 · Notions de base</a></h3><ul>
+        <li><a href="#tsintro">Séries temporelles et TimescaleDB</a></li><li><a href="#glossaire">Glossaire</a></li><li><a href="#hypertable">Hypertable et chunks</a></li><li><a href="#chunksim">Simulateur d'exclusion de chunks</a></li><li><a href="#timebucket">time_bucket</a></li><li><a href="#efmodel">Modèle EF Core</a></li><li><a href="#utc">Dates et UTC</a></li><li><a href="#bulk">Insertion en masse</a></li><li><a href="#anti">Mauvaises pratiques</a></li><li><a href="#qcm-base">QCM de base</a></li>
+      </ul></div>
+      <div><h3><a href="#avance">2 · Notions avancées</a></h3><ul>
+        <li><a href="#compression">Compression</a></li><li><a href="#cagg">Continuous aggregates</a></li><li><a href="#caggef">Vue agrégée dans EF Core</a></li><li><a href="#retention">Rétention</a></li><li><a href="#dbfunction">time_bucket en LINQ</a></li><li><a href="#lastvalue">Dernière valeur par série</a></li><li><a href="#gapfill">Trous et gapfill</a></li><li><a href="#migrations">Migrations EF</a></li><li><a href="#reads">Lire de gros volumes</a></li><li><a href="#qcm-avance">QCM avancé</a></li>
+      </ul></div>
+      <div><h3><a href="#profond">3 · Notions profondes</a></h3><ul>
+        <li><a href="#chunksize">Taille des chunks</a></li><li><a href="#exclusion">Exclusion : plan, démarrage, exécution</a></li><li><a href="#compinternals">Compression interne</a></li><li><a href="#dmlcomp">Écrire dans un chunk compressé</a></li><li><a href="#indexes">Index et partitionnement spatial</a></li><li><a href="#copy">COPY et pooling Npgsql</a></li><li><a href="#tests">Tests avec Testcontainers</a></li><li><a href="#licences">Éditions et licences</a></li><li><a href="#qcm-profond">QCM profond</a></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Niveau">
+    <button type="button" role="tab" id="tab-btn-base" aria-controls="base" aria-selected="true"><span class="long">Notions de base</span><span class="short">Base</span> <span class="pill count" title="Sections">9</span></button>
+    <button type="button" role="tab" id="tab-btn-avance" aria-controls="avance" aria-selected="false"><span class="long">Notions avancées</span><span class="short">Avancé</span> <span class="pill count" title="Sections">9</span></button>
+    <button type="button" role="tab" id="tab-btn-profond" aria-controls="profond" aria-selected="false"><span class="long">Notions profondes</span><span class="short">Profond</span> <span class="pill count" title="Sections">8</span></button>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS DE BASE ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="base" aria-labelledby="tab-btn-base" tabindex="-1">
+    <div class="part">
+      <p class="eyebrow">Niveau 1</p>
+      <h2>Notions de base</h2>
+      <p class="lede">Ces notions suffisent pour créer une hypertable, l'utiliser avec EF Core et éviter les erreurs fréquentes.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="tsintro" class="stack">
+      <h2>Séries temporelles et TimescaleDB</h2>
+      <p class="intro">Une série temporelle est une suite de mesures horodatées. Exemples : température d'un capteur, prix d'un actif, latence d'une API, consommation d'énergie.</p>
+      <div class="tiles">
+        <div class="tile red"><p class="eyebrow">Écriture</p><h3>Ajout, presque jamais de mise à jour</h3><p>Les mesures arrivent en continu. Le volume est grand : 1 000 capteurs à 1 mesure par seconde donnent 86 millions de lignes par jour.</p></div>
+        <div class="tile green"><p class="eyebrow">Lecture</p><h3>Plages de temps et agrégats</h3><p>Les requêtes lisent une plage récente. Elles calculent des moyennes par heure ou par jour. Elles lisent rarement une ligne seule.</p></div>
+        <div class="tile blue"><p class="eyebrow">Cycle de vie</p><h3>Les données vieillissent</h3><p>Les données récentes sont lues souvent. Les données anciennes sont compressées, agrégées puis supprimées.</p></div>
+      </div>
+      <p class="prose">TimescaleDB est une <b>extension de PostgreSQL</b>. Ce n'est pas une autre base de données. Vous gardez SQL, les jointures, les transactions, les index et les outils PostgreSQL. Côté .NET, vous gardez Npgsql et le provider EF Core <code>Npgsql.EntityFrameworkCore.PostgreSQL</code>.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Besoin</th><th>Table PostgreSQL simple</th><th>Hypertable TimescaleDB</th></tr></thead>
+        <tbody>
+          <tr><td>Insertion continue</td><td class="secondary">L'index unique sur des milliards de lignes ne tient plus en mémoire. L'insertion ralentit.</td><td class="secondary">L'insertion va dans le chunk récent. Son index est petit et reste en mémoire.</td></tr>
+          <tr><td>Requête sur les dernières 24 h</td><td class="secondary">Le planner parcourt un grand index.</td><td class="secondary">Le planner exclut les chunks hors de la plage.</td></tr>
+          <tr><td>Supprimer les données de plus de 90 jours</td><td class="secondary"><code>DELETE</code> de millions de lignes, WAL, puis <code>VACUUM</code>.</td><td class="secondary"><code>drop_chunks</code> supprime des tables entières. L'opération est presque instantanée.</td></tr>
+          <tr><td>Agrégats par heure</td><td class="secondary">Calcul complet à chaque requête, ou vue matérialisée à rafraîchir en entier.</td><td class="secondary">Continuous aggregate : rafraîchissement incrémental.</td></tr>
+          <tr><td>Stockage</td><td class="secondary">Format ligne. Peu de compression.</td><td class="secondary">Compression en colonnes : souvent 90 % de gain, ou plus.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg info"><p><strong>À retenir.</strong> TimescaleDB reste PostgreSQL. Une hypertable s'utilise comme une table. EF Core la lit et l'écrit comme une table. Les fonctions propres à Timescale (<code>time_bucket</code>, compression, continuous aggregates) demandent du SQL ou un mapping explicite.</p></div>
+    </section>
+
+    <section id="glossaire" class="stack">
+      <h2>Glossaire</h2>
+      <p class="intro">Cette page utilise ces termes avec ce sens uniquement.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+        <tbody>
+          <tr><td><b>Hypertable</b></td><td class="secondary">Table logique partitionnée automatiquement par le temps. Vous écrivez et lisez l'hypertable. TimescaleDB gère les partitions.</td></tr>
+          <tr><td><b>Chunk</b></td><td class="secondary">Partition d'une hypertable. Un chunk est une vraie table PostgreSQL. Il contient les lignes d'un intervalle de temps.</td></tr>
+          <tr><td><b>chunk_time_interval</b></td><td class="secondary">Durée couverte par un chunk. Valeur par défaut : 7 jours.</td></tr>
+          <tr><td><b>Colonne de partition</b></td><td class="secondary">Colonne de temps qui découpe l'hypertable en chunks. Type conseillé : <code>timestamptz</code>.</td></tr>
+          <tr><td><b>Exclusion de chunks</b></td><td class="secondary">Le moteur ignore les chunks hors de la plage de la requête. Il ne les ouvre pas.</td></tr>
+          <tr><td><b>time_bucket</b></td><td class="secondary">Fonction qui arrondit un horodatage au début de son intervalle. Elle sert à regrouper par 5 minutes, par heure ou par jour.</td></tr>
+          <tr><td><b>Compression (columnstore)</b></td><td class="secondary">Format en colonnes d'un chunk ancien. Depuis la version 2.18, la documentation l'appelle « columnstore » ou « hypercore ».</td></tr>
+          <tr><td><b>segmentby</b></td><td class="secondary">Colonne qui sépare les lignes compressées en groupes. Exemple : <code>device_id</code>.</td></tr>
+          <tr><td><b>Continuous aggregate</b></td><td class="secondary">Vue matérialisée d'agrégats par <code>time_bucket</code>. TimescaleDB la rafraîchit de façon incrémentale.</td></tr>
+          <tr><td><b>Policy</b></td><td class="secondary">Tâche de fond planifiée par TimescaleDB : compression, rétention, rafraîchissement d'un agrégat.</td></tr>
+          <tr><td><b>Npgsql</b></td><td class="secondary">Driver ADO.NET pour PostgreSQL. Le provider EF Core <code>Npgsql.EntityFrameworkCore.PostgreSQL</code> l'utilise.</td></tr>
+          <tr><td><b>COPY</b></td><td class="secondary">Commande PostgreSQL d'import en flux. Npgsql l'expose avec <code>NpgsqlBinaryImporter</code>.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="hypertable" class="stack">
+      <h2>Hypertable et chunks</h2>
+      <p class="intro">Créez d'abord une table PostgreSQL normale. Transformez-la ensuite en hypertable. Les insertions créent les chunks automatiquement.</p>
+<script type="text/x-csharp">
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+CREATE TABLE measurements (
+    time       timestamptz      NOT NULL,
+    device_id  int              NOT NULL,
+    value      double precision NOT NULL,
+    PRIMARY KEY (device_id, time)          -- la clé contient la colonne de partition
+);
+
+-- TimescaleDB 2.13 et plus : syntaxe by_range
+SELECT create_hypertable('measurements', by_range('time', INTERVAL '1 day'));
+
+-- Syntaxe historique, toujours acceptée
+-- SELECT create_hypertable('measurements', 'time', chunk_time_interval => INTERVAL '1 day');
+</script>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Ce que fait create_hypertable</h3>
+          <ul class="bul">
+            <li>La table <code>measurements</code> devient la table parente. Elle ne contient plus de lignes.</li>
+            <li>Chaque insertion va dans le chunk de son intervalle. TimescaleDB crée le chunk s'il n'existe pas.</li>
+            <li>Les chunks sont dans le schéma <code>_timescaledb_internal</code>. Exemple : <code>_hyper_1_42_chunk</code>.</li>
+            <li>Chaque chunk a une contrainte <code>CHECK</code> sur sa plage de temps. Le planner utilise cette contrainte pour exclure le chunk.</li>
+            <li>TimescaleDB crée par défaut un index sur <code>time DESC</code>.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Règle de la clé unique</h3>
+          <p style="margin:0">Une contrainte unique ou une clé primaire doit <b>contenir la colonne de partition</b>. Chaque chunk vérifie l'unicité localement. Sans la colonne de temps, le moteur devrait vérifier tous les chunks à chaque insertion.</p>
+<script type="text/x-csharp">
+-- Refusé par create_hypertable :
+-- PRIMARY KEY (id)
+-- Accepté :
+-- PRIMARY KEY (device_id, time)
+-- ou pas de clé primaire du tout
+</script>
+        </div>
+      </div>
+      <div class="msg warning"><p><strong>Erreur fréquente.</strong> Une entité EF avec <code>int Id</code> en clé auto-incrémentée donne <code>PRIMARY KEY (id)</code>. L'appel à <code>create_hypertable</code> échoue alors. Utilisez une clé composite qui contient le temps. Voir <a href="#efmodel">Modèle EF Core</a>.</p></div>
+    </section>
+
+    <section id="chunksim" class="stack">
+      <h2>Simulateur : chunks et exclusion</h2>
+      <p class="intro">L'hypertable contient 30 jours de mesures. 1 000 capteurs envoient 1 mesure par minute : 1,44 million de lignes par jour. Choisissez la taille des chunks, la plage de la requête et la forme du filtre <code>WHERE</code>.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><span class="label">chunk_time_interval</span><span class="segmented" role="group" aria-label="Intervalle" id="ckInt"><button type="button" data-m="1" aria-pressed="false">1 h</button><button type="button" data-m="6" aria-pressed="false">6 h</button><button type="button" data-m="24" aria-pressed="true">1 jour</button><button type="button" data-m="168" aria-pressed="false">7 jours</button></span></div>
+          <div class="field"><span class="label">Plage demandée</span><span class="segmented" role="group" aria-label="Plage" id="ckRange"><button type="button" data-m="1" aria-pressed="false">1 h</button><button type="button" data-m="24" aria-pressed="true">24 h</button><button type="button" data-m="168" aria-pressed="false">7 jours</button><button type="button" data-m="720" aria-pressed="false">30 jours</button></span></div>
+        </div>
+        <div class="field"><span class="label">Forme du filtre</span><span class="segmented segwrap" role="group" aria-label="Filtre" id="ckMode"><button type="button" data-m="param" aria-pressed="true">time &gt;= @from (paramètre EF)</button><button type="button" data-m="now" aria-pressed="false">time &gt; now() - interval</button><button type="button" data-m="func" aria-pressed="false">m.Time.Date == day</button><button type="button" data-m="none" aria-pressed="false">Filtre sur device_id seulement</button></span></div>
+        <div id="ckCode"></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Chunks</p><p class="value" id="ckTotal"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Chunks ouverts</p><p class="value" id="ckOpen"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Chunks exclus</p><p class="value" id="ckSkip"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Lignes par chunk</p><p class="value" id="ckRows"></p></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Chunk ouvert, parcours d'index</span><span><i style="background:var(--red)"></i>Chunk ouvert, parcours complet</span><span><i style="background:var(--rule)"></i>Chunk exclu</span><span>Le plus récent est à droite</span></div>
+        <div class="chunks" id="ckGrid"></div>
+        <div class="msg" id="ckNote"></div>
+      </div>
+      <div class="msg info"><p><strong>Comparaison.</strong> Gardez la plage « 24 h ». Passez de « paramètre EF » à « m.Time.Date == day ». Le filtre est presque le même pour un humain. Pour le moteur, une fonction appliquée à la colonne empêche l'exclusion : tous les chunks sont ouverts.</p></div>
+    </section>
+
+    <section id="timebucket" class="stack">
+      <h2><code>time_bucket</code> : regrouper par intervalle</h2>
+      <p class="intro"><code>time_bucket(largeur, time)</code> arrondit chaque horodatage au début de son intervalle. C'est un <code>date_trunc</code> avec une largeur libre : 5 minutes, 15 minutes, 3 heures.</p>
+<script type="text/x-csharp">
+SELECT time_bucket(INTERVAL '15 minutes', time) AS bucket,
+       count(*)   AS n,
+       avg(value) AS avg,
+       max(value) AS max
+FROM measurements
+WHERE device_id = 42
+  AND time >= '2026-11-10 08:00+00' AND time < '2026-11-10 10:00+00'
+GROUP BY bucket
+ORDER BY bucket;
+</script>
+      <div class="panel stack">
+        <div class="toolbar"><div class="field"><span class="label">Largeur du bucket</span><span class="segmented" role="group" aria-label="Largeur" id="tbW"><button type="button" data-m="5" aria-pressed="false">5 min</button><button type="button" data-m="15" aria-pressed="true">15 min</button><button type="button" data-m="30" aria-pressed="false">30 min</button><button type="button" data-m="60" aria-pressed="false">1 h</button></span></div></div>
+        <p class="muted" style="margin:0">Données : 24 mesures du capteur 42, une toutes les 5 minutes, de 08:00 à 09:55 UTC.</p>
+        <div class="table-wrap"><table class="table dense" id="tbOut"></table></div>
+        <div class="msg" id="tbNote"></div>
+      </div>
+      <div class="grid2">
+        <div class="panel stack"><h3>Alignement</h3><p style="margin:0">Les buckets sont alignés sur une origine fixe. Pour une largeur en jours, l'origine par défaut est un lundi (2000-01-03). Un bucket de 1 jour commence donc à minuit UTC. Pour un fuseau horaire, utilisez la variante <code>time_bucket('1 day', time, 'Europe/Paris')</code>.</p></div>
+        <div class="panel stack"><h3>Bucket et exclusion</h3><p style="margin:0">Utilisez <code>time_bucket</code> dans le <code>SELECT</code> et le <code>GROUP BY</code>. Filtrez sur la colonne <code>time</code> brute dans le <code>WHERE</code>. Un <code>WHERE time_bucket(...) = ...</code> empêche l'exclusion de chunks.</p></div>
+      </div>
+    </section>
+
+    <section id="efmodel" class="stack">
+      <h2>Modèle EF Core avec Npgsql</h2>
+      <p class="intro">EF Core ne connaît pas les hypertables. Pour EF Core, <code>measurements</code> est une table normale. Vous configurez la clé, les types et les index. Une migration crée ensuite l'hypertable avec du SQL.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+public class Measurement
+{
+    public DateTime Time { get; set; }     // timestamptz, Kind = Utc
+    public int DeviceId { get; set; }
+    public double Value { get; set; }
+}
+
+public class MetricsDbContext(DbContextOptions<MetricsDbContext> options)
+    : DbContext(options)
+{
+    public DbSet<Measurement> Measurements => Set<Measurement>();
+
+    protected override void OnModelCreating(ModelBuilder b)
+    {
+        b.Entity<Measurement>(e =>
+        {
+            e.ToTable("measurements");
+            e.HasKey(m => new { m.DeviceId, m.Time });  // contient la colonne de temps
+            e.Property(m => m.Time).HasColumnName("time")
+                                   .HasColumnType("timestamp with time zone");
+            e.Property(m => m.DeviceId).HasColumnName("device_id");
+            e.Property(m => m.Value).HasColumnName("value");
+        });
+    }
+}
+</script>
+<script type="text/x-csharp">
+// Program.cs
+builder.Services.AddDbContextPool<MetricsDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Metrics"))
+     .UseSnakeCaseNamingConvention()); // package EFCore.NamingConventions, facultatif
+
+// Migration générée, puis complétée à la main
+public partial class CreateMeasurements : Migration
+{
+    protected override void Up(MigrationBuilder mb)
+    {
+        mb.Sql("CREATE EXTENSION IF NOT EXISTS timescaledb;");
+        mb.CreateTable(/* ... généré par EF ... */);
+        mb.Sql("SELECT create_hypertable('measurements', by_range('time', INTERVAL '1 day'));");
+    }
+
+    protected override void Down(MigrationBuilder mb)
+    {
+        mb.DropTable("measurements"); // supprime aussi les chunks
+    }
+}
+</script>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Choix</th><th>Conséquence</th></tr></thead>
+        <tbody>
+          <tr><td><code>HasKey(m =&gt; new { m.DeviceId, m.Time })</code></td><td class="secondary">Clé composite. Elle contient le temps : <code>create_hypertable</code> l'accepte. EF peut suivre, modifier et supprimer une ligne. Deux mesures d'un même capteur au même instant sont refusées.</td></tr>
+          <tr><td><code>HasNoKey()</code></td><td class="secondary">Pas de clé primaire en base. EF peut lire l'entité, mais <code>SaveChanges</code> refuse de l'insérer. Insérez alors avec <code>COPY</code> ou du SQL.</td></tr>
+          <tr><td><code>int Id</code> auto-incrémenté</td><td class="secondary">Clé sans le temps : <code>create_hypertable</code> échoue. Un <code>Id</code> n'a pas d'intérêt pour une mesure.</td></tr>
+          <tr><td>Index <code>(device_id, time DESC)</code></td><td class="secondary">La clé primaire le fournit déjà dans cet ordre de colonnes. C'est l'index de la requête « mesures d'un capteur sur une plage ».</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg"><p><strong>Requête LINQ simple.</strong> Une requête LINQ sur l'hypertable est traduite en SQL normal. TimescaleDB applique l'exclusion de chunks sans changement côté .NET.</p></div>
+<script type="text/x-csharp">
+var from = DateTime.UtcNow.AddHours(-24);
+var points = await db.Measurements
+    .AsNoTracking()
+    .Where(m => m.DeviceId == deviceId && m.Time >= from)   // filtre sur la colonne brute
+    .OrderBy(m => m.Time)
+    .ToListAsync(ct);
+-- SQL généré : WHERE m.device_id = @deviceId AND m.time >= @from
+</script>
+    </section>
+
+    <section id="utc" class="stack">
+      <h2>Dates : <code>timestamptz</code> et <code>DateTime</code> UTC</h2>
+      <p class="intro">Depuis Npgsql 6, le mapping des dates est strict. Une erreur de <code>Kind</code> lève une exception à l'écriture. C'est voulu : la règle évite les décalages silencieux.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Type .NET</th><th>Type PostgreSQL</th><th>Règle Npgsql 6 et plus</th></tr></thead>
+        <tbody>
+          <tr><td><code>DateTime</code>, <code>Kind = Utc</code></td><td><code>timestamptz</code></td><td class="secondary">Accepté. C'est le mapping par défaut. La lecture retourne un <code>DateTime</code> avec <code>Kind = Utc</code>.</td></tr>
+          <tr><td><code>DateTime</code>, <code>Kind = Local</code> ou <code>Unspecified</code></td><td><code>timestamptz</code></td><td class="secondary">Refusé : <code>ArgumentException</code> à l'écriture.</td></tr>
+          <tr><td><code>DateTime</code>, <code>Kind = Unspecified</code></td><td><code>timestamp</code> (sans fuseau)</td><td class="secondary">Accepté. Déconseillé pour une colonne de partition : l'heure d'été donne des trous et des doublons.</td></tr>
+          <tr><td><code>DateTimeOffset</code></td><td><code>timestamptz</code></td><td class="secondary">Accepté seulement avec un offset nul. Un offset +01:00 est refusé.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+// Erreur à l'écriture : Kind = Unspecified (valeur lue d'un fichier ou d'un JSON sans 'Z')
+var t = DateTime.Parse("2026-11-10 08:00:00");
+db.Measurements.Add(new Measurement { Time = t, DeviceId = 42, Value = 21.5 });
+await db.SaveChangesAsync(ct); // ArgumentException : Cannot write DateTime with Kind=Unspecified ...
+
+// Correction : convertir à l'entrée du système
+var utc = DateTime.SpecifyKind(t, DateTimeKind.Utc);           // si la valeur est déjà en UTC
+var utc2 = TimeZoneInfo.ConvertTimeToUtc(t, parisTimeZone);     // si la valeur est en heure de Paris
+</script>
+      <div class="msg warning"><p><strong>Commutateur legacy.</strong> <code>AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true)</code> rétablit l'ancien comportement. Ce commutateur masque le problème. Utilisez-le seulement pendant une migration d'un ancien projet.</p></div>
+    </section>
+
+    <section id="bulk" class="stack">
+      <h2>Insertion en masse : <code>SaveChanges</code> ou <code>COPY</code></h2>
+      <p class="intro">Une série temporelle reçoit beaucoup de lignes. Le change tracker d'EF Core coûte cher pour ce volume. Comparez les méthodes.</p>
+      <div class="panel stack">
+        <div class="toolbar"><div class="field"><label for="bkN">Lignes à insérer : <span class="val" id="bkNO"></span></label><input type="range" id="bkN" min="0" max="3" step="1" value="2"></div></div>
+        <div class="gantt" id="bkGantt"></div>
+        <div class="msg" id="bkNote"></div>
+      </div>
+      <div class="grid2">
+<script type="text/x-csharp">
+// Correct pour quelques centaines de lignes
+db.ChangeTracker.AutoDetectChangesEnabled = false;
+db.Measurements.AddRange(batch);
+await db.SaveChangesAsync(ct);   // INSERT en lots (batching Npgsql)
+db.ChangeTracker.Clear();        // libère les entités suivies
+</script>
+<script type="text/x-csharp">
+// Gros volumes : COPY binaire
+await using var conn = await dataSource.OpenConnectionAsync(ct);
+await using var w = await conn.BeginBinaryImportAsync(
+    "COPY measurements (time, device_id, value) FROM STDIN (FORMAT BINARY)", ct);
+foreach (var m in batch)
+{
+    await w.StartRowAsync(ct);
+    await w.WriteAsync(m.Time, NpgsqlDbType.TimestampTz, ct);
+    await w.WriteAsync(m.DeviceId, NpgsqlDbType.Integer, ct);
+    await w.WriteAsync(m.Value, NpgsqlDbType.Double, ct);
+}
+await w.CompleteAsync(ct);       // sans CompleteAsync : annulation de l'import
+</script>
+      </div>
+      <div class="msg"><p><strong>Limites de COPY.</strong> <code>COPY</code> ne gère pas les conflits : un doublon de clé arrête tout l'import. Pour un upsert, copiez dans une table temporaire, puis exécutez <code>INSERT ... SELECT ... ON CONFLICT DO NOTHING</code>.</p></div>
+    </section>
+
+    <section id="anti" class="stack">
+      <h2>Mauvaises pratiques : description, cause, correction</h2>
+      <p class="intro">Cliquez sur un titre pour afficher le détail.</p>
+      <div class="stack" id="antiList"></div>
+    </section>
+
+    <section id="qcm-base" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 1</p>
+        <h2>QCM : notions de base</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="b"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS AVANCÉES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="avance" aria-labelledby="tab-btn-avance" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 2</p>
+      <h2>Notions avancées</h2>
+      <p class="lede">Ces notions gèrent le cycle de vie des données : compression, agrégats continus, rétention. Elles expliquent aussi l'usage de ces objets depuis EF Core.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="compression" class="stack">
+      <h2>Compression : <code>segmentby</code> et <code>orderby</code></h2>
+      <p class="intro">La compression transforme un chunk ancien en format colonnes. TimescaleDB regroupe les lignes par lots de 1 000 au plus. Chaque lot devient une ligne avec un tableau compressé par colonne.</p>
+<script type="text/x-csharp">
+-- TimescaleDB 2.x (avant 2.18)
+ALTER TABLE measurements SET (
+    timescaledb.compress,
+    timescaledb.compress_segmentby = 'device_id',
+    timescaledb.compress_orderby   = 'time DESC'
+);
+SELECT add_compression_policy('measurements', INTERVAL '7 days');
+
+-- TimescaleDB 2.18 et plus : mêmes réglages, nouveaux noms
+-- ALTER TABLE measurements SET (timescaledb.enable_columnstore, timescaledb.segmentby = 'device_id', timescaledb.orderby = 'time DESC');
+-- CALL add_columnstore_policy('measurements', after => INTERVAL '7 days');
+</script>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><span class="label">segmentby</span><span class="segmented" role="group" aria-label="segmentby" id="cpSeg"><button type="button" data-m="none" aria-pressed="false">aucun</button><button type="button" data-m="device" aria-pressed="true">device_id</button><button type="button" data-m="unique" aria-pressed="false">request_id (unique)</button></span></div>
+          <div class="field"><span class="label">Valeurs</span><span class="segmented" role="group" aria-label="Valeurs" id="cpProf"><button type="button" data-m="stable" aria-pressed="true">stables</button><button type="button" data-m="noisy" aria-pressed="false">bruitées</button></span></div>
+          <div class="field"><label for="cpDev">Capteurs : <span class="val" id="cpDevO"></span></label><input type="range" id="cpDev" min="10" max="5000" step="10" value="1000"></div>
+        </div>
+        <p class="muted" style="margin:0">Un chunk = 1 jour. Chaque capteur envoie 1 mesure par minute (1 440 lignes par capteur et par jour).</p>
+        <div class="gantt" id="cpBars"></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Taux de compression</p><p class="value" id="cpRatio"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Lots compressés</p><p class="value" id="cpBatches"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Lignes décompressées pour device_id = 42</p><p class="value" id="cpRead"></p></div>
+        </div>
+        <div class="msg" id="cpNote"></div>
+      </div>
+      <div class="grid2">
+        <div class="panel stack"><h3>Choisir segmentby</h3><ul class="bul"><li>La colonne des filtres fréquents : <code>device_id</code>, <code>tenant_id</code>.</li><li>Cardinalité moyenne : assez de lignes par valeur pour remplir des lots.</li><li>Pas un identifiant unique : un lot par ligne, la table grossit.</li></ul></div>
+        <div class="panel stack"><h3>Choisir orderby</h3><ul class="bul"><li>Par défaut : la colonne de temps, ordre décroissant.</li><li>TimescaleDB stocke le min et le max de chaque colonne orderby par lot. Un filtre sur le temps saute les lots hors plage.</li><li>Les valeurs triées se suivent : les deltas sont petits, la compression est meilleure.</li></ul></div>
+      </div>
+    </section>
+
+    <section id="cagg" class="stack">
+      <h2>Continuous aggregates</h2>
+      <p class="intro">Un continuous aggregate est une vue matérialisée de <code>time_bucket</code>. Une policy la rafraîchit. Elle recalcule seulement les buckets modifiés.</p>
+<script type="text/x-csharp">
+CREATE MATERIALIZED VIEW measurements_hourly
+WITH (timescaledb.continuous) AS
+SELECT time_bucket(INTERVAL '1 hour', time) AS bucket,
+       device_id,
+       avg(value) AS avg_value,
+       max(value) AS max_value,
+       count(*)   AS samples
+FROM measurements
+GROUP BY bucket, device_id
+WITH NO DATA;
+
+SELECT add_continuous_aggregate_policy('measurements_hourly',
+    start_offset      => INTERVAL '3 days',    -- début de la fenêtre rafraîchie
+    end_offset        => INTERVAL '1 hour',    -- exclut le bucket en cours
+    schedule_interval => INTERVAL '30 minutes');
+</script>
+      <div class="panel stack">
+        <div class="legend"><span><i style="background:var(--green)"></i>Bucket matérialisé</span><span><i style="background:var(--blue)"></i>Calculé à la requête (real-time)</span><span><i style="background:var(--red)"></i>Bucket invalidé, à rafraîchir</span><span><i style="background:var(--rule)"></i>Absent du résultat</span></div>
+        <div class="corerow"><span class="lbl">Buckets</span><div class="cells" id="caCells"></div></div>
+        <div class="corerow"><span class="lbl"></span><div class="cells" id="caLabels"></div></div>
+        <ul class="list kv">
+          <li><span>materialized_only</span><span id="caMo"></span></li>
+          <li><span>Watermark (fin de la partie matérialisée)</span><span id="caWm"></span></li>
+          <li><span>Résultat de <code>SELECT * FROM measurements_hourly</code></span><span id="caRes"></span></li>
+        </ul>
+        <div data-stepbar="ca"></div>
+      </div>
+      <div class="msg info"><p><strong>Real-time aggregation.</strong> Depuis la version 2.13, une nouvelle vue a <code>materialized_only = true</code> par défaut. La vue retourne seulement les buckets matérialisés. Avec <code>materialized_only = false</code>, la vue ajoute un calcul sur les données brutes après le watermark.</p></div>
+    </section>
+
+    <section id="caggef" class="stack">
+      <h2>Vue agrégée dans EF Core</h2>
+      <p class="intro">Pour EF Core, un continuous aggregate est une vue en lecture seule. Mappez-la en entité sans clé. Créez-la dans une migration avec du SQL.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+public class HourlyStat
+{
+    public DateTime Bucket { get; set; }
+    public int DeviceId { get; set; }
+    public double AvgValue { get; set; }
+    public double MaxValue { get; set; }
+    public long Samples { get; set; }
+}
+
+// OnModelCreating
+b.Entity<HourlyStat>(e =>
+{
+    e.HasNoKey();                        // lecture seule, pas de suivi
+    e.ToView("measurements_hourly");     // EF ne crée pas la vue
+    e.Property(x => x.Bucket).HasColumnName("bucket");
+    e.Property(x => x.DeviceId).HasColumnName("device_id");
+    e.Property(x => x.AvgValue).HasColumnName("avg_value");
+    e.Property(x => x.MaxValue).HasColumnName("max_value");
+    e.Property(x => x.Samples).HasColumnName("samples");
+});
+</script>
+<script type="text/x-csharp">
+public partial class AddHourlyAggregate : Migration
+{
+    protected override void Up(MigrationBuilder mb)
+    {
+        // CREATE MATERIALIZED VIEW ... WITH (timescaledb.continuous)
+        // est refusé dans une transaction
+        mb.Sql(Sql.CreateHourly, suppressTransaction: true);
+        mb.Sql(Sql.AddHourlyPolicy);
+    }
+
+    protected override void Down(MigrationBuilder mb)
+    {
+        mb.Sql("DROP MATERIALIZED VIEW IF EXISTS measurements_hourly;",
+               suppressTransaction: true);
+    }
+}
+
+// Lecture
+var stats = await db.Set<HourlyStat>()
+    .Where(s => s.DeviceId == id && s.Bucket >= from)
+    .OrderBy(s => s.Bucket)
+    .ToListAsync(ct);
+</script>
+      </div>
+      <div class="msg warning"><p><strong>Transaction.</strong> EF Core exécute chaque migration dans une transaction. <code>CREATE MATERIALIZED VIEW ... WITH (timescaledb.continuous)</code> et <code>CALL refresh_continuous_aggregate</code> échouent dans une transaction : « cannot run inside a transaction block ». Passez <code>suppressTransaction: true</code> à <code>mb.Sql</code>.</p></div>
+      <div class="msg"><p><strong>Snapshot du modèle.</strong> <code>ToView</code> indique à EF que l'objet existe déjà. EF ne génère pas de <code>CREATE</code> pour lui. Le <code>ModelSnapshot</code> garde quand même l'entité : les migrations suivantes restent cohérentes.</p></div>
+    </section>
+
+    <section id="retention" class="stack">
+      <h2>Rétention : <code>drop_chunks</code> ou <code>DELETE</code></h2>
+      <p class="intro">Supprimer des données anciennes est une opération fréquente. Sur une hypertable, supprimez des chunks entiers, pas des lignes.</p>
+      <div class="panel stack">
+        <div class="toolbar"><div class="field"><label for="rtDays">Jours à supprimer : <span class="val" id="rtDaysO"></span></label><input type="range" id="rtDays" min="1" max="90" value="30"></div></div>
+        <p class="muted" style="margin:0">1,44 million de lignes par jour. Chunks de 1 jour.</p>
+        <div class="grid2">
+          <div class="panel stack"><h3><code>ExecuteDeleteAsync</code> (DELETE)</h3><ul class="list kv" id="rtDel"></ul></div>
+          <div class="panel stack"><h3><code>drop_chunks</code></h3><ul class="list kv" id="rtDrop"></ul></div>
+        </div>
+        <div class="msg" id="rtNote"></div>
+      </div>
+      <div class="grid2">
+<script type="text/x-csharp">
+-- Policy : tâche de fond quotidienne
+SELECT add_retention_policy('measurements', drop_after => INTERVAL '90 days');
+
+-- Appel ponctuel
+SELECT drop_chunks('measurements', older_than => INTERVAL '90 days');
+</script>
+<script type="text/x-csharp">
+// Depuis .NET, si la suppression doit rester dans le code
+await db.Database.ExecuteSqlAsync(
+    $"SELECT drop_chunks('measurements', older_than => {TimeSpan.FromDays(90)})", ct);
+
+// À éviter sur une hypertable
+await db.Measurements
+    .Where(m => m.Time < DateTime.UtcNow.AddDays(-90))
+    .ExecuteDeleteAsync(ct);
+</script>
+      </div>
+      <div class="msg info"><p><strong>Granularité.</strong> <code>drop_chunks</code> supprime seulement les chunks <b>entièrement</b> plus anciens que la limite. Avec des chunks de 7 jours, des données de 96 jours peuvent rester. Les continuous aggregates gardent leurs buckets si leur fenêtre de rafraîchissement ne couvre pas les chunks supprimés.</p></div>
+    </section>
+
+    <section id="dbfunction" class="stack">
+      <h2><code>time_bucket</code> en LINQ</h2>
+      <p class="intro">Le provider Npgsql ne traduit pas <code>time_bucket</code>. Deux solutions : une requête SQL typée, ou une fonction mappée dans le modèle.</p>
+      <div class="grid2">
+<script type="text/x-csharp">
+// Solution 1 : SqlQuery (EF Core 8 et plus), type non mappé
+public record BucketRow(DateTime Bucket, double Avg);
+
+var rows = await db.Database.SqlQuery<BucketRow>($"""
+    SELECT time_bucket(INTERVAL '5 minutes', time) AS "Bucket",
+           avg(value) AS "Avg"
+    FROM measurements
+    WHERE device_id = {id} AND time >= {from}
+    GROUP BY 1 ORDER BY 1
+    """).ToListAsync(ct);
+// Les valeurs interpolées deviennent des paramètres : pas d'injection SQL
+</script>
+<script type="text/x-csharp">
+// Solution 2 : fonction mappée, utilisable dans LINQ
+public static class TsdbFunctions
+{
+    public static DateTime TimeBucket(TimeSpan width, DateTime time)
+        => throw new NotSupportedException("Traduit en SQL uniquement");
+}
+
+// OnModelCreating
+b.HasDbFunction(typeof(TsdbFunctions).GetMethod(nameof(TsdbFunctions.TimeBucket))!)
+ .HasName("time_bucket")
+ .IsBuiltIn();                        // pas de préfixe de schéma
+
+var q = db.Measurements
+    .Where(m => m.DeviceId == id && m.Time >= from)
+    .GroupBy(m => TsdbFunctions.TimeBucket(TimeSpan.FromMinutes(5), m.Time))
+    .Select(g => new { Bucket = g.Key, Avg = g.Average(x => x.Value) })
+    .OrderBy(x => x.Bucket);
+-- time_bucket(INTERVAL '00:05:00', m.time) : TimeSpan devient interval
+</script>
+      </div>
+      <div class="msg"><p><strong>Choix.</strong> <code>SqlQuery</code> convient pour une requête de reporting isolée. La fonction mappée convient quand le filtre ou la pagination se composent en LINQ. Dans les deux cas, filtrez sur <code>m.Time</code>, pas sur le bucket.</p></div>
+    </section>
+
+    <section id="lastvalue" class="stack">
+      <h2>Dernière valeur par série</h2>
+      <p class="intro">« La dernière mesure de chaque capteur » est une requête fréquente. Sa forme change beaucoup la performance.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Forme</th><th>Exemple</th><th>Comportement</th></tr></thead>
+        <tbody>
+          <tr><td>LINQ GroupBy + First</td><td><code>GroupBy(m =&gt; m.DeviceId).Select(g =&gt; g.OrderByDescending(x =&gt; x.Time).First())</code></td><td class="secondary">EF Core traduit en <code>ROW_NUMBER() OVER (PARTITION BY ...)</code>. Le moteur lit toutes les lignes de la plage. Sans filtre de temps, il lit toute l'hypertable.</td></tr>
+          <tr><td><code>DISTINCT ON</code></td><td><code>SELECT DISTINCT ON (device_id) * ... ORDER BY device_id, time DESC</code></td><td class="secondary">Correct avec un filtre de temps borné. Sans borne, le moteur parcourt beaucoup de chunks.</td></tr>
+          <tr><td><code>last(value, time)</code></td><td><code>SELECT device_id, last(value, time) ... GROUP BY device_id</code></td><td class="secondary">Agrégat Timescale. Lisible. Il lit aussi toutes les lignes de la plage.</td></tr>
+          <tr><td><code>LATERAL</code> + <code>LIMIT 1</code></td><td>Voir le code ci-dessous</td><td class="secondary">Un parcours d'index court par capteur. Le plus rapide avec une table <code>devices</code> et l'index <code>(device_id, time DESC)</code>.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+SELECT d.id, m.time, m.value
+FROM devices d
+CROSS JOIN LATERAL (
+    SELECT time, value
+    FROM measurements
+    WHERE device_id = d.id
+      AND time > now() - INTERVAL '1 day'     -- borne : exclusion de chunks
+    ORDER BY time DESC
+    LIMIT 1
+) m;
+</script>
+      <div class="msg info"><p><strong>Alternative.</strong> Pour un tableau de bord, une table <code>latest_measurement</code> mise à jour par upsert à l'insertion évite la requête. Un continuous aggregate avec <code>last(value, time)</code> par bucket est une autre option.</p></div>
+    </section>
+
+    <section id="gapfill" class="stack">
+      <h2>Trous dans les données : <code>time_bucket_gapfill</code></h2>
+      <p class="intro">Un capteur en panne n'envoie rien. <code>time_bucket</code> ne crée pas de ligne pour un bucket vide. Un graphique relie alors deux points éloignés.</p>
+<script type="text/x-csharp">
+SELECT time_bucket_gapfill(INTERVAL '5 minutes', time) AS bucket,
+       avg(value)        AS avg_raw,      -- NULL pour un bucket vide
+       locf(avg(value))  AS avg_locf,     -- dernière valeur connue répétée
+       interpolate(avg(value)) AS avg_lin -- interpolation linéaire
+FROM measurements
+WHERE device_id = 42
+  AND time >= '2026-11-10 08:00+00' AND time < '2026-11-10 09:00+00'  -- bornes obligatoires
+GROUP BY bucket
+ORDER BY bucket;
+</script>
+      <div class="grid2">
+        <div class="panel stack"><h3>Règles</h3><ul class="bul"><li>Le <code>WHERE</code> doit borner la colonne de temps des deux côtés. Sinon, la fonction ne connaît pas la plage à remplir.</li><li><code>locf</code> : « last observation carried forward ». Usage : un état, un compteur.</li><li><code>interpolate</code> : usage pour une grandeur continue, comme une température.</li></ul></div>
+        <div class="panel stack"><h3>Depuis .NET</h3><p style="margin:0">Utilisez <code>SqlQuery&lt;T&gt;</code> avec une propriété <code>double?</code> : un bucket vide donne <code>NULL</code>. Un type non nullable lève une exception à la lecture.</p></div>
+      </div>
+    </section>
+
+    <section id="migrations" class="stack">
+      <h2>Migrations EF et objets Timescale</h2>
+      <p class="intro">EF Core génère seulement les tables, colonnes et index. Les objets Timescale sont du SQL dans les migrations. Écrivez ce SQL de façon idempotente et réversible.</p>
+<script type="text/x-csharp">
+protected override void Up(MigrationBuilder mb)
+{
+    mb.Sql("SELECT create_hypertable('measurements', by_range('time', INTERVAL '1 day'), if_not_exists => TRUE);");
+    mb.Sql("""
+        ALTER TABLE measurements SET (timescaledb.compress,
+            timescaledb.compress_segmentby = 'device_id',
+            timescaledb.compress_orderby = 'time DESC');
+        """);
+    mb.Sql("SELECT add_compression_policy('measurements', INTERVAL '7 days', if_not_exists => TRUE);");
+    mb.Sql("SELECT add_retention_policy('measurements', INTERVAL '90 days', if_not_exists => TRUE);");
+}
+
+protected override void Down(MigrationBuilder mb)
+{
+    mb.Sql("SELECT remove_retention_policy('measurements', if_exists => TRUE);");
+    mb.Sql("SELECT remove_compression_policy('measurements', if_exists => TRUE);");
+    // La désactivation de la compression exige de décompresser les chunks avant
+}
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Piège</th><th>Effet</th><th>Correction</th></tr></thead>
+        <tbody>
+          <tr><td>Ajouter une colonne à une hypertable compressée</td><td class="secondary">Accepté pour une colonne nullable ou avec une valeur par défaut. D'autres changements de schéma sont refusés sur les chunks compressés.</td><td class="secondary">Testez chaque migration sur une copie avec des chunks compressés.</td></tr>
+          <tr><td><code>AlterColumn</code> du type de <code>time</code></td><td class="secondary">Refusé sur la colonne de partition.</td><td class="secondary">Choisissez <code>timestamptz</code> dès la création.</td></tr>
+          <tr><td><code>EnsureCreated()</code> dans les tests</td><td class="secondary">EF crée les tables, mais n'exécute aucune migration. Pas d'hypertable.</td><td class="secondary">Utilisez <code>Database.MigrateAsync()</code>.</td></tr>
+          <tr><td>Script SQL généré (<code>dotnet ef migrations script</code>)</td><td class="secondary"><code>suppressTransaction</code> est respecté. Le script reste à vérifier.</td><td class="secondary">Relisez le script. Lancez-le dans un environnement de test.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="reads" class="stack">
+      <h2>Lire de gros volumes</h2>
+      <p class="intro">Une requête de série temporelle retourne souvent beaucoup de lignes. Réduisez d'abord le volume en base. Ensuite, réduisez le coût côté .NET.</p>
+      <div class="tiles">
+        <div class="tile green"><p class="eyebrow">1. En base</p><h3>Agréger avant de lire</h3><p>Un graphique de 800 pixels n'a pas besoin de 86 400 points. Utilisez <code>time_bucket</code> ou un continuous aggregate.</p></div>
+        <div class="tile blue"><p class="eyebrow">2. EF Core</p><h3>AsNoTracking et projection</h3><p><code>AsNoTracking()</code> supprime le coût du change tracker. Un <code>Select</code> vers un DTO lit seulement les colonnes utiles.</p></div>
+        <div class="tile red"><p class="eyebrow">3. Flux</p><h3>AsAsyncEnumerable</h3><p>Un export lit les lignes en flux. La mémoire reste constante. <code>ToListAsync</code> charge tout en mémoire.</p></div>
+      </div>
+<script type="text/x-csharp">
+// Export CSV d'un mois : lecture en flux, mémoire constante
+await foreach (var m in db.Measurements
+    .AsNoTracking()
+    .Where(m => m.DeviceId == id && m.Time >= from && m.Time < to)
+    .OrderBy(m => m.Time)
+    .Select(m => new { m.Time, m.Value })
+    .AsAsyncEnumerable()
+    .WithCancellation(ct))
+{
+    await writer.WriteLineAsync($"{m.Time:O};{m.Value}");
+}
+
+// Pagination par clé (keyset), pas par Skip
+var page = await db.Measurements.AsNoTracking()
+    .Where(m => m.DeviceId == id && m.Time > lastTime)
+    .OrderBy(m => m.Time).Take(1000).ToListAsync(ct);
+</script>
+      <div class="msg"><p><strong>Skip sur une série temporelle.</strong> <code>Skip(100000)</code> fait lire et ignorer 100 000 lignes. La pagination par clé (<code>Time &gt; lastTime</code>) utilise l'index et l'exclusion de chunks.</p></div>
+    </section>
+
+    <section id="qcm-avance" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 2</p>
+        <h2>QCM : notions avancées</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="a"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS PROFONDES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="profond" aria-labelledby="tab-btn-profond" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 3</p>
+      <h2>Notions profondes</h2>
+      <p class="lede">Ces notions expliquent le fonctionnement interne : dimensionnement des chunks, moments de l'exclusion, format compressé, coût des écritures et des connexions.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="chunksize" class="stack">
+      <h2>Simulateur : taille des chunks</h2>
+      <p class="intro">Règle de la documentation Timescale : les chunks actifs, <b>index compris</b>, doivent tenir dans environ 25 % de la mémoire. Les insertions modifient l'index du chunk récent. Si cet index sort du cache, chaque insertion lit le disque.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="csDev">Séries (capteurs) : <span class="val" id="csDevO"></span></label><input type="range" id="csDev" min="0" max="6" step="1" value="3"></div>
+          <div class="field"><label for="csPer">Une mesure toutes les (s) : <span class="val" id="csPerO"></span></label><input type="range" id="csPer" min="1" max="60" value="10"></div>
+          <div class="field"><label for="csInt">chunk_time_interval (h) : <span class="val" id="csIntO"></span></label><input type="range" id="csInt" min="1" max="168" value="24"></div>
+          <div class="field"><label for="csRam">Mémoire du serveur (Go) : <span class="val" id="csRamO"></span></label><input type="range" id="csRam" min="4" max="256" step="4" value="32"></div>
+        </div>
+        <p class="muted" style="margin:0">Hypothèse : 150 octets par ligne, données et deux index compris. Rétention : 90 jours.</p>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Lignes par chunk</p><p class="value" id="csRows"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Taille d'un chunk</p><p class="value" id="csSize"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Budget (25 % RAM)</p><p class="value" id="csBudget"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Chunks sur 90 jours</p><p class="value" id="csCount"></p></div>
+        </div>
+        <div class="row"><span class="muted" style="font-size:.85rem">Part du budget</span><div class="meter" aria-hidden="true"><i id="csMeter"></i></div><span class="num" id="csPct"></span></div>
+        <div class="msg" id="csNote"></div>
+      </div>
+<script type="text/x-csharp">
+-- Changer l'intervalle : effet sur les prochains chunks uniquement
+SELECT set_chunk_time_interval('measurements', INTERVAL '6 hours');
+
+-- Taille réelle des chunks
+SELECT chunk_name, range_start, range_end,
+       pg_size_pretty(total_bytes) AS total
+FROM chunks_detailed_size('measurements') JOIN timescaledb_information.chunks USING (chunk_name)
+ORDER BY range_start DESC LIMIT 5;
+</script>
+      <div class="msg"><p><strong>Trop petit aussi est un problème.</strong> Chaque chunk est une table. Des milliers de chunks augmentent le temps de planification et le nombre de verrous par requête. Une requête sur 90 jours avec des chunks de 1 heure touche 2 160 tables.</p></div>
+    </section>
+
+    <section id="exclusion" class="stack">
+      <h2>Exclusion de chunks : plan, démarrage, exécution</h2>
+      <p class="intro">TimescaleDB exclut les chunks à trois moments. Le moment dépend de la valeur connue dans le filtre. Le nœud <code>Custom Scan (ChunkAppend)</code> du plan fait l'exclusion au démarrage et à l'exécution.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Moment</th><th>Valeur du filtre</th><th>Exemple</th><th>Visible dans EXPLAIN</th></tr></thead>
+        <tbody>
+          <tr><td><b>Planification</b></td><td class="secondary">Constante, ou paramètre d'un plan personnalisé</td><td><code>time &gt; '2026-11-09'</code></td><td class="secondary">Les chunks exclus sont absents du plan.</td></tr>
+          <tr><td><b>Démarrage de l'exécution</b></td><td class="secondary">Fonction stable : <code>now()</code>. Paramètre d'un plan générique.</td><td><code>time &gt; now() - INTERVAL '1 day'</code></td><td class="secondary"><code>Chunks excluded during startup: 29</code></td></tr>
+          <tr><td><b>Exécution</b></td><td class="secondary">Valeur venue d'une jointure ou d'une sous-requête</td><td><code>LATERAL</code>, <code>time &gt; (SELECT ...)</code></td><td class="secondary"><code>Chunks excluded during runtime: 29</code></td></tr>
+          <tr><td><b>Jamais</b></td><td class="secondary">Fonction appliquée à la colonne, ou type différent</td><td><code>date_trunc('day', time) = ...</code></td><td class="secondary">Tous les chunks sont dans le plan.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Paramètres EF Core et plans génériques</h3>
+          <p style="margin:0">EF Core envoie les valeurs comme paramètres (<code>$1</code>). Avec des requêtes préparées, PostgreSQL passe à un <b>plan générique</b> après 5 exécutions si ce plan n'est pas plus cher. Le plan générique ne connaît pas la valeur : l'exclusion se fait au démarrage. Le résultat est correct, mais le plan liste tous les chunks.</p>
+        </div>
+        <div class="panel stack">
+          <h3>Pièges de type</h3>
+          <ul class="bul">
+            <li><code>timestamp</code> comparé à <code>timestamptz</code> : la conversion dépend du fuseau de la session. Elle peut empêcher l'exclusion au planning.</li>
+            <li><code>DateTime</code> avec <code>Kind = Unspecified</code> envoyé en <code>timestamp</code> sur une colonne <code>timestamptz</code> : conversion implicite.</li>
+            <li>Gardez le même type des deux côtés : <code>timestamptz</code> et <code>DateTime</code> UTC.</li>
+          </ul>
+        </div>
+      </div>
+<script type="text/x-csharp">
+EXPLAIN (ANALYZE, COSTS OFF)
+SELECT avg(value) FROM measurements
+WHERE device_id = 42 AND time > now() - INTERVAL '1 day';
+
+-- Custom Scan (ChunkAppend) on measurements
+--   Chunks excluded during startup: 28
+--   ->  Index Scan using _hyper_1_31_chunk_measurements_pkey on _hyper_1_31_chunk
+--   ->  Index Scan using _hyper_1_32_chunk_measurements_pkey on _hyper_1_32_chunk
+</script>
+    </section>
+
+    <section id="compinternals" class="stack">
+      <h2>Compression interne : du format ligne au format colonnes</h2>
+      <p class="intro">Six mesures du capteur <code>d-42</code>. Suivez leur transformation en une seule ligne compressée. Pour la lisibilité, l'exemple trie par temps croissant.</p>
+      <div class="panel stack">
+        <div id="ciView"></div>
+        <div data-stepbar="ci"></div>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Type de colonne</th><th>Algorithme</th><th>Efficace quand</th></tr></thead>
+        <tbody>
+          <tr><td>Entier, horodatage</td><td class="secondary">Delta-of-delta, puis Simple-8b avec RLE</td><td class="secondary">Intervalle régulier entre les mesures</td></tr>
+          <tr><td>Flottant</td><td class="secondary">Gorilla (XOR avec la valeur précédente)</td><td class="secondary">Valeurs proches d'une mesure à la suivante</td></tr>
+          <tr><td>Texte ou faible cardinalité</td><td class="secondary">Dictionnaire, puis indices compressés</td><td class="secondary">Peu de valeurs distinctes : statut, unité</td></tr>
+          <tr><td>Autres</td><td class="secondary">Tableau, puis compression LZ</td><td class="secondary">Cas général, gain plus faible</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="dmlcomp" class="stack">
+      <h2>Écrire dans un chunk compressé</h2>
+      <p class="intro">Les versions récentes acceptent <code>INSERT</code>, <code>UPDATE</code> et <code>DELETE</code> sur des chunks compressés. Le coût est différent d'un chunk normal.</p>
+      <div class="board">
+        <div class="column"><div class="column-head"><span class="status" data-state="done" data-label="INSERT"></span></div><div class="card"><span class="meta">La ligne va d'abord dans une zone non compressée du chunk. Un job de compression la fusionne plus tard. Une contrainte unique oblige à décompresser les lots qui peuvent contenir un doublon.</span></div></div>
+        <div class="column"><div class="column-head"><span class="status" data-state="progress" data-label="UPDATE / DELETE"></span></div><div class="card"><span class="meta">TimescaleDB décompresse les lots concernés, puis applique la modification. Un filtre sur <code>segmentby</code> limite les lots touchés. Sans ce filtre, tout le chunk peut être décompressé.</span></div></div>
+        <div class="column"><div class="column-head"><span class="status" data-state="alert" data-label="Données en retard"></span></div><div class="card is-alert"><span class="meta">Des mesures de J-10 arrivent en masse dans des chunks compressés. Chaque lot touché est décompressé. Le débit d'insertion baisse fortement.</span></div></div>
+      </div>
+      <div class="msg warning"><p><strong>Conséquence pour EF Core.</strong> <code>ExecuteUpdateAsync</code> ou <code>SaveChanges</code> sur des mesures anciennes déclenche cette décompression. Réglez le délai de compression (<code>compress_after</code>) au-delà du retard maximal des données. Corrigez les données anciennes par des lots qui filtrent sur la colonne <code>segmentby</code>.</p></div>
+    </section>
+
+    <section id="indexes" class="stack">
+      <h2>Index par chunk et partitionnement spatial</h2>
+      <p class="intro">Un index créé sur l'hypertable est créé sur chaque chunk. Chaque index est donc petit. Mais chaque index ajouté coûte à chaque insertion.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Index</h3>
+          <ul class="bul">
+            <li>Un <code>CREATE INDEX</code> sur l'hypertable prend un verrou sur chaque chunk. Pour une grande table, utilisez <code>WITH (timescaledb.transaction_per_chunk)</code>.</li>
+            <li>Les chunks compressés n'utilisent pas les index B-tree des lignes. Ils utilisent <code>segmentby</code> et les métadonnées min/max de <code>orderby</code>.</li>
+            <li>Un index EF déclaré avec <code>HasIndex</code> devient un index de l'hypertable. La migration bloque l'écriture pendant la création.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Partitionnement spatial</h3>
+<script type="text/x-csharp">
+SELECT add_dimension('measurements', by_hash('device_id', 4));
+</script>
+          <p style="margin:0">Une deuxième dimension découpe chaque intervalle de temps en 4 chunks. La documentation la déconseille dans la plupart des cas. Elle est utile surtout pour répartir les données sur plusieurs tablespaces ou disques. Pour accélérer les filtres sur <code>device_id</code>, utilisez un index ou <code>segmentby</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="copy" class="stack">
+      <h2>COPY binaire et pooling Npgsql</h2>
+      <p class="intro">Le débit d'ingestion dépend du protocole, des allers-retours réseau et des connexions.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Méthode</th><th>Ce qui coûte</th></tr></thead>
+        <tbody>
+          <tr><td><code>SaveChanges</code></td><td class="secondary">Change tracker, détection des modifications, génération SQL. Les commandes partent en lots, mais chaque ligne est un <code>INSERT</code> avec ses paramètres.</td></tr>
+          <tr><td><code>INSERT ... VALUES (...), (...)</code></td><td class="secondary">Une requête pour N lignes. Limite : 65 535 paramètres par requête dans le protocole PostgreSQL.</td></tr>
+          <tr><td><code>INSERT ... SELECT * FROM unnest(@times, @ids, @values)</code></td><td class="secondary">Trois paramètres tableaux pour N lignes. Pas de limite de paramètres. Accepte <code>ON CONFLICT</code>.</td></tr>
+          <tr><td><code>COPY ... FROM STDIN (FORMAT BINARY)</code></td><td class="secondary">Flux continu, pas d'analyse SQL par ligne, format binaire. Le plus rapide. Pas de <code>ON CONFLICT</code>.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+// Une seule source de connexions pour l'application (Npgsql 7 et plus)
+var dataSource = new NpgsqlDataSourceBuilder(connString).Build();
+builder.Services.AddSingleton(dataSource);
+builder.Services.AddDbContextPool<MetricsDbContext>(o => o.UseNpgsql(dataSource));
+
+// Chaîne de connexion
+// Host=...;Database=metrics;Maximum Pool Size=50;Timeout=15;Command Timeout=60
+</script>
+      <div class="grid2">
+        <div class="panel stack"><h3>Pool de connexions</h3><ul class="bul"><li>Npgsql garde un pool par chaîne de connexion. Valeur par défaut : 100 connexions au plus.</li><li>Chaque connexion PostgreSQL est un process côté serveur. 10 instances × 100 connexions dépassent souvent <code>max_connections</code>.</li><li>Un import <code>COPY</code> long garde sa connexion pendant tout l'import.</li></ul></div>
+        <div class="panel stack"><h3>Ingestion parallèle</h3><ul class="bul"><li>Plusieurs <code>COPY</code> en parallèle augmentent le débit jusqu'à saturer le disque ou le CPU du serveur.</li><li>Lots conseillés : quelques milliers à quelques dizaines de milliers de lignes.</li><li>Les lignes d'un même lot dans le même chunk réduisent le nombre de chunks touchés.</li></ul></div>
+      </div>
+    </section>
+
+    <section id="tests" class="stack">
+      <h2>Tests avec Testcontainers</h2>
+      <p class="intro">SQLite ou le provider InMemory ne connaissent pas TimescaleDB. Testez sur une vraie instance dans un conteneur.</p>
+<script type="text/x-csharp">
+public class TimescaleFixture : IAsyncLifetime
+{
+    private readonly PostgreSqlContainer _pg = new PostgreSqlBuilder()
+        .WithImage("timescale/timescaledb:2.17.2-pg16")   // version fixée, identique à la production
+        .Build();
+
+    public string ConnectionString => _pg.GetConnectionString();
+
+    public async Task InitializeAsync()
+    {
+        await _pg.StartAsync();
+        await using var db = CreateContext();
+        await db.Database.MigrateAsync();                  // pas EnsureCreated : il faut les migrations
+    }
+
+    public Task DisposeAsync() => _pg.DisposeAsync().AsTask();
+
+    public MetricsDbContext CreateContext() => new(new DbContextOptionsBuilder<MetricsDbContext>()
+        .UseNpgsql(ConnectionString).Options);
+}
+</script>
+      <div class="grid2">
+        <div class="panel stack"><h3>À tester</h3><ul class="bul"><li>La migration crée bien l'hypertable : <code>SELECT * FROM timescaledb_information.hypertables</code>.</li><li>Le mapping des dates : écriture et relecture d'un <code>DateTime</code> UTC.</li><li>Une requête sur le continuous aggregate après <code>CALL refresh_continuous_aggregate(...)</code>.</li></ul></div>
+        <div class="panel stack"><h3>Policies et tests</h3><p style="margin:0">Les policies tournent en tâche de fond selon un planning. Un test ne doit pas attendre leur exécution. Appelez la fonction directement : <code>compress_chunk</code>, <code>drop_chunks</code>, <code>refresh_continuous_aggregate</code>.</p></div>
+      </div>
+    </section>
+
+    <section id="licences" class="stack">
+      <h2>Éditions et licences</h2>
+      <p class="intro">TimescaleDB existe en deux éditions. Le choix dépend souvent de l'hébergeur, pas de l'équipe.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Fonction</th><th>Édition Apache 2</th><th>Édition Community (licence TSL)</th></tr></thead>
+        <tbody>
+          <tr><td>Hypertables, chunks, <code>time_bucket</code>, <code>drop_chunks</code></td><td class="secondary">Oui</td><td class="secondary">Oui</td></tr>
+          <tr><td>Compression, columnstore</td><td class="secondary">Non</td><td class="secondary">Oui</td></tr>
+          <tr><td>Continuous aggregates</td><td class="secondary">Non</td><td class="secondary">Oui</td></tr>
+          <tr><td>Policies (compression, rétention, rafraîchissement)</td><td class="secondary">Non</td><td class="secondary">Oui</td></tr>
+          <tr><td><code>time_bucket_gapfill</code>, <code>locf</code>, <code>interpolate</code></td><td class="secondary">Non</td><td class="secondary">Oui</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Hébergement managé.</strong> Certains services PostgreSQL managés de cloud public proposent seulement l'édition Apache. Vérifiez l'édition avant de concevoir autour de la compression ou des continuous aggregates : <code>SHOW timescaledb.license;</code>. La licence TSL interdit de revendre TimescaleDB comme service de base de données. Elle autorise son usage dans une application.</p></div>
+    </section>
+
+    <section id="qcm-profond" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 3</p>
+        <h2>QCM : notions profondes</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="p"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-brand">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      Carbon IT · Formation .NET
+    </span>
+    <span class="ste">Rédaction : règles ASD-STE100 appliquées au français. Références : documentation TimescaleDB (docs.timescale.com), documentation Npgsql et du provider EF Core (npgsql.org), documentation EF Core (Microsoft), documentation PostgreSQL. Chiffres des simulateurs : ordres de grandeur.</span>
+  </footer>
+</main>
+
+<script>
+/* ───────── Utilitaires ───────── */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const HL = /(\/\/.*|--\s.*)|(\$?"(?:[^"\\]|\\.)*"|'[^'\n]*')|\b(async|await|var|public|private|protected|return|new|using|static|void|for|foreach|while|if|else|true|false|null|try|finally|catch|throw|class|record|struct|readonly|override|partial|get|set|init|SELECT|FROM|WHERE|GROUP|BY|ORDER|INSERT|INTO|VALUES|CREATE|TABLE|INDEX|ON|AND|OR|AS|DESC|ASC|LIMIT|WITH|MATERIALIZED|VIEW|DISTINCT|ALTER|SET|NOT|NULL|PRIMARY|KEY|DELETE|COPY|BINARY|STDIN|FORMAT|INTERVAL|CALL|JOIN|LATERAL|CROSS|EXTENSION|IF|EXISTS|DROP|UNIQUE|BETWEEN|NO|DATA|EXPLAIN|ANALYZE|COSTS|OFF|SHOW|USING|TRUE|FALSE)\b|\b(Task|ValueTask|int|long|double|string|bool|DateTime|DateTimeOffset|TimeSpan|DateTimeKind|DbContext|DbContextOptions|DbContextOptionsBuilder|DbSet|ModelBuilder|MigrationBuilder|Migration|NpgsqlConnection|NpgsqlBinaryImporter|NpgsqlDataSource|NpgsqlDataSourceBuilder|NpgsqlDbType|CancellationToken|List|Measurement|HourlyStat|MetricsDbContext|NotSupportedException|ArgumentException|PostgreSqlContainer|PostgreSqlBuilder|IAsyncLifetime|TsdbFunctions|BucketRow|AppContext|TimeZoneInfo|EF)\b/g;
+function hl(src){
+  let out='',last=0,m; HL.lastIndex=0;
+  while((m=HL.exec(src))){
+    out+=esc(src.slice(last,m.index));
+    const cls=m[1]?'c':m[2]?'s':m[3]?'k':'t';
+    out+=`<span class="${cls}">${esc(m[0])}</span>`; last=HL.lastIndex;
+  }
+  return out+esc(src.slice(last));
+}
+document.querySelectorAll('script[type="text/x-csharp"]').forEach(s=>{
+  const pre=document.createElement('pre');
+  pre.innerHTML=hl(s.textContent.replace(/^\s*\n/,'').replace(/\s+$/,''));
+  s.replaceWith(pre);
+});
+const HEX='<svg viewBox="0 0 32 32" aria-hidden="true"><path class="fill" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/><path class="edge" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/></svg>';
+const st=(state,label)=>`<span class="status" data-state="${state}">${HEX}<span class="label">${label}</span></span>`;
+document.querySelectorAll('.status[data-label]').forEach(el=>{el.innerHTML=HEX+`<span class="label">${el.dataset.label}</span>`;});
+document.querySelectorAll('[data-stepbar]').forEach(el=>{
+  const p=el.dataset.stepbar;
+  el.outerHTML=`<div class="msg note" id="${p}Note"></div><div class="stepbar"><button class="btn secondary sm" type="button" id="${p}Prev">Précédent</button><button class="btn sm" type="button" id="${p}Next">Suivant</button><button class="btn ghost sm" type="button" id="${p}Reset">Recommencer</button><span class="count" id="${p}Cnt"></span></div>`;
+});
+function bindRange(id){const r=$('#'+id),o=$('#'+id+'O');const f=()=>{if(o)o.textContent=r.value;};r.addEventListener('input',f);f();return r;}
+function seg(id,cb){const el=$('#'+id);el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');cb(b.dataset.m);}));}
+const TONE={good:'msg success note',warn:'msg warning note',mid:'msg info note','':'msg note'};
+function setMsg(el,tone,html){const keep=el.classList.contains('note');el.className=(TONE[tone]||'msg note').replace(' note',keep?' note':'');el.innerHTML=html;}
+
+/* Démonstration pas à pas : préfixe p → #pCode #pNote #pCnt #pPrev #pNext #pReset */
+function stepper(p,cfg){
+  let i=0;
+  const lines=cfg.code?cfg.code.split('\n'):null;
+  function draw(){
+    const s=cfg.steps[i];
+    if(lines) $('#'+p+'Code').innerHTML=lines.map((l,n)=>{
+      const cls=s.line===n?'cur':(s.paused||[]).includes(n)?'paused':'';
+      return `<div class="${cls}"><span class="ln">${n+1}</span>${hl(l)||' '}</div>`;
+    }).join('');
+    cfg.render(s,i);
+    const note=$('#'+p+'Note'); note.className=TONE[s.tone||'']; note.innerHTML=`<p>${s.note}</p>`;
+    $('#'+p+'Cnt').textContent=`Étape ${i+1} sur ${cfg.steps.length}`;
+    $('#'+p+'Prev').disabled=i===0; $('#'+p+'Next').disabled=i===cfg.steps.length-1;
+  }
+  $('#'+p+'Prev').onclick=()=>{if(i>0){i--;draw();}};
+  $('#'+p+'Next').onclick=()=>{if(i<cfg.steps.length-1){i++;draw();}};
+  $('#'+p+'Reset').onclick=()=>{i=0;draw();};
+  draw();
+}
+
+/* ───────── Thème (repris du design system) ───────── */
+(()=>{
+  const root=document.documentElement;
+  const apply=v=>{
+    if(v==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
+    document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===v)));
+  };
+  let saved='auto';
+  try{saved=localStorage.getItem('cds-theme')||'auto';}catch(_){}
+  apply(saved);
+  document.querySelectorAll('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>{
+    apply(b.dataset.themeSet);
+    try{localStorage.setItem('cds-theme',b.dataset.themeSet);}catch(_){}
+  }));
+})();
+
+/* ───────── Onglets de niveau ───────── */
+const syncHeights=()=>{
+  const r=document.documentElement.style;
+  r.setProperty('--topbar-h',$('.topbar').offsetHeight+'px');
+  r.setProperty('--tabs-h',$('.tabs').offsetHeight+'px');
+};
+syncHeights(); window.addEventListener('resize',syncHeights);
+const Tabs=(()=>{
+  const IDS=['base','avance','profond'];
+  let current='base';
+  const panelOf=el=>el&&el.closest('.tabpanel');
+  function show(id){
+    current=id;
+    IDS.forEach(t=>{
+      $('#'+t).hidden=t!==id;
+      $('#tab-btn-'+t).setAttribute('aria-selected',String(t===id));
+      const nav=document.querySelector(`[data-nav="${t}"]`); if(nav){ if(t===id) nav.setAttribute('aria-current','page'); else nav.removeAttribute('aria-current'); }
+    });
+    $('#ctaQcm').setAttribute('href','#qcm-'+id);
+    try{localStorage.setItem('tsdb-tab',id);}catch(_){}
+  }
+  function go(hash,push){
+    const id=hash.replace(/^#/,'');
+    if(!id||id==='haut'){ window.scrollTo({top:0}); return; }
+    let target;
+    if(IDS.includes(id)){ show(id); target=document.querySelector('.tabs'); }
+    else{
+      target=document.getElementById(id); if(!target) return;
+      const p=panelOf(target); if(p) show(p.id);
+    }
+    if(push) history.replaceState(null,'','#'+id);
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  }
+  IDS.forEach(t=>$('#tab-btn-'+t).addEventListener('click',()=>{show(t);history.replaceState(null,'','#'+t);}));
+  $('.tabs').addEventListener('keydown',e=>{
+    if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return;
+    const i=IDS.indexOf(current), n=IDS[(i+(e.key==='ArrowRight'?1:IDS.length-1))%IDS.length];
+    show(n); $('#tab-btn-'+n).focus();
+  });
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#"]'); if(!a) return;
+    e.preventDefault(); go(a.getAttribute('href'),true);
+  });
+  window.addEventListener('hashchange',()=>go(location.hash,false));
+  let start='base';
+  try{start=localStorage.getItem('tsdb-tab')||'base';}catch(_){}
+  show(IDS.includes(start)?start:'base');
+  if(location.hash) go(location.hash,false);
+  return {show};
+})();
+
+
+
+const fmtN=n=>n.toLocaleString('fr-FR');
+const fmtB=b=>b>=1e12?(b/1e12).toFixed(1).replace('.',',')+' To':b>=1e9?(b/1e9).toFixed(1).replace('.',',')+' Go':b>=1e6?Math.round(b/1e6)+' Mo':Math.max(1,Math.round(b/1e3))+' Ko';
+const fmtD=s=>s<1?Math.round(s*1000)+' ms':s<120?s.toFixed(s<10?1:0).replace('.',',')+' s':s<7200?Math.round(s/60)+' min':(s/3600).toFixed(1).replace('.',',')+' h';
+
+/* ───────── Exclusion de chunks ───────── */
+(function(){
+  let iv=24, range=24, mode='param';
+  const TOTAL_H=720, ROWS_H=60000;
+  seg('ckInt',m=>{iv=+m;draw();}); seg('ckRange',m=>{range=+m;draw();}); seg('ckMode',m=>{mode=m;draw();});
+  const CODE={
+    param:`var from = DateTime.UtcNow.AddHours(-range);
+db.Measurements.Where(m => m.Time >= from)
+-- WHERE m.time >= @from`,
+    now:`db.Database.SqlQuery<...>($"... WHERE time > now() - {TimeSpan.FromHours(range)}")
+-- WHERE time > now() - @p0`,
+    func:`var day = DateTime.UtcNow.Date;
+db.Measurements.Where(m => m.Time.Date == day)
+-- WHERE date_trunc('day', m.time) = @day`,
+    none:`db.Measurements.Where(m => m.DeviceId == 42)
+-- WHERE m.device_id = 42  (aucune borne de temps)`
+  };
+  function draw(){
+    const n=Math.ceil(TOTAL_H/iv), rng=mode==='func'?24:range;
+    let open=0, html='';
+    for(let i=0;i<n;i++){
+      const start=i*iv, end=Math.min((i+1)*iv,TOTAL_H);
+      let cls='skip';
+      if(mode==='func'||mode==='none'){ cls='seq'; }
+      else if(end>TOTAL_H-rng) cls='scan';
+      if(cls!=='skip') open++;
+      html+=`<span class="ck ${cls}" title="Chunk ${i+1}">${n<=40?i+1:''}</span>`;
+    }
+    const g=$('#ckGrid'); g.className='chunks'+(n>200?' dense':n>40?' mid':''); g.innerHTML=html;
+    $('#ckCode').innerHTML=`<pre>${hl(CODE[mode].replace('range', String(range)))}</pre>`;
+    $('#ckTotal').textContent=fmtN(n); $('#ckOpen').textContent=fmtN(open); $('#ckSkip').textContent=fmtN(n-open);
+    $('#ckRows').textContent=fmtN(Math.round(ROWS_H*Math.min(iv,TOTAL_H)/1000))+' k';
+    const note=$('#ckNote'), when=mode==='now'?'au <b>démarrage de l\'exécution</b> (nœud ChunkAppend, voir l\'onglet <a href="#exclusion">Notions profondes</a>)':'à la <b>planification</b> ou au démarrage, selon le plan';
+    if(mode==='func') setMsg(note,'warn',`<p><strong>Aucune exclusion.</strong> <code>m.Time.Date</code> devient <code>date_trunc('day', m.time)</code>. La contrainte des chunks porte sur <code>time</code>, pas sur <code>date_trunc(time)</code>. Le moteur ouvre les ${n} chunks. Écrivez plutôt <code>m.Time &gt;= day &amp;&amp; m.Time &lt; day.AddDays(1)</code>.</p>`);
+    else if(mode==='none') setMsg(note,'warn',`<p><strong>Aucune borne de temps.</strong> Le moteur ouvre les ${n} chunks. Avec un index sur <code>(device_id, time)</code>, chaque chunk fait un parcours d'index court. Le coût reste proportionnel au nombre de chunks. Ajoutez toujours une borne de temps.</p>`);
+    else if(open<=3) setMsg(note,'good',`<p><strong>Exclusion efficace.</strong> ${n-open} chunks sur ${n} sont exclus ${when}. Le moteur lit ${open} chunk(s). Les index de ces chunks sont petits et souvent en mémoire.</p>`);
+    else setMsg(note,'mid',`<p><strong>${open} chunks ouverts.</strong> L'exclusion fonctionne (${when}). La plage couvre beaucoup de chunks. Pour une longue plage, lisez un continuous aggregate plutôt que les données brutes.${iv===1?' Avec des chunks de 1 h, une requête sur 30 jours touche 720 tables : la planification devient coûteuse.':''}</p>`);
+  }
+  draw();
+})();
+
+/* ───────── time_bucket ───────── */
+(function(){
+  const pts=Array.from({length:24},(_,i)=>({m:i*5,v:+(20+1.5*Math.sin(i/3.2)+(i%5===3?0.6:0)+i*0.04).toFixed(1)}));
+  const hm=m=>`${String(8+Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+  function draw(w){
+    const b={};
+    pts.forEach(p=>{const k=Math.floor(p.m/w)*w;(b[k]=b[k]||[]).push(p.v);});
+    const rows=Object.keys(b).map(Number).sort((x,y)=>x-y);
+    $('#tbOut').innerHTML=`<thead><tr><th>bucket</th><th class="num">n</th><th class="num">avg</th><th class="num">max</th><th>Mesures du bucket</th></tr></thead><tbody>`+
+      rows.map(k=>{const a=b[k];return `<tr><td><code>${hm(k)}</code></td><td class="num">${a.length}</td><td class="num">${(a.reduce((x,y)=>x+y,0)/a.length).toFixed(2).replace('.',',')}</td><td class="num">${Math.max(...a).toFixed(1).replace('.',',')}</td><td class="secondary">${a.map(v=>String(v).replace('.',',')).join(' · ')}</td></tr>`;}).join('')+'</tbody>';
+    setMsg($('#tbNote'),'mid',`<p><strong>${rows.length} lignes au lieu de 24.</strong> Chaque mesure va dans le bucket qui commence à <code>floor(time / ${w} min) × ${w} min</code>. La mesure de 08:10 va dans le bucket ${hm(Math.floor(10/w)*w)}. Un graphique d'une semaine en buckets de ${w} min donne ${fmtN(7*24*60/w)} points par capteur.</p>`);
+  }
+  seg('tbW',m=>draw(+m)); draw(15);
+})();
+
+/* ───────── Insertion en masse ───────── */
+(function(){
+  const N=[1000,10000,100000,1000000], r=$('#bkN');
+  const M=[
+    {l:'Add + SaveChanges par ligne',rate:800,cls:'bad'},
+    {l:'AddRange + 1 SaveChanges',rate:20000,cls:'cpu'},
+    {l:'AddRange, lots, AutoDetectChanges off',rate:45000,cls:'cpu'},
+    {l:'INSERT ... unnest(tableaux)',rate:150000,cls:'ok'},
+    {l:'COPY binaire',rate:500000,cls:'ok'}];
+  function draw(){
+    const n=N[+r.value]; $('#bkNO').textContent=fmtN(n);
+    const ts=M.map(m=>n/m.rate), mx=Math.max(...ts);
+    $('#bkGantt').innerHTML=M.map((m,i)=>`<div class="grow"><span class="lbl" style="width:11rem">${m.l}</span><div class="segs"><div class="sg ${m.cls}" style="width:${Math.max(1.5,ts[i]/mx*100)}%"></div><div class="sg free" style="flex:1;justify-content:flex-start;padding-left:.4rem">${fmtD(ts[i])}</div></div></div>`).join('');
+    setMsg($('#bkNote'),n>=100000?'warn':'mid',`<p><strong>${fmtN(n)} lignes.</strong> COPY est environ ${Math.round(M[4].rate/M[1].rate)} fois plus rapide qu'un seul <code>SaveChanges</code>, et ${Math.round(M[4].rate/M[0].rate)} fois plus rapide qu'un <code>SaveChanges</code> par ligne. ${n>=100000?'À ce volume, le change tracker garde aussi toutes les entités en mémoire : utilisez COPY.':'À ce volume, <code>SaveChanges</code> reste acceptable pour un traitement occasionnel.'} Débits indicatifs : mesurez sur votre infrastructure.</p>`);
+  }
+  r.addEventListener('input',draw); draw();
+})();
+
+/* ───────── Compression ───────── */
+(function(){
+  let segm='device', prof='stable'; const dev=bindRange('cpDev');
+  seg('cpSeg',m=>{segm=m;draw();}); seg('cpProf',m=>{prof=m;draw();});
+  function draw(){
+    const D=+dev.value, rows=D*1440, raw=rows*100;
+    let perRow, batches, readRows;
+    if(segm==='device'){ perRow=prof==='stable'?4:9; batches=D*Math.ceil(1440/1000); readRows=1440; }
+    else if(segm==='none'){ perRow=prof==='stable'?9:16; batches=Math.ceil(rows/1000); readRows=rows; }
+    else { perRow=60; batches=rows; readRows=rows; }
+    const comp=rows*perRow+batches*120, ratio=raw/comp;
+    $('#cpDevO').textContent=fmtN(D);
+    $('#cpBars').innerHTML=[['Avant',raw,'cpu'],['Après',comp,ratio<1?'bad':'ok']].map(([l,v,c])=>`<div class="grow"><span class="lbl">${l}</span><div class="segs"><div class="sg ${c}" style="width:${Math.max(1,v/Math.max(raw,comp)*100)}%">${fmtB(v)}</div></div></div>`).join('');
+    $('#cpRatio').textContent=ratio.toFixed(ratio<1?2:1).replace('.',',')+' ×';
+    $('#cpBatches').textContent=fmtN(batches);
+    $('#cpRead').textContent=fmtN(readRows);
+    const n=$('#cpNote');
+    if(segm==='unique') setMsg(n,'warn',`<p><strong>Chunk plus gros après compression.</strong> Chaque <code>request_id</code> est unique : chaque lot contient une seule ligne. Les tableaux n'ont rien à compresser. Les métadonnées de chaque lot s'ajoutent. Ne choisissez jamais une colonne unique en <code>segmentby</code>.</p>`);
+    else if(segm==='none') setMsg(n,'mid',`<p><strong>Gain moyen.</strong> Les lots mélangent les capteurs. Les valeurs voisines viennent de capteurs différents : les deltas sont grands. Une requête sur <code>device_id = 42</code> décompresse les ${fmtN(batches)} lots du chunk, puis filtre.</p>`);
+    else setMsg(n,'good',`<p><strong>Bon choix.</strong> Chaque capteur a ses propres lots (${Math.ceil(1440/1000)} par jour). Les valeurs d'un lot se suivent dans le temps : la compression est forte. Une requête sur <code>device_id = 42</code> décompresse seulement ${Math.ceil(1440/1000)} lots.${D<50?' Avec peu de capteurs, le gain reste bon.':''}</p>`);
+  }
+  dev.addEventListener('input',draw); draw();
+})();
+
+/* ───────── Continuous aggregate ───────── */
+(function(){
+  const H=12;
+  const lab=i=>i===0?'J-5':'H-'+(H-i);
+  // états : '' absent, raw, mat, rt, inv
+  const mk=(f)=>Array.from({length:H+1},(_,i)=>f(i));
+  stepper('ca',{
+    steps:[
+      {c:mk(()=>'raw'),mo:'true',wm:'aucun',res:'0 ligne',note:`La vue est créée avec <code>WITH NO DATA</code>. Les données brutes existent (cases en pointillés). Rien n'est matérialisé. La vue retourne 0 ligne.`},
+      {c:mk(i=>i===0?'raw':i<H?'mat':'raw'),mo:'true',wm:'H-1',res:'buckets H-11 à H-1',note:`La policy s'exécute. Elle rafraîchit la fenêtre de <code>now() - 3 days</code> à <code>now() - 1 hour</code>. Le bucket de J-5 est hors de la fenêtre : il n'est pas matérialisé. Le bucket en cours (H-0) est exclu par <code>end_offset</code>.`},
+      {c:mk(i=>i===0?'raw':i<H?'mat':'raw'),mo:'true',wm:'H-1',res:'sans le bucket en cours',tone:'',note:`Une requête lit la vue. Avec <code>materialized_only = true</code> (défaut depuis 2.13), la dernière heure est absente. Un tableau de bord « temps réel » semble en retard d'une heure.`},
+      {c:mk(i=>i===0?'raw':i<H?'mat':'rt'),mo:'false',wm:'H-1',res:'matérialisé + calcul sur les données brutes',tone:'good',note:`<code>ALTER MATERIALIZED VIEW measurements_hourly SET (timescaledb.materialized_only = false);</code> La vue fait une union : la partie matérialisée avant le watermark, plus un agrégat calculé sur les données brutes après le watermark.`},
+      {c:mk(i=>i===0?'raw':i===7?'inv':i<H?'mat':'rt'),mo:'false',wm:'H-1',res:'le bucket H-5 contient l\'ancienne valeur',tone:'warn',note:`Des mesures en retard arrivent pour H-5. TimescaleDB enregistre une invalidation pour cette plage. Le bucket matérialisé H-5 est faux jusqu'au prochain rafraîchissement : la vue ne recalcule pas la partie matérialisée.`},
+      {c:mk(i=>i===0?'raw':i<H?'mat':'rt'),mo:'false',wm:'H-1',res:'H-5 corrigé',tone:'good',note:`La policy suivante traite le journal d'invalidation. Elle recalcule seulement le bucket H-5. C'est le rafraîchissement incrémental.`},
+      {c:mk(i=>i===0?'inv':i<H?'mat':'rt'),mo:'false',wm:'H-1',res:'J-5 jamais rafraîchi',tone:'warn',note:`Des données arrivent pour J-5. J-5 est hors de <code>start_offset</code> (3 jours). La policy ne le rafraîchit pas. Lancez <code>CALL refresh_continuous_aggregate('measurements_hourly', '2026-11-05', '2026-11-06');</code> hors transaction. Cette fenêtre limitée protège aussi les agrégats quand la rétention supprime les données brutes.`}
+    ],
+    render(s){
+      const T={raw:'',mat:'✓',rt:'≈',inv:'!'};
+      $('#caCells').innerHTML=s.c.map(x=>`<span class="cell ${x}">${T[x]||''}</span>`).join('');
+      $('#caLabels').innerHTML=s.c.map((_,i)=>`<span class="cell" style="background:none;color:var(--ink-faint);font-weight:400">${lab(i)}</span>`).join('');
+      $('#caMo').innerHTML=`<code>${s.mo}</code>`; $('#caWm').textContent=s.wm; $('#caRes').textContent=s.res;
+    }
+  });
+})();
+
+/* ───────── Rétention ───────── */
+(function(){
+  const d=bindRange('rtDays');
+  function draw(){
+    const n=+d.value, rows=n*1440000;
+    const li=(k,v)=>`<li><span>${k}</span><span class="num">${v}</span></li>`;
+    $('#rtDel').innerHTML=li('Lignes supprimées',fmtN(rows))+li('Durée estimée',fmtD(rows/150000))+li('WAL écrit',fmtB(rows*90))+li('Lignes mortes à nettoyer',fmtN(rows))+li('Espace disque rendu',`après <code>VACUUM</code>, partiel`);
+    $('#rtDrop').innerHTML=li('Chunks supprimés',fmtN(n))+li('Durée estimée',fmtD(n*0.03))+li('WAL écrit','quelques Ko')+li('Lignes mortes à nettoyer','0')+li('Espace disque rendu','immédiatement');
+    setMsg($('#rtNote'),'good',`<p><strong>Différence.</strong> <code>DELETE</code> marque ${fmtN(rows)} lignes comme mortes, écrit chaque suppression dans le WAL et prend des verrous de ligne. <code>drop_chunks</code> supprime ${n} tables : c'est une opération de catalogue, comme un <code>DROP TABLE</code>. Les réplicas reçoivent aussi beaucoup moins de WAL.</p>`);
+  }
+  d.addEventListener('input',draw); draw();
+})();
+
+/* ───────── Taille des chunks ───────── */
+(function(){
+  const DEV=[100,1000,5000,10000,50000,100000,500000];
+  const dv=$('#csDev'), pe=bindRange('csPer'), it=bindRange('csInt'), ram=bindRange('csRam');
+  function draw(){
+    const D=DEV[+dv.value]; $('#csDevO').textContent=fmtN(D);
+    const rows=D*(3600/+pe.value)*+it.value, size=rows*150, budget=+ram.value*1e9*0.25, pct=size/budget;
+    const count=Math.ceil(90*24/+it.value);
+    $('#csRows').textContent=rows>=1e9?(rows/1e9).toFixed(1).replace('.',',')+' G':rows>=1e6?Math.round(rows/1e6)+' M':fmtN(Math.round(rows));
+    $('#csSize').textContent=fmtB(size); $('#csBudget').textContent=fmtB(budget); $('#csCount').textContent=fmtN(count);
+    $('#csMeter').style.width=Math.min(100,pct*100)+'%'; $('#csMeter').style.background=pct>1?'var(--red)':'var(--green)';
+    $('#csPct').textContent=Math.round(pct*100)+' %';
+    const n=$('#csNote');
+    if(pct>1) setMsg(n,'warn',`<p><strong>Chunk trop gros.</strong> Le chunk actif dépasse le budget de ${Math.round(pct*100)} %. Son index ne tient plus en cache. L'insertion ralentit. Réduisez <code>chunk_time_interval</code> à environ ${Math.max(1,Math.floor(+it.value/pct))} h.</p>`);
+    else if(count>2000) setMsg(n,'warn',`<p><strong>Trop de chunks.</strong> ${fmtN(count)} chunks sur 90 jours. Chaque requête large planifie beaucoup de tables. Augmentez l'intervalle : le chunk utilise seulement ${Math.round(pct*100)} % du budget.</p>`);
+    else if(pct<0.02 && +it.value<168) setMsg(n,'mid',`<p><strong>Chunk petit.</strong> ${Math.round(pct*100)} % du budget. Ce n'est pas une erreur. Un intervalle plus grand réduit le nombre de chunks. La valeur par défaut de 7 jours convient souvent à ce volume.</p>`);
+    else setMsg(n,'good',`<p><strong>Taille correcte.</strong> Le chunk actif et ses index utilisent ${Math.round(pct*100)} % du budget. Ils restent en mémoire pendant les insertions. ${fmtN(count)} chunks sur 90 jours restent gérables.</p>`);
+  }
+  [dv,pe,it,ram].forEach(x=>x.addEventListener('input',draw)); draw();
+})();
+
+/* ───────── Compression interne ───────── */
+(function(){
+  const T=['12:00:00','12:00:10','12:00:20','12:00:30','12:00:40','12:00:51'];
+  const S=['ok','ok','ok','ok','warn','ok'], V=['21.5','21.5','21.6','21.6','21.7','21.7'];
+  const A=(arr,hi)=>`<div class="arr">[ ${arr.map((x,i)=>hi&&hi.includes(i)?`<span class="hi">${x}</span>`:x).join(', ')} ]</div>`;
+  const C=(t,b)=>`<div class="card stack"><h3 style="margin:0;font-family:var(--mono);font-size:.85rem">${t}</h3>${b}</div>`;
+  const rowTable=`<div class="table-wrap"><table class="table dense"><thead><tr><th>time</th><th>device_id</th><th>status</th><th>value</th></tr></thead><tbody>${T.map((t,i)=>`<tr><td><code>${t}</code></td><td>d-42</td><td>${S[i]}</td><td class="num">${V[i]}</td></tr>`).join('')}</tbody></table></div>`;
+  stepper('ci',{
+    steps:[
+      {v:rowTable,note:`Format ligne : chaque mesure est une ligne de PostgreSQL. Chaque ligne a un en-tête d'environ 24 octets. <code>d-42</code> est répété 6 fois.`},
+      {v:`<div class="colstore">${C('device_id (segmentby)','<div class="arr">d-42</div><p class="muted" style="margin:0">Stockée une seule fois par lot.</p>')}${C('time',A(T))}${C('status',A(S))}${C('value',A(V))}</div>`,note:`TimescaleDB regroupe les lignes par valeur de <code>segmentby</code>. Il les trie selon <code>orderby</code>. Chaque colonne devient un tableau. Un lot contient 1 000 lignes au plus.`},
+      {v:`<div class="colstore">${C('time : secondes depuis 12:00',A(['0','10','20','30','40','51']))}${C('delta',A(['0','10','10','10','10','11']))}${C('delta-of-delta',A(['0','10','0','0','0','1'],[2,3,4]))}</div>`,note:`Horodatages : delta, puis delta du delta. Avec un intervalle régulier, presque tout vaut 0. Simple-8b et RLE stockent une suite de 0 en quelques bits.`},
+      {v:`<div class="colstore">${C('value',A(V))}${C('XOR avec la valeur précédente',A(['21.5 (complet)','0','≠0 (peu de bits)','0','≠0 (peu de bits)','0'],[1,3,5]))}</div>`,note:`Flottants : algorithme Gorilla. Chaque valeur est comparée à la précédente avec un XOR. Une valeur identique coûte 1 bit. Une valeur proche partage le signe, l'exposant et les premiers bits : seuls les bits différents sont stockés.`},
+      {v:`<div class="colstore">${C('dictionnaire',A(['0 → ok','1 → warn']))}${C('indices',A(['0','0','0','0','1','0']))}</div>`,note:`Texte de faible cardinalité : dictionnaire. Chaque valeur distincte est stockée une fois. La colonne devient une suite d'indices, compressée ensuite.`},
+      {v:`<div class="table-wrap"><table class="table dense"><thead><tr><th>device_id</th><th>_ts_meta_count</th><th>_ts_meta_min_1</th><th>_ts_meta_max_1</th><th>time</th><th>status</th><th>value</th></tr></thead><tbody><tr><td>d-42</td><td class="num">6</td><td><code>12:00:00</code></td><td><code>12:00:51</code></td><td><i>binaire</i></td><td><i>binaire</i></td><td><i>binaire</i></td></tr></tbody></table></div>`,tone:'good',note:`Résultat : une ligne dans la table compressée interne. Les colonnes <code>_ts_meta_min</code> et <code>_ts_meta_max</code> gardent le min et le max de <code>orderby</code>. Une requête sur 13:00–14:00 saute ce lot sans le décompresser. Un filtre sur <code>device_id</code> utilise un index sur la colonne <code>segmentby</code>.`}
+    ],
+    render(s){ $('#ciView').innerHTML=s.v; }
+  });
+})();
+
+
+/* ───────── Mauvaises pratiques ───────── */
+const ANTI=[
+  {t:`Clé primaire Id auto-incrémentée sur la table de mesures`,why:`La clé unique doit contenir la colonne de partition. create_hypertable échoue. Un Id n'apporte rien à une mesure : la mesure est identifiée par sa série et son instant.`,bad:`public class Measurement
+{
+    public int Id { get; set; }          // PRIMARY KEY (id)
+    public DateTime Time { get; set; }
+}`,good:`e.HasKey(m => new { m.DeviceId, m.Time });
+// PRIMARY KEY (device_id, time)`},
+  {t:`Fonction appliquée à la colonne de temps dans le WHERE`,why:`m.Time.Date devient date_trunc('day', time). La contrainte des chunks porte sur time. Le moteur ne peut pas exclure de chunk et ouvre toute l'hypertable.`,bad:`.Where(m => m.Time.Date == day)`,good:`var next = day.AddDays(1);
+.Where(m => m.Time >= day && m.Time < next)`},
+  {t:`DateTime local ou sans Kind écrit dans une colonne timestamptz`,why:`Npgsql 6 et plus refuse Kind = Local et Kind = Unspecified pour timestamptz. Le commutateur legacy masque le problème et donne des décalages d'une heure au changement d'heure.`,bad:`AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+m.Time = DateTime.Now;`,good:`m.Time = DateTime.UtcNow;
+// conversion en UTC à l'entrée du système (API, fichier, message)`},
+  {t:`SaveChanges pour ingérer des millions de lignes`,why:`Le change tracker garde chaque entité en mémoire. Chaque ligne est un INSERT avec ses paramètres. Le débit reste faible et la mémoire grandit.`,bad:`foreach (var m in readings)
+{
+    db.Measurements.Add(m);
+    await db.SaveChangesAsync(ct);
+}`,good:`await using var w = await conn.BeginBinaryImportAsync(
+    "COPY measurements (time, device_id, value) FROM STDIN (FORMAT BINARY)", ct);
+// StartRowAsync, WriteAsync..., puis CompleteAsync`},
+  {t:`DELETE pour la rétention`,why:`ExecuteDeleteAsync supprime ligne par ligne : WAL important, lignes mortes, VACUUM. drop_chunks supprime des tables entières presque instantanément.`,bad:`await db.Measurements
+    .Where(m => m.Time < limit)
+    .ExecuteDeleteAsync(ct);`,good:`SELECT add_retention_policy('measurements', INTERVAL '90 days');`},
+  {t:`Requête sans borne de temps`,why:`Sans filtre sur time, le moteur ouvre tous les chunks. Le coût augmente avec l'historique, même avec un index sur device_id.`,bad:`db.Measurements.Where(m => m.DeviceId == id)
+  .OrderByDescending(m => m.Time).First();`,good:`db.Measurements.Where(m => m.DeviceId == id
+      && m.Time > DateTime.UtcNow.AddDays(-1))
+  .OrderByDescending(m => m.Time).First();`},
+  {t:`EnsureCreated dans les tests ou au démarrage`,why:`EnsureCreated crée les tables du modèle, sans exécuter les migrations. Le SQL de create_hypertable, de la compression et des vues n'est jamais exécuté. Les tests passent sur une table PostgreSQL normale.`,bad:`await db.Database.EnsureCreatedAsync();`,good:`await db.Database.MigrateAsync();`},
+  {t:`Continuous aggregate créé dans une migration transactionnelle`,why:`EF Core exécute la migration dans une transaction. CREATE MATERIALIZED VIEW ... WITH (timescaledb.continuous) est refusé dans une transaction : la migration échoue.`,bad:`mb.Sql(createHourlyView);`,good:`mb.Sql(createHourlyView, suppressTransaction: true);`},
+  {t:`segmentby sur une colonne unique`,why:`Chaque valeur forme son propre lot d'une ligne. Rien n'est compressé et les métadonnées de lot s'ajoutent. Le chunk compressé est plus gros que l'original.`,bad:`ALTER TABLE logs SET (timescaledb.compress,
+    timescaledb.compress_segmentby = 'request_id');`,good:`ALTER TABLE logs SET (timescaledb.compress,
+    timescaledb.compress_segmentby = 'service_name',
+    timescaledb.compress_orderby = 'time DESC');`},
+  {t:`Lire toutes les mesures brutes pour tracer un graphique`,why:`Un graphique d'un mois à une mesure par seconde demande 2,6 millions de points par série. Le réseau, EF Core et le navigateur saturent.`,bad:`var all = await db.Measurements
+    .Where(m => m.DeviceId == id && m.Time >= monthStart)
+    .ToListAsync(ct);`,good:`var stats = await db.Set<HourlyStat>()
+    .Where(s => s.DeviceId == id && s.Bucket >= monthStart)
+    .ToListAsync(ct);  // 720 points`}
+];
+$('#antiList').innerHTML=ANTI.map((a,i)=>`<details class="disclosure"><summary>${i+1}. ${esc(a.t)}</summary><div class="disclosure-body stack" style="padding-top:.8rem"><p style="margin:0">${esc(a.why)}</p><div class="tiles"><div class="tile red"><h3>À éviter</h3><pre>${hl(a.bad)}</pre></div><div class="tile green"><h3>À faire</h3><pre>${hl(a.good)}</pre></div></div></div></details>`).join('');
+
+
+/* ───────── QCM (un par niveau : b = base, a = avancé, p = profond) ───────── */
+const QCM=[
+  {lv:'b',th:'Bases',q:`Qu'est-ce que TimescaleDB ?`,o:[`Une extension de PostgreSQL pour les séries temporelles`,`Un format de fichier en colonnes`,`Une base de données NoSQL indépendante`,`Un ORM pour .NET`],a:0,e:`TimescaleDB s'installe dans PostgreSQL avec CREATE EXTENSION. Vous gardez SQL, les transactions, Npgsql et EF Core.`},
+  {lv:'b',th:'Hypertable',q:`Qu'est-ce qu'un chunk ?`,o:[`Un lot de lignes envoyé par Npgsql`,`Une table PostgreSQL qui contient les lignes d'un intervalle de temps de l'hypertable`,`Un index sur la colonne de temps`,`Une page mémoire de 8 Ko`],a:1,e:`L'hypertable est une table logique. Les lignes sont dans des chunks, de vraies tables du schéma _timescaledb_internal, avec une contrainte CHECK sur leur plage de temps.`},
+  {lv:'b',th:'Hypertable',q:`Quelle est la valeur par défaut de chunk_time_interval ?`,o:[`1 heure`,`1 jour`,`7 jours`,`30 jours`],a:2,e:`La valeur par défaut est 7 jours. Ajustez-la selon le volume : le chunk actif et ses index doivent tenir dans environ 25 % de la mémoire.`},
+  {lv:'b',th:'Hypertable',q:`Une table a PRIMARY KEY (id). Que fait create_hypertable sur la colonne time ?`,o:[`Il réussit, mais sans exclusion de chunks`,`Il réussit et ignore la clé`,`Il échoue : une contrainte unique doit contenir la colonne de partition`,`Il remplace la clé par (id, time)`],a:2,e:`Chaque chunk vérifie l'unicité localement. Une clé sans la colonne de temps demanderait une vérification sur tous les chunks. TimescaleDB la refuse.`},
+  {lv:'b',th:'Requêtes',q:`Quel filtre LINQ permet l'exclusion de chunks pour « les mesures d'aujourd'hui » ?`,o:[`m.Time >= today && m.Time < today.AddDays(1)`,`m.Time.ToString("yyyy-MM-dd") == s`,`EF.Functions.DateDiffDay(m.Time, today) == 0`,`m.Time.Date == today`],a:0,e:`Le filtre doit porter sur la colonne brute. m.Time.Date devient date_trunc('day', time) : le moteur ne peut plus comparer avec les contraintes des chunks.`},
+  {lv:'b',th:'Requêtes',q:`Que fait time_bucket(INTERVAL '15 minutes', time) ?`,o:[`Il filtre les lignes des 15 dernières minutes`,`Il crée des chunks de 15 minutes`,`Il calcule une moyenne glissante sur 15 minutes`,`Il arrondit chaque horodatage au début de son intervalle de 15 minutes`],a:3,e:`time_bucket est un date_trunc avec une largeur libre. Il sert dans le SELECT et le GROUP BY pour agréger par intervalle.`},
+  {lv:'b',th:'EF Core',q:`Comment créer l'hypertable avec EF Core ?`,o:[`Avec migrationBuilder.Sql("SELECT create_hypertable(...)") dans une migration`,`Avec HasPartitionKey dans OnModelCreating`,`Avec l'attribut [Hypertable] sur l'entité`,`EF Core la crée automatiquement avec Npgsql`],a:0,e:`Le provider Npgsql ne connaît pas les hypertables. EF crée la table. Le SQL ajouté à la migration la transforme en hypertable.`},
+  {lv:'b',th:'EF Core',q:`Une entité est configurée avec HasNoKey(). Que se passe-t-il avec db.Add(entité) puis SaveChanges ?`,o:[`L'insertion fonctionne`,`EF lève une exception : une entité sans clé ne peut pas être insérée`,`EF génère une clé technique`,`EF insère, mais ne peut pas relire`],a:1,e:`Une entité sans clé est en lecture seule pour EF Core. Pour insérer, utilisez une clé composite (device_id, time), du SQL ou COPY.`},
+  {lv:'b',th:'Dates',q:`Avec Npgsql 6 et plus, que se passe-t-il à l'écriture d'un DateTime avec Kind = Local dans une colonne timestamptz ?`,o:[`Npgsql lève une ArgumentException`,`PostgreSQL applique le fuseau du serveur`,`Npgsql le convertit en UTC`,`Npgsql l'écrit sans conversion`],a:0,e:`Npgsql 6 refuse Kind = Local et Kind = Unspecified pour timestamptz. Convertissez en UTC à l'entrée du système.`},
+  {lv:'b',th:'Dates',q:`Quel type de colonne choisir pour la colonne de temps ?`,o:[`timestamp`,`timestamptz`,`text au format ISO 8601`,`bigint en millisecondes`],a:1,e:`timestamptz stocke un instant absolu en UTC. timestamp sans fuseau donne des trous et des doublons au changement d'heure. EF Core mappe timestamptz vers DateTime UTC.`},
+  {lv:'b',th:'Ingestion',q:`Quelle méthode donne le meilleur débit pour insérer un million de mesures depuis .NET ?`,o:[`ExecuteSqlRawAsync avec un INSERT par ligne`,`COPY binaire avec NpgsqlBinaryImporter`,`Add puis SaveChangesAsync pour chaque ligne`,`AddRange puis un seul SaveChangesAsync`],a:1,e:`COPY envoie les lignes en flux binaire, sans analyse SQL par ligne. Le change tracker d'EF Core n'est pas utilisé. Le débit est souvent dix fois supérieur ou plus.`},
+  {lv:'b',th:'Ingestion',q:`Un import COPY contient un doublon de clé primaire. Que se passe-t-il ?`,o:[`COPY ne vérifie pas les contraintes`,`La ligne en double est ignorée`,`Tout l'import échoue`,`La ligne en double remplace l'ancienne`],a:2,e:`COPY ne gère pas ON CONFLICT. Pour un upsert, copiez dans une table temporaire, puis exécutez INSERT ... SELECT ... ON CONFLICT DO NOTHING.`},
+  {lv:'b',th:'Ingestion',q:`Que se passe-t-il si le code n'appelle pas CompleteAsync sur NpgsqlBinaryImporter ?`,o:[`Seules les lignes complètes sont gardées`,`Npgsql relance l'import`,`Les lignes sont validées au Dispose`,`L'import est annulé au Dispose`],a:3,e:`Sans CompleteAsync, le Dispose annule l'opération COPY. Aucune ligne n'est écrite.`},
+  {lv:'b',th:'Requêtes',q:`Pourquoi ajouter toujours une borne de temps, même avec un filtre sur device_id ?`,o:[`Pour activer la compression`,`Pour éviter un deadlock`,`Pour respecter la syntaxe SQL`,`Sans borne, le moteur ouvre tous les chunks`],a:3,e:`L'exclusion de chunks utilise la colonne de temps. Sans borne, chaque chunk est ouvert. Le coût grandit avec l'historique.`},
+  {lv:'a',th:'Compression',q:`Quelle colonne choisir en segmentby pour des mesures de capteurs ?`,o:[`device_id`,`un identifiant unique de mesure`,`time`,`value`],a:0,e:`device_id est filtré souvent et a assez de lignes par valeur pour remplir des lots. time est la colonne orderby. Une colonne unique donne un lot par ligne.`},
+  {lv:'a',th:'Compression',q:`Combien de lignes au plus contient un lot compressé ?`,o:[`100`,`1 000`,`8 192`,`Tout le chunk`],a:1,e:`TimescaleDB regroupe au plus 1 000 lignes par lot, pour une valeur de segmentby. Chaque lot devient une ligne avec un tableau compressé par colonne.`},
+  {lv:'a',th:'Compression',q:`À quoi servent les métadonnées min/max de la colonne orderby ?`,o:[`À trier le résultat`,`À sauter les lots hors de la plage de la requête sans les décompresser`,`À calculer avg() sans décompresser`,`À vérifier l'unicité`],a:1,e:`Chaque lot garde le min et le max des colonnes orderby. Un filtre sur le temps élimine les lots hors plage avant décompression.`},
+  {lv:'a',th:'Continuous aggregates',q:`Depuis TimescaleDB 2.13, quelle est la valeur par défaut de materialized_only pour un nouveau continuous aggregate ?`,o:[`true : la vue retourne seulement les buckets matérialisés`,`false : la vue ajoute les données récentes`,`La valeur dépend de la policy`,`Ce réglage n'existe plus`],a:0,e:`Depuis 2.13, real-time aggregation est désactivée par défaut. Pour inclure les données après le watermark, réglez materialized_only = false.`},
+  {lv:'a',th:'Continuous aggregates',q:`Des données en retard arrivent dans la fenêtre de la policy. Que fait le rafraîchissement suivant ?`,o:[`Il recalcule toute la vue`,`Il ignore ces données`,`Il recalcule seulement les buckets invalidés`,`Il supprime les buckets concernés`],a:2,e:`TimescaleDB enregistre les plages modifiées dans un journal d'invalidation. Le rafraîchissement recalcule seulement ces buckets.`},
+  {lv:'a',th:'Continuous aggregates',q:`Une migration EF contient CREATE MATERIALIZED VIEW ... WITH (timescaledb.continuous). Elle échoue avec « cannot run inside a transaction block ». Quelle correction ?`,o:[`Passer suppressTransaction: true à migrationBuilder.Sql`,`Utiliser EnsureCreated`,`Créer la vue avec HasView dans le modèle`,`Ajouter BEGIN; et COMMIT; dans le SQL`],a:0,e:`EF exécute la migration dans une transaction. suppressTransaction: true exécute cette commande hors transaction.`},
+  {lv:'a',th:'EF Core',q:`Comment mapper un continuous aggregate dans EF Core ?`,o:[`Ce n'est pas possible`,`Entité avec HasNoKey() et ToView("nom_de_la_vue")`,`Entité avec HasKey et ToTable`,`Owned type de Measurement`],a:1,e:`La vue est en lecture seule. HasNoKey désactive le suivi. ToView indique à EF que l'objet existe déjà : EF ne génère pas de CREATE pour lui.`},
+  {lv:'a',th:'Rétention',q:`Pourquoi préférer drop_chunks à ExecuteDeleteAsync pour la rétention ?`,o:[`ExecuteDeleteAsync ne fonctionne pas sur une hypertable`,`drop_chunks supprime ligne par ligne, mais en parallèle`,`drop_chunks garde une sauvegarde`,`drop_chunks supprime des tables entières : peu de WAL, pas de lignes mortes, pas de VACUUM`],a:3,e:`DELETE marque chaque ligne comme morte et écrit chaque suppression dans le WAL. drop_chunks est une opération de catalogue, comme un DROP TABLE.`},
+  {lv:'a',th:'Rétention',q:`Chunks de 7 jours. drop_chunks(older_than => INTERVAL '90 days'). Quelles données restent ?`,o:[`Moins de 90 jours`,`Toutes : la commande échoue`,`Exactement 90 jours`,`Jusqu'à environ 97 jours : un chunk est supprimé seulement s'il est entièrement plus ancien que la limite`],a:3,e:`drop_chunks supprime seulement les chunks dont la fin est avant la limite. Le chunk qui chevauche la limite reste.`},
+  {lv:'a',th:'EF Core',q:`Comment utiliser time_bucket dans une requête LINQ ?`,o:[`Ce n'est pas possible en LINQ`,`m.Time.Round(TimeSpan)`,`EF.Functions.TimeBucket, fourni par Npgsql`,`Une méthode statique mappée avec HasDbFunction(...).HasName("time_bucket").IsBuiltIn()`],a:3,e:`Le provider ne traduit pas time_bucket. Une fonction mappée permet de l'utiliser dans GroupBy. Autre solution : Database.SqlQuery<T> avec du SQL.`},
+  {lv:'a',th:'Requêtes',q:`Quelle forme est la plus rapide pour la dernière mesure de 10 000 capteurs ?`,o:[`GroupBy(DeviceId).Select(g => g.OrderByDescending(x => x.Time).First()) sans filtre`,`SELECT device_id, last(value, time) sans filtre de temps`,`CROSS JOIN LATERAL ... ORDER BY time DESC LIMIT 1, avec une borne de temps`,`SELECT * puis tri en mémoire en C#`],a:2,e:`LATERAL fait un parcours d'index court par capteur, sur l'index (device_id, time DESC). Les autres formes lisent toutes les lignes de la plage.`},
+  {lv:'a',th:'Requêtes',q:`Que retourne avg(value) pour un bucket vide avec time_bucket_gapfill ?`,o:[`NULL`,`La valeur du bucket précédent`,`Le bucket est absent`,`0`],a:0,e:`gapfill crée la ligne du bucket vide. L'agrégat vaut NULL. locf() répète la dernière valeur. interpolate() fait une interpolation linéaire. Côté .NET, utilisez double?.`},
+  {lv:'a',th:'EF Core',q:`Un export lit un mois de mesures brutes. Quelle combinaison limite la mémoire ?`,o:[`ToListAsync()`,`AsNoTracking(), projection Select et AsAsyncEnumerable()`,`Include() de toutes les relations`,`Skip/Take par pages de 1 000`],a:1,e:`AsAsyncEnumerable lit en flux. AsNoTracking supprime le change tracker. La projection réduit les colonnes. Skip relit les lignes ignorées : préférez la pagination par clé.`},
+  {lv:'a',th:'Compression',q:`Quel réglage limite la décompression due aux données en retard ?`,o:[`Désactiver les index`,`Réduire chunk_time_interval`,`Régler le délai de compression au-delà du retard maximal des données`,`Supprimer segmentby`],a:2,e:`Un INSERT ou UPDATE dans un chunk compressé peut décompresser des lots. Compressez seulement les chunks qui ne reçoivent plus de données.`},
+  {lv:'p',th:'Chunks',q:`Quelle règle sert à choisir chunk_time_interval ?`,o:[`Un chunk par capteur`,`Un chunk par jour, toujours`,`Le chunk actif, index compris, tient dans environ 25 % de la mémoire`,`Le plus petit intervalle possible`],a:2,e:`Les insertions modifient l'index du chunk récent. Cet index doit rester en cache. Des chunks trop petits multiplient les tables et le coût de planification.`},
+  {lv:'p',th:'Chunks',q:`Que fait set_chunk_time_interval sur une hypertable existante ?`,o:[`Il s'applique seulement aux prochains chunks créés`,`Il échoue si des chunks existent`,`Il compresse les anciens chunks`,`Il redécoupe tous les chunks existants`],a:0,e:`Les chunks existants gardent leur plage. Le nouvel intervalle s'applique aux chunks créés ensuite.`},
+  {lv:'p',th:'Exclusion',q:`Filtre time > now() - INTERVAL '1 day'. Quand se fait l'exclusion de chunks ?`,o:[`Après la lecture de chaque chunk`,`Seulement si la requête est préparée`,`Jamais : now() n'est pas une constante`,`Au démarrage de l'exécution, par le nœud ChunkAppend`],a:3,e:`now() est une fonction stable : sa valeur est connue au démarrage de l'exécution. EXPLAIN ANALYZE affiche « Chunks excluded during startup ».`},
+  {lv:'p',th:'Exclusion',q:`La borne de temps vient d'une jointure LATERAL. Quel type d'exclusion s'applique ?`,o:[`À l'exécution (runtime)`,`Aucune`,`À la planification`,`Au démarrage`],a:0,e:`La valeur change pour chaque ligne externe. ChunkAppend exclut les chunks à l'exécution. EXPLAIN ANALYZE affiche « Chunks excluded during runtime ».`},
+  {lv:'p',th:'Exclusion',q:`Une requête EF préparée s'exécute pour la 6e fois. PostgreSQL choisit un plan générique. Quel effet sur l'exclusion ?`,o:[`L'exclusion disparaît`,`L'exclusion passe de la planification au démarrage de l'exécution`,`La requête échoue`,`Aucun effet`],a:1,e:`Le plan générique ne connaît pas la valeur du paramètre. ChunkAppend exclut les chunks au démarrage. Le résultat est correct. Le plan liste tous les chunks.`},
+  {lv:'p',th:'Compression',q:`Quel algorithme compresse une colonne d'horodatages réguliers ?`,o:[`Delta-of-delta, puis Simple-8b avec RLE`,`gzip ligne par ligne`,`Gorilla XOR`,`Dictionnaire`],a:0,e:`Avec un intervalle régulier, le delta du delta vaut presque toujours 0. Simple-8b et RLE stockent ces suites en très peu de bits.`},
+  {lv:'p',th:'Compression',q:`Quel algorithme compresse une colonne double precision de valeurs proches ?`,o:[`Aucun : les flottants ne sont pas compressés`,`Gorilla : XOR avec la valeur précédente`,`Delta-of-delta`,`Dictionnaire`],a:1,e:`Une valeur identique coûte 1 bit. Une valeur proche partage le signe, l'exposant et les premiers bits de la mantisse. Seuls les bits différents sont stockés.`},
+  {lv:'p',th:'Compression',q:`Un UPDATE vise des lignes d'un chunk compressé sans filtre sur la colonne segmentby. Quel est le risque ?`,o:[`L'UPDATE est refusé dans toutes les versions`,`Beaucoup de lots, voire tout le chunk, sont décompressés`,`Les lignes sont modifiées sans décompression`,`La compression est désactivée sur l'hypertable`],a:1,e:`TimescaleDB décompresse les lots qui peuvent contenir les lignes. Un filtre sur segmentby et sur le temps limite les lots touchés.`},
+  {lv:'p',th:'Index',q:`Quand le partitionnement spatial (add_dimension by_hash) est-il utile ?`,o:[`Pour activer la compression`,`Pour remplacer la clé primaire`,`Toujours, pour accélérer les filtres sur device_id`,`Surtout pour répartir les données sur plusieurs tablespaces ou disques`],a:3,e:`La documentation le déconseille dans la plupart des cas. Pour accélérer un filtre sur device_id, un index ou segmentby suffit.`},
+  {lv:'p',th:'Npgsql',q:`Quel est le nombre maximal de connexions par défaut du pool Npgsql pour une chaîne de connexion ?`,o:[`10`,`50`,`100`,`Illimité`],a:2,e:`Maximum Pool Size vaut 100 par défaut. Plusieurs instances multiplient ce nombre. Le total peut dépasser max_connections de PostgreSQL.`},
+  {lv:'p',th:'Npgsql',q:`Quelle limite empêche un INSERT ... VALUES de 30 000 lignes de 3 colonnes paramétrées ?`,o:[`Aucune limite`,`La taille maximale d'une requête de 1 Mo`,`La limite de 65 535 paramètres par requête du protocole PostgreSQL`,`La taille du chunk`],a:2,e:`30 000 × 3 = 90 000 paramètres. Le protocole limite à 65 535. Utilisez unnest avec des paramètres tableaux, ou COPY.`},
+  {lv:'p',th:'Tests',q:`Pourquoi tester avec Testcontainers et l'image timescale/timescaledb plutôt qu'avec le provider InMemory ?`,o:[`InMemory et SQLite ne connaissent ni les hypertables, ni time_bucket, ni le mapping timestamptz`,`Testcontainers évite d'écrire des migrations`,`Les tests InMemory ne sont pas async`,`Le provider InMemory est plus lent`],a:0,e:`Les comportements à tester sont dans PostgreSQL et TimescaleDB. Fixez la version de l'image, identique à la production.`},
+  {lv:'p',th:'Licences',q:`Un service PostgreSQL managé propose seulement l'édition Apache de TimescaleDB. Quelle fonction manque ?`,o:[`Les hypertables`,`time_bucket`,`drop_chunks`,`La compression et les continuous aggregates`],a:3,e:`Compression, continuous aggregates, policies et gapfill sont dans l'édition Community (licence TSL). Vérifiez avec SHOW timescaledb.license.`}
+];
+document.querySelectorAll('.qroot').forEach(root=>{
+  const lv=root.dataset.level, key={b:'base',a:'avance',p:'profond'}[lv];
+  const items=QCM.filter(q=>q.lv===lv);
+  let answered=0, good=0, theme='';
+  root.innerHTML=`<div class="panel qhead"><div class="row">
+      <span class="pill count" data-r="score">0 / 0</span><span class="muted" data-r="total"></span>
+      <div class="meter" aria-hidden="true"><i data-r="prog"></i></div>
+      <div class="field" style="min-width:12rem"><label for="qt-${key}" class="muted" style="font-weight:400">Thème</label><select class="select" id="qt-${key}" data-r="sel"><option value="">Tous les thèmes</option>${[...new Set(items.map(q=>q.th))].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <button class="btn ghost sm" type="button" data-r="reset">Recommencer</button></div></div>
+    <div class="stack" data-r="list"></div><div class="msg" data-r="final" hidden></div>`;
+  const R=n=>root.querySelector(`[data-r="${n}"]`);
+  const list=()=>items.filter(q=>!theme||q.th===theme);
+  function render(){
+    answered=0; good=0;
+    R('list').innerHTML=list().map((q,n)=>`<div class="panel stack q" data-i="${QCM.indexOf(q)}">
+      <div class="row"><span class="pill">${q.th}</span><span class="muted num" style="font-size:.85rem">Question ${n+1}</span></div>
+      <h3 style="margin:0">${esc(q.q)}</h3>
+      <div class="stack" style="gap:.4rem">${q.o.map((o,j)=>`<button class="choice" type="button" data-j="${j}">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join('')}</div>
+      <p class="msg info expl"></p></div>`).join('');
+    R('list').querySelectorAll('.q').forEach(el=>{
+      el.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+        if(el.classList.contains('answered')) return;
+        const q=QCM[+el.dataset.i], j=+b.dataset.j;
+        el.classList.add('answered'); answered++;
+        el.querySelectorAll('.choice')[q.a].classList.add('right');
+        const ok=j===q.a; if(ok) good++; else b.classList.add('wrong');
+        const ex=el.querySelector('.expl'); ex.className='msg expl '+(ok?'success':'warning');
+        ex.innerHTML=`<strong>${ok?'Bonne réponse.':'Réponse incorrecte.'}</strong> ${esc(q.e)}`;
+        score();
+      });
+    });
+    score();
+  }
+  function score(){
+    const total=list().length;
+    R('score').textContent=`${good} / ${answered}`;
+    R('total').textContent=`${answered} réponse(s) sur ${total} question(s)`;
+    R('prog').style.width=(answered/total*100)+'%';
+    const f=R('final');
+    if(answered===total){
+      const p=good/total; f.hidden=false;
+      f.className='msg '+(p>=.8?'success':p<.5?'warning':'info');
+      f.innerHTML=`<p><strong>Score final : ${good} sur ${total}.</strong> `+(p>=.8?(lv==='p'?`Ce résultat est solide. Vous maîtrisez les mécanismes internes.`:`Ce résultat est solide. Passez au niveau suivant.`):p>=.5?`La base est correcte. Lisez les explications des erreurs. Refaites les simulateurs de ces thèmes.`:`Refaites les sections de cet onglet. Ensuite, recommencez le QCM.`)+'</p>';
+    } else f.hidden=true;
+  }
+  R('sel').addEventListener('change',e=>{theme=e.target.value;render();});
+  R('reset').onclick=()=>{render(); root.scrollIntoView();};
+  render();
+});
+</script>
+</body>
+</html>

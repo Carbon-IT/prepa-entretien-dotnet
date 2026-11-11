@@ -54,6 +54,16 @@ Une quatrième page, `rt-modernisation.html`, prépare un consultant à un RT cl
 
 Sa progression est enregistrée séparément de celle des autres pages.
 
+### Pages « TimescaleDB et EF Core », « RabbitMQ et .NET », « Cache et Redis .NET »
+
+Trois pages suivent le format de `async-dotnet.html` : trois niveaux (notions de base, avancées, profondes), des simulateurs, des exemples de code C#, une liste de mauvaises pratiques et un QCM par niveau. Chaque sujet est traité sous l'angle .NET. Elles ne sont pas liées depuis `index.html` : on les transmet par leur URL.
+
+| Page | Sujet |
+|---|---|
+| `timescaledb-dotnet.html` | Hypertables, chunks, `time_bucket`, compression, continuous aggregates, rétention, et leur usage avec EF Core et Npgsql (migrations, mapping, insertion en masse) |
+| `rabbitmq-dotnet.html` | Modèle AMQP (exchanges, bindings, queues), `RabbitMQ.Client` 7, ack et prefetch, retry et DLQ, Outbox, MassTransit, quorum queues |
+| `cache-redis-dotnet.html` | Cache-aside, `IMemoryCache`, `IDistributedCache`, `HybridCache`, stampede, invalidation, StackExchange.Redis, fonctionnement interne de Redis |
+
 ## Fonctionnalités
 
 - Recherche plein texte (insensible aux accents)
@@ -69,6 +79,9 @@ Sa progression est enregistrée séparément de celle des autres pages.
 ├── questions-ouvertes.html  # Questions complémentaires, non liée depuis index.html
 ├── async-dotnet.html        # Formation async et threads .NET, non liée depuis index.html
 ├── rt-modernisation.html     # Prépa RT client modernisation, non liée depuis index.html
+├── timescaledb-dotnet.html   # Formation TimescaleDB et EF Core, non liée depuis index.html
+├── rabbitmq-dotnet.html      # Formation RabbitMQ et .NET, non liée depuis index.html
+├── cache-redis-dotnet.html   # Formation cache et Redis .NET, non liée depuis index.html
 └── README.md
 ```
 

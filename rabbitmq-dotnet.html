@@ -1,0 +1,1997 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RabbitMQ et .NET</title>
+<meta name="description" content="Formation interactive sur RabbitMQ en .NET (RabbitMQ.Client 7, MassTransit), en trois niveaux, avec simulateurs et QCM.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap">
+
+<!--
+  Design : Carbon Design System v1.0 (design-system/carbon-design-system.html).
+  - <style id="carbon-ds"> : copie du bloc du design system (composants utilisés par cette page).
+  - <style id="page">      : adaptations pour les composants absents du design system.
+                              Elles utilisent seulement les tokens du design system.
+  Rédaction : règles ASD-STE100 appliquées au français.
+-->
+
+<style id="carbon-ds">
+:root {
+  --ground: #f3f4f4; --surface: #fdfdfd; --surface-sunk: #ebebeb;
+  --ink: #282b2a; --ink-soft: #666867; --ink-faint: #9b9c9c;
+  --rule: #dbdbdb; --rule-soft: #ececec; --control-edge: #8a8c8b;
+  --red: #e53f49; --green: #00bb7e; --blue: #5b98d2;
+  --red-ink: #bd2f39; --green-ink: #007049; --blue-ink: #386a9b;
+  --red-wash: #fbeaeb; --green-wash: #e4f6f0; --blue-wash: #edf3f9;
+  --action: #d4353f; --on-action: #fdfdfd;
+  --band: #282b2a; --band-ink: #fdfdfd; --band-soft: #b9bab9; --band-rule: #535554; --band-red: #ff6b73;
+  --shadow: 0 1px 2px rgba(40, 43, 42, .07), 0 10px 28px -18px rgba(40, 43, 42, .28);
+  --shadow-overlay: 0 2px 6px rgba(40, 43, 42, .12), 0 24px 60px -24px rgba(40, 43, 42, .45);
+  --scrim: rgba(40, 43, 42, .45);
+  --font: "Calibri", "Carlito", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r-xs: 3px; --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; --r-2xl: 14px; --r-pill: 999px;
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.25rem; --s-6: 1.5rem; --s-7: 2.25rem; --s-8: 3rem;
+  --w-content: 56rem; --w-wide: 76rem;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+    --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+    --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+    --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+    --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+    --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+    --action: #d4353f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+    --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+    --scrim: rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #282b2a; --surface: #353837; --surface-sunk: #3f4241;
+  --ink: #fdfdfd; --ink-soft: #b5b6b5; --ink-faint: #8e908f;
+  --rule: #4e5150; --rule-soft: #3d403f; --control-edge: #858887;
+  --red: #e95d66; --green: #23c490; --blue: #6ea4d7;
+  --red-ink: #f59aa0; --green-ink: #23c490; --blue-ink: #8dbae3;
+  --red-wash: #522f31; --green-wash: #20483b; --blue-wash: #32414c;
+  --action: #d4353f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -20px rgba(0, 0, 0, .8);
+  --shadow-overlay: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 64px -24px rgba(0, 0, 0, .9);
+  --scrim: rgba(0, 0, 0, .6);
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+h1 { font-weight: 700; font-size: clamp(2.1rem, 5.4vw, 3rem); letter-spacing: -.018em; line-height: 1.06; text-wrap: balance; margin: 0; }
+h2 { font-weight: 700; font-size: 1.35rem; letter-spacing: -.008em; line-height: 1.25; margin: 0 0 1rem; }
+h3 { font-weight: 700; font-size: 1rem; line-height: 1.35; margin: 0 0 .3rem; }
+a { color: var(--green-ink); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+code, kbd { font-family: var(--mono); font-size: .85em; background: var(--surface-sunk); padding: .1em .34em; border-radius: var(--r-xs); overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.eyebrow { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin: 0; }
+.lede { max-width: 40rem; margin: 0; font-size: 1.075rem; }
+.muted { color: var(--ink-soft); }
+.hexmark { display: block; fill: currentColor; }
+.accent-rule { display: flex; height: 3px; width: 100%; border-radius: 2px; overflow: hidden; }
+.accent-rule i { display: block; height: 100%; }
+.accent-rule i:nth-child(1) { background: var(--red); flex: 0 0 3.5rem; }
+.accent-rule i:nth-child(2) { background: var(--green); flex: 0 0 1.5rem; }
+.accent-rule i:nth-child(3) { background: var(--blue); flex: 0 0 .75rem; }
+.accent-rule i:nth-child(4) { background: var(--band-rule); flex: 1 1 0; }
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--ground) 90%, transparent); backdrop-filter: saturate(140%) blur(10px); border-bottom: 1px solid var(--rule); }
+.topbar-inner { max-width: var(--w-content); margin: 0 auto; padding: .55rem 1.5rem; display: flex; align-items: center; gap: 1.1rem; }
+.topbar.wide .topbar-inner { max-width: var(--w-wide); }
+.brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1rem; letter-spacing: -.005em; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand .hexmark { width: 20px; color: var(--ink); }
+.navlinks { display: flex; align-items: center; gap: 1.1rem; margin-left: auto; font-size: .9rem; }
+.navlinks a:not(.nav-cta) { color: var(--ink-soft); text-decoration: none; }
+.navlinks a:not(.nav-cta):hover { color: var(--ink); text-decoration: underline; text-underline-offset: .2em; }
+.navlinks a[aria-current="page"] { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: .45em; }
+.nav-cta { padding: .3rem .85rem; border-radius: var(--r-pill); background: var(--action); color: var(--on-action); font-weight: 700; text-decoration: none; font-size: .875rem; white-space: nowrap; }
+.nav-cta:hover { filter: brightness(1.07); }
+@media (max-width: 40rem) { .navlinks a:not(.nav-cta) { display: none; } }
+.wrap { max-width: var(--w-content); margin: 0 auto; padding: 2.5rem 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
+.wrap.wide { max-width: var(--w-wide); }
+section { scroll-margin-top: 4.5rem; }
+.stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.band { position: relative; overflow: hidden; background: var(--band); color: var(--band-ink); border: 1px solid var(--band-rule); border-radius: var(--r-2xl); padding: 2.25rem 2.25rem 1.9rem; }
+.band-watermark { position: absolute; right: -3.5rem; top: 50%; transform: translateY(-50%); width: 17rem; color: var(--band-ink); opacity: .05; pointer-events: none; }
+.band-head { position: relative; display: flex; align-items: flex-start; gap: 1.4rem; }
+.band-titles { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.band .eyebrow { color: var(--band-red); }
+.band .lede { color: var(--band-soft); }
+.band .accent-rule { margin-top: 1.75rem; }
+.band-actions { position: relative; margin-left: auto; display: flex; gap: var(--s-2); align-self: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; font: inherit; font-weight: 700; font-size: 1rem; line-height: 1.2; padding: .7rem 1.25rem; border-radius: var(--r-md); border: 1px solid transparent; background: var(--action); color: var(--on-action); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.btn:hover { filter: brightness(1.07); }
+.btn.sm { font-size: .875rem; padding: .4rem .8rem; }
+.btn.secondary { background: var(--surface); color: var(--ink); border-color: var(--control-edge); }
+.btn.secondary:hover { filter: none; background: var(--surface-sunk); }
+.btn.ghost { background: transparent; color: var(--ink-soft); }
+.btn.ghost:hover { filter: none; background: var(--surface-sunk); color: var(--ink); }
+.band .btn.secondary { background: transparent; color: var(--band-ink); border-color: var(--band-soft); }
+.band .btn.secondary:hover { background: rgba(253, 253, 253, .08); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; filter: none; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 1.25rem 1.4rem; }
+.panel.raised { border-radius: var(--r-xl); padding: 1.35rem 1.5rem; box-shadow: var(--shadow); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.tile { background: var(--surface); padding: 1rem 1.1rem; border-top: 3px solid transparent; }
+.tile.red { border-top-color: var(--red); }
+.tile.green { border-top-color: var(--green); }
+.tile.blue { border-top-color: var(--blue); }
+.tile.neutral { border-top-color: var(--rule); }
+.tile p { margin: 0; color: var(--ink-soft); font-size: .925rem; }
+.tile .value { font-size: 2.1rem; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--ink); margin: .2rem 0 .15rem; }
+.tile .eyebrow { color: var(--ink-soft); letter-spacing: .12em; }
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.steps > li { counter-increment: step; background: var(--surface); padding: 1.15rem 1.3rem 1.25rem 3.5rem; position: relative; }
+.steps > li::before { content: counter(step); position: absolute; left: 1.15rem; top: 1.1rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--ink); color: var(--ground); font-weight: 700; font-size: .875rem; display: flex; align-items: center; justify-content: center; }
+.steps p { margin: .35rem 0 0; color: var(--ink-soft); }
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
+.list > li { display: flex; align-items: center; gap: var(--s-3); padding: .75rem 1.1rem; border-top: 1px solid var(--rule-soft); }
+.list > li:first-child { border-top: 0; }
+.list > li .meta { margin-left: auto; color: var(--ink-soft); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.disclosure { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 0 1.3rem; }
+.disclosure > summary { cursor: pointer; padding: 1rem 0; font-weight: 700; font-size: 1.05rem; list-style-position: inside; }
+.disclosure > summary::marker { color: var(--red); }
+.disclosure-body { padding: .2rem 0 .9rem; border-top: 1px solid var(--rule-soft); color: var(--ink-soft); }
+.msg { margin: 0; padding: .65rem .9rem; border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: .925rem; line-height: 1.45; background: var(--surface-sunk); border-left: 3px solid var(--control-edge); color: var(--ink-soft); }
+.msg p { margin: 0; }
+.msg p + p { margin-top: .5rem; }
+.msg strong { color: var(--ink); }
+.msg.info { background: var(--blue-wash); border-left-color: var(--blue); }
+.msg.success { background: var(--blue-wash); border-left-color: var(--green); }
+.msg.warning { background: var(--red-wash); border-left-color: var(--red); }
+.msg.warning strong { color: var(--red-ink); }
+.pill { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .55rem; border-radius: var(--r-pill); font-size: .78rem; font-weight: 700; line-height: 1.5; white-space: nowrap; background: var(--surface-sunk); color: var(--ink-soft); }
+.pill.red { background: var(--red-wash); color: var(--red-ink); }
+.pill.green { background: var(--green-wash); color: var(--green-ink); }
+.pill.blue { background: var(--blue-wash); color: var(--blue-ink); }
+.pill.count { min-width: 1.5rem; justify-content: center; padding: .05rem .45rem; font-variant-numeric: tabular-nums; }
+.status { display: inline-flex; align-items: center; gap: .45rem; font-size: .925rem; white-space: nowrap; color: var(--ink); }
+.status svg { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; overflow: visible; }
+.status .edge { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linejoin: round; }
+.status .fill { fill: var(--ink); }
+.status[data-state="todo"] .fill { display: none; }
+.status[data-state="alert"] .fill { display: none; }
+.status[data-state="alert"] .edge { stroke: var(--red); }
+.status[data-state="alert"] .label { color: var(--red-ink); font-weight: 700; }
+.status[data-state="progress"] .fill { clip-path: inset(50% 0 0 0); }
+.status[data-state="done"] .fill { fill: var(--green); }
+.status[data-state="done"] .edge { stroke: var(--green-ink); }
+.status[data-state="past"] .fill { fill: var(--ink-faint); }
+.status[data-state="past"] .edge { stroke: var(--ink-faint); }
+.status[data-state="past"] .label { color: var(--ink-soft); }
+.status[data-state="cancelled"] .fill { display: none; }
+.status[data-state="cancelled"] .edge { stroke: var(--ink-faint); }
+.status[data-state="cancelled"] .label { color: var(--ink-soft); text-decoration: line-through; }
+.field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.field > label, .field > .label { font-size: .875rem; font-weight: 700; color: var(--ink); }
+.input, .select { width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .55rem .75rem; min-height: 2.6rem; }
+.select { appearance: none; padding-right: 2.2rem; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%); background-position: calc(100% - 1.05rem) 52%, calc(100% - .75rem) 52%; background-size: .32rem .32rem; background-repeat: no-repeat; }
+.input:hover, .select:hover { border-color: var(--ink-soft); }
+.input:focus, .select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 30%, transparent); }
+.field .hint { font-size: .825rem; color: var(--ink-soft); }
+.check { display: inline-flex; align-items: center; gap: .5rem; font-size: .95rem; cursor: pointer; }
+.check input { width: 1.05rem; height: 1.05rem; accent-color: var(--ink); margin: 0; }
+.segmented { display: inline-flex; background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: 2px; gap: 2px; }
+.segmented button { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--ink-soft); padding: .35rem .8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.segmented button:hover { color: var(--ink); background: var(--surface-sunk); }
+.segmented button[aria-pressed="true"] { background: var(--ink); color: var(--ground); font-weight: 700; }
+.toolbar { display: flex; align-items: flex-end; gap: var(--s-3); flex-wrap: wrap; }
+.toolbar .field { min-width: 12rem; }
+.toolbar .spacer { flex: 1; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); }
+.table { width: 100%; border-collapse: collapse; font-size: .925rem; }
+.table th, .table td { text-align: left; vertical-align: top; padding: .7rem .85rem; border-bottom: 1px solid var(--rule-soft); }
+.table th { font-weight: 700; font-size: .75rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .09em; white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+.table td.secondary { color: var(--ink-soft); }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table.dense th, .table.dense td { padding: .5rem .75rem; vertical-align: middle; }
+.table tr.is-alert td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--s-4); align-items: start; }
+.column { background: var(--surface-sunk); border-radius: var(--r-lg); padding: .75rem; display: flex; flex-direction: column; gap: .6rem; }
+.column-head { display: flex; align-items: center; gap: .5rem; padding: .15rem .25rem .35rem; }
+.column-head h3 { margin: 0; font-size: .95rem; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: .8rem .95rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .3rem; }
+.card h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.card .meta { font-size: .85rem; color: var(--ink-soft); }
+.card.is-alert { border-left: 3px solid var(--red); }
+.footer { border-top: 1px solid var(--rule); padding-top: 1.4rem; font-size: .875rem; color: var(--ink-soft); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.footer-brand { display: flex; align-items: center; gap: .5rem; }
+.footer-brand .hexmark { width: 16px; color: var(--red); }
+</style>
+
+<style id="page">
+/* ─── Adaptations : composants absents du design system. Tokens du design system uniquement. ─── */
+[hidden] { display: none !important; }
+section { scroll-margin-top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + 1rem); }
+
+/* Onglets de niveau : même règle que le lien actif de la barre (texte --ink gras, trait rouge) */
+.tabs { position: sticky; top: var(--topbar-h, 3.65rem); z-index: 9; display: flex; gap: 1.75rem; background: var(--ground); border-bottom: 1px solid var(--rule); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-top: -1.5rem; }
+.tabs .short { display: none; }
+.tabs button { font: inherit; font-size: 1rem; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: .75rem 0 .65rem; color: var(--ink-soft); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: .5rem; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--red); }
+.tabpanel { display: flex; flex-direction: column; gap: 3rem; }
+.tabpanel:focus-visible { outline: none; }
+
+/* Code : même rendu que le bloc .code de la documentation du design system (fond --band) */
+pre { margin: 0; background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: 1rem 1.1rem; overflow: auto; font-family: var(--mono); font-size: .8rem; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: inherit; }
+/* Coloration : valeurs « encre sombre » du design system, lisibles sur --band dans les deux thèmes */
+.k { color: var(--band-red); } .t { color: #8dbae3; } .s { color: #23c490; } .c { color: var(--band-soft); font-style: italic; }
+
+/* Code ligne par ligne, avec la ligne courante en évidence */
+.codelines { background: var(--band); color: #e6e7e6; border-radius: var(--r-lg); padding: .6rem 0; font-family: var(--mono); font-size: .8rem; line-height: 1.6; overflow-x: auto; }
+.codelines div { padding: 0 1.1rem; white-space: pre; border-left: 3px solid transparent; }
+.codelines div.cur { background: rgba(110, 164, 215, .22); border-left-color: var(--blue); }
+.codelines div.paused { background: rgba(253, 253, 253, .06); border-left-color: var(--band-soft); }
+.codelines .ln { color: var(--band-soft); display: inline-block; width: 1.6rem; user-select: none; opacity: .7; }
+
+/* En-tête de niveau : surtitre + filet tricolore (usage autorisé du filet seul) */
+.part { display: flex; flex-direction: column; gap: .5rem; }
+.part .eyebrow { color: var(--red-ink); }
+.part h2 { font-size: clamp(1.6rem, 3.4vw, 2rem); letter-spacing: -.018em; margin: 0; }
+.part .lede { color: var(--ink-soft); }
+
+/* Sommaire */
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-4); }
+.toc ul { list-style: none; margin: .3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .2rem; font-size: .925rem; }
+.toc a { color: var(--ink-soft); text-decoration: none; }
+.toc a:hover { color: var(--ink); text-decoration: underline; }
+.toc h3 a { color: var(--ink); }
+
+/* Texte de section */
+.intro { margin: 0; color: var(--ink-soft); max-width: 48rem; }
+.sub { margin: 1.25rem 0 .5rem; }
+.prose { margin: 0; max-width: 52rem; }
+.prose + .prose { margin-top: .6rem; }
+ul.bul { margin: 0; padding-left: 1.2rem; }
+ul.bul li { margin: .2rem 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--s-4); }
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+@media (max-width: 52rem) { .split { grid-template-columns: minmax(0, 1fr); } }
+.tile pre { margin-top: .5rem; }
+.tile h3 { margin-bottom: .3rem; }
+
+/* Curseur (input range) : mêmes règles qu'un champ, libellé au-dessus */
+.field input[type="range"] { width: 100%; accent-color: var(--ink); margin: .35rem 0 0; }
+.field .val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Barre de pas pour les démonstrations pas à pas */
+.stepbar { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.stepbar .count { margin-left: auto; font-size: .875rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.note { min-height: 4.2rem; }
+
+/* Liste clé / valeur */
+.kv > li { justify-content: space-between; font-size: .925rem; }
+.kv > li > span:first-child { color: var(--ink-soft); }
+
+/* Workers du ThreadPool (simulateur) : tuile compacte à filet coloré */
+.threads { display: flex; flex-wrap: wrap; gap: 4px; }
+.th { width: 3.6rem; padding: .3rem .2rem; border-radius: var(--r-sm); background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--rule); font-size: .72rem; line-height: 1.25; text-align: center; color: var(--ink-soft); }
+.th b { display: block; color: var(--ink); }
+.th.cpu { background: var(--blue-wash); border-top-color: var(--blue); }
+.th.block { background: var(--red-wash); border-top-color: var(--red); }
+.th.new { box-shadow: 0 0 0 2px var(--blue); }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; min-height: .7rem; }
+.dot { width: .62rem; height: .62rem; border-radius: 50%; background: var(--ink-faint); }
+.dot.io { background: var(--green); }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .825rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+.zone h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-soft); margin-bottom: .5rem; }
+
+/* Ordonnanceur : une ligne par cœur, une case par tranche de temps */
+.corerow { display: flex; align-items: center; gap: .6rem; margin: 3px 0; }
+.corerow .lbl { width: 3.6rem; flex: 0 0 auto; font-size: .825rem; color: var(--ink-soft); }
+.cells { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.cell { flex: 1 1 0; min-width: 0; height: 1.5rem; border-radius: 3px; background: var(--surface-sunk); font-size: .65rem; font-weight: 700; color: var(--blue-ink); display: grid; place-items: center; overflow: hidden; }
+.cell.busy { background: var(--blue-wash); }
+.cell.sw { box-shadow: inset 3px 0 0 var(--red); }
+
+/* Barres de durée (Gantt, frises) */
+.gantt { display: flex; flex-direction: column; gap: .45rem; }
+.grow { display: flex; align-items: center; gap: .7rem; }
+.grow .lbl { width: 8.5rem; flex: 0 0 auto; font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); }
+.track { position: relative; flex: 1; height: 1.35rem; background: var(--surface-sunk); border-radius: var(--r-sm); overflow: hidden; }
+.track .bar { position: absolute; top: 0; height: 100%; background: var(--blue-wash); }
+.track .fill { position: absolute; top: 0; height: 100%; background: var(--blue); }
+.track .fill.total { background: var(--ink); }
+.segs { display: flex; flex: 1; height: 1.5rem; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-sunk); }
+.sg { height: 100%; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; color: var(--ink); }
+.sg.cpu { background: var(--blue-wash); box-shadow: inset 0 -3px 0 var(--blue); }
+.sg.ok { background: var(--green-wash); box-shadow: inset 0 -3px 0 var(--green); }
+.sg.bad { background: var(--red-wash); box-shadow: inset 0 -3px 0 var(--red); color: var(--red-ink); }
+.sg.free { color: var(--ink-soft); font-weight: 400; }
+.lanes { display: flex; flex-direction: column; gap: 2px; }
+.lane { position: relative; height: .55rem; background: var(--surface-sunk); border-radius: 2px; }
+.lane .job { position: absolute; top: 0; height: 100%; border-radius: 2px; background: var(--blue); }
+.lane .job.slow { background: var(--red); }
+
+/* Graphique SVG */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-soft); font-family: var(--font); font-size: 12px; }
+
+/* Vol de travail : files de tâches */
+.deque { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 2rem; padding: .3rem; border: 1px dashed var(--rule); border-radius: var(--r-sm); }
+.log { font-family: var(--mono); font-size: .8rem; display: flex; flex-direction: column; gap: .15rem; }
+.log div:first-child { color: var(--ink); font-weight: 700; }
+.log div { color: var(--ink-soft); }
+
+/* Objet en mémoire (pile et heap) : carte du kanban, avec repère pour le nouvel objet */
+.card.hot { box-shadow: var(--shadow), inset 3px 0 0 var(--blue); }
+.card.dead { opacity: .55; text-decoration: line-through; box-shadow: none; }
+.card.mono { font-family: var(--mono); font-size: .78rem; box-shadow: none; padding: .45rem .6rem; }
+.column .empty-note { font-size: .85rem; font-style: italic; color: var(--ink-soft); padding: .2rem .25rem; }
+
+/* Race condition et cache CPU */
+.ops { font-family: var(--mono); font-size: .82rem; display: flex; flex-direction: column; gap: 2px; }
+.ops div { padding: .2rem .45rem; border-radius: var(--r-xs); color: var(--ink-soft); }
+.ops div.done { text-decoration: line-through; }
+.ops div.next { background: var(--blue-wash); color: var(--ink); font-weight: 700; }
+.race { display: grid; grid-template-columns: minmax(0, 1fr) 11rem minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+@media (max-width: 44rem) { .race { grid-template-columns: minmax(0, 1fr); } }
+.mesi { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.mesi .full { grid-column: 1 / -1; }
+.cycle { display: flex; align-items: center; justify-content: center; gap: .6rem; flex-wrap: wrap; }
+.cycle .arr { color: var(--ink-faint); font-size: 1.2rem; }
+.cycle.on .arr { color: var(--red); }
+
+/* QCM : choix de réponse */
+.choice { display: block; width: 100%; overflow-wrap: anywhere; text-align: left; font: inherit; font-size: .95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--control-edge); border-radius: var(--r-md); padding: .6rem .8rem; cursor: pointer; }
+.choice:hover { background: var(--surface-sunk); }
+.choice.right { background: var(--green-wash); border-color: var(--green-ink); font-weight: 700; }
+.choice.wrong { background: var(--red-wash); border-color: var(--red-ink); }
+.q .expl { display: none; }
+.q.answered .expl { display: block; }
+.qhead { position: sticky; top: calc(var(--topbar-h, 3.65rem) + var(--tabs-h, 3.1rem) + .5rem); z-index: 2; }
+.meter { height: 6px; background: var(--surface-sunk); border-radius: var(--r-pill); overflow: hidden; flex: 1; min-width: 8rem; }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
+.ste { font-size: .825rem; }
+
+/* Petits écrans : règles reprises de la documentation du design system */
+.segmented.segwrap { flex-wrap: wrap; }
+@media (max-width: 40rem) {
+  .band-head { flex-direction: column; }
+  .band-actions { margin-left: 0; align-self: flex-start; }
+  .band { padding: 1.6rem 1.4rem 1.5rem; }
+  .navlinks .segmented { display: none; }
+  .wrap { padding: 1.5rem 1rem 4rem; }
+  .tabs { gap: 1.2rem; }
+  .tabs .long { display: none; }
+  .tabs .short { display: inline; }
+  .qhead { position: static; }
+}
+
+/* ─── RabbitMQ : routage, files, consommateurs. Tokens du design system uniquement. ─── */
+.route { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--s-3); align-items: center; }
+@media (max-width: 48rem) { .route { grid-template-columns: minmax(0, 1fr); } }
+.node { background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--rule); border-radius: var(--r-md); padding: .55rem .75rem; font-size: .875rem; }
+.node b { display: block; color: var(--ink); }
+.node .meta { color: var(--ink-soft); font-size: .8rem; font-family: var(--mono); overflow-wrap: anywhere; }
+.node.ex { border-top-color: var(--blue); background: var(--blue-wash); }
+.node.hit { border-top-color: var(--green); background: var(--green-wash); }
+.node.miss { opacity: .6; }
+.node.drop { border-top-color: var(--red); background: var(--red-wash); }
+.binds { display: flex; flex-direction: column; gap: .35rem; }
+.bind { display: flex; align-items: center; gap: .5rem; font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); padding: .3rem .5rem; border-radius: var(--r-sm); border: 1px dashed var(--rule); overflow-wrap: anywhere; }
+.bind.on { border-style: solid; border-color: var(--green); color: var(--ink); background: var(--green-wash); }
+.bind .arrow { margin-left: auto; color: var(--ink-faint); }
+.bind.on .arrow { color: var(--green-ink); }
+.msgs { display: flex; flex-wrap: wrap; gap: 3px; min-height: .8rem; }
+.m { min-width: 1.5rem; height: 1.25rem; padding: 0 .25rem; border-radius: 3px; font-size: .66rem; font-weight: 700; display: grid; place-items: center; background: var(--surface-sunk); color: var(--ink-soft); border: 1px solid var(--rule); }
+.m.unack { background: var(--blue-wash); color: var(--blue-ink); border-color: var(--blue); }
+.m.work { background: var(--blue); color: var(--on-action); border-color: var(--blue); }
+.m.bad { background: var(--red-wash); color: var(--red-ink); border-color: var(--red); }
+.m.ok { background: var(--green-wash); color: var(--green-ink); border-color: var(--green); }
+.crow { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 5rem; gap: .6rem; align-items: center; padding: .35rem 0; border-top: 1px solid var(--rule-soft); }
+.crow:first-child { border-top: 0; }
+.crow .lbl { font-size: .85rem; color: var(--ink); font-weight: 700; }
+.crow .lbl span { display: block; font-weight: 400; color: var(--ink-soft); font-size: .78rem; }
+.crow .done { text-align: right; font-variant-numeric: tabular-nums; font-size: .85rem; color: var(--ink-soft); }
+.headers-pick { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .875rem; }
+.headers-pick label { display: inline-flex; align-items: center; gap: .35rem; font-family: var(--mono); font-size: .8rem; }
+.presets { display: flex; flex-wrap: wrap; gap: .35rem; }
+.presets button { font-family: var(--mono); font-size: .75rem; }
+.seq { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.jtrack { position: relative; flex: 1; height: 1.5rem; background: var(--surface-sunk); border-radius: var(--r-sm); overflow: hidden; }
+.jseg { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; background: var(--blue-wash); border: 1px solid var(--blue); font-size: .7rem; font-weight: 700; display: grid; place-items: center; color: var(--blue-ink); overflow: hidden; }
+.jseg.bad { background: var(--red-wash); border-color: var(--red); color: var(--red-ink); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <symbol id="carbon-hex" viewBox="0 0 768 840">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M369.5-0.5C378.5-0.5 387.5-0.5 396.5-0.5 421.557 2.18892 445.224 9.68892 467.5 22 537.5 62.6667 607.5 103.333 677.5 144 732.606 175.967 762.606 223.801 767.5 287.5 767.5 375.5 767.5 463.5 767.5 551.5 763.555 611.233 736.555 657.4 686.5 690 611.833 733.333 537.167 776.667 462.5 820 442.246 830.477 420.913 836.977 398.5 839.5 388.167 839.5 377.833 839.5 367.5 839.5 343.091 836.753 320.091 829.253 298.5 817 226.33 774.748 153.997 732.748 81.5 691 34.1078 661.067 6.77449 618.233-0.5 562.5-0.5 467.5-0.5 372.5-0.5 277.5 7.56046 217.532 37.8938 172.698 90.5 143 160.5 102.333 230.5 61.6667 300.5 21 322.212 9.25979 345.212 2.09313 369.5-0.5ZM376.5 89.5C393.288 88.7804 408.955 92.6137 423.5 101 495.67 143.252 568.003 185.252 640.5 227 661.1 240.677 673.267 259.843 677 284.5 677.667 374.5 677.667 464.5 677 554.5 673.178 580.671 660.011 600.505 637.5 614 567.5 654.667 497.5 695.333 427.5 736 399.572 753.199 371.239 753.866 342.5 738 269.167 695.333 195.833 652.667 122.5 610 102.63 595.097 91.4637 575.263 89 550.5 88.3333 463.167 88.3333 375.833 89 288.5 92.0014 261.521 104.835 240.688 127.5 226 199.997 184.252 272.33 142.252 344.5 100 354.682 94.6301 365.349 91.1301 376.5 89.5Z"/>
+  </symbol>
+</svg>
+
+<nav class="topbar wide">
+  <div class="topbar-inner">
+    <a class="brand" href="#haut">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      RabbitMQ et .NET
+    </a>
+    <div class="navlinks">
+      <a href="#base" data-nav="base">Base</a>
+      <a href="#avance" data-nav="avance">Avancé</a>
+      <a href="#profond" data-nav="profond">Profond</a>
+      <span class="segmented" role="group" aria-label="Thème">
+        <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-theme-set="light" aria-pressed="false">Clair</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Sombre</button>
+      </span>
+      <a class="nav-cta" href="#qcm-base" id="ctaQcm">QCM</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap wide" id="haut">
+
+  <div class="band">
+    <svg class="hexmark band-watermark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+    <div class="band-head">
+      <div class="band-titles">
+        <p class="eyebrow">Carbon IT · Formation .NET</p>
+        <h1>RabbitMQ et messagerie en .NET</h1>
+        <p class="lede">La formation a trois niveaux : notions de base, notions avancées et notions profondes. Chaque niveau contient des simulateurs, des exemples de code C# et un QCM.</p>
+      </div>
+      <div class="band-actions">
+        <a class="btn secondary sm" href="#qcm-base">Aller au QCM</a>
+        <a class="btn sm" href="#base">Commencer</a>
+      </div>
+    </div>
+    <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <section class="panel raised stack" aria-labelledby="usage">
+    <h2 id="usage" style="margin:0">Utiliser cette page</h2>
+    <ol class="steps">
+      <li><h3>Choisissez un niveau</h3><p>Commencez par l'onglet « Notions de base ». Passez au niveau suivant quand le QCM de l'onglet donne au moins 80 %.</p></li>
+      <li><h3>Utilisez les simulateurs</h3><p>Changez les réglages. Cliquez sur « Suivant » pour avancer d'une étape. Lisez le message sous chaque simulateur.</p></li>
+      <li><h3>Faites le QCM de l'onglet</h3><p>Chaque réponse affiche une explication. Pour un score inférieur à 80 %, refaites les simulateurs des thèmes en erreur.</p></li>
+    </ol>
+    <div class="toc" aria-label="Sommaire">
+      <div><h3><a href="#base">1 · Notions de base</a></h3><ul>
+        <li><a href="#pourquoi">Rôle d'un broker</a></li><li><a href="#glossaire">Glossaire</a></li><li><a href="#modele">Modèle AMQP</a></li><li><a href="#routage">Simulateur de routage</a></li><li><a href="#client">Connexion, channel et client .NET</a></li><li><a href="#ack">Acquittement pas à pas</a></li><li><a href="#prefetch">Simulateur de prefetch</a></li><li><a href="#durable">Durabilité</a></li><li><a href="#kafka">RabbitMQ et Kafka</a></li><li><a href="#anti">Mauvaises pratiques</a></li><li><a href="#qcm-base">QCM de base</a></li>
+      </ul></div>
+      <div><h3><a href="#avance">2 · Notions avancées</a></h3><ul>
+        <li><a href="#confirms">Publisher confirms</a></li><li><a href="#garanties">Garanties et idempotence</a></li><li><a href="#dlq">Retry et dead letter</a></li><li><a href="#outbox">Outbox et Inbox</a></li><li><a href="#worker">Consommateur hébergé</a></li><li><a href="#masstransit">MassTransit</a></li><li><a href="#quorum">Quorum et classic</a></li><li><a href="#ordre">Ordre des messages</a></li><li><a href="#trace">Traces distribuées</a></li><li><a href="#qcm-avance">QCM avancé</a></li>
+      </ul></div>
+      <div><h3><a href="#profond">3 · Notions profondes</a></h3><ul>
+        <li><a href="#raft">Quorum queues et Raft</a></li><li><a href="#streams">Streams</a></li><li><a href="#flow">Flow control et alarmes</a></li><li><a href="#prefetch-calc">Calcul du prefetch</a></li><li><a href="#channels">Channels et delivery tags</a></li><li><a href="#recovery">Heartbeats et recovery</a></li><li><a href="#partition">Single active consumer et hash</a></li><li><a href="#poison">Messages empoisonnés</a></li><li><a href="#qcm-profond">QCM profond</a></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Niveau">
+    <button type="button" role="tab" id="tab-btn-base" aria-controls="base" aria-selected="true"><span class="long">Notions de base</span><span class="short">Base</span> <span class="pill count" title="Sections">10</span></button>
+    <button type="button" role="tab" id="tab-btn-avance" aria-controls="avance" aria-selected="false"><span class="long">Notions avancées</span><span class="short">Avancé</span> <span class="pill count" title="Sections">9</span></button>
+    <button type="button" role="tab" id="tab-btn-profond" aria-controls="profond" aria-selected="false"><span class="long">Notions profondes</span><span class="short">Profond</span> <span class="pill count" title="Sections">8</span></button>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS DE BASE ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="base" aria-labelledby="tab-btn-base" tabindex="-1">
+    <div class="part">
+      <p class="eyebrow">Niveau 1</p>
+      <h2>Notions de base</h2>
+      <p class="lede">Ces notions suffisent pour publier et consommer des messages de façon correcte. Elles expliquent le modèle AMQP, le client .NET, l'acquittement et le prefetch.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="pourquoi" class="stack">
+      <h2>Rôle d'un broker de messages</h2>
+      <p class="intro">Un service envoie un message au broker. Le broker garde le message. Un autre service lit le message plus tard. Les deux services ne se connaissent pas.</p>
+      <div class="tiles">
+        <div class="tile red"><p class="eyebrow">Couplage</p><h3>Découplage</h3><p>Le producteur ne connaît pas les consommateurs. Vous ajoutez un consommateur sans modifier le producteur. Un consommateur arrêté ne bloque pas le producteur.</p></div>
+        <div class="tile green"><p class="eyebrow">Charge</p><h3>Lissage de charge</h3><p>Un pic de 5 000 commandes par minute arrive. La file garde les messages. Les consommateurs traitent les messages à leur vitesse. La base de données ne reçoit pas le pic.</p></div>
+        <div class="tile blue"><p class="eyebrow">Fiabilité</p><h3>Traitement différé et nouvel essai</h3><p>Un service partenaire est indisponible. Le message reste dans la file. Le consommateur fait un nouvel essai plus tard. Le client HTTP a déjà reçu sa réponse.</p></div>
+      </div>
+      <div class="msg info"><p><strong>À retenir.</strong> Un broker transforme un appel synchrone en échange asynchrone. Le producteur ne connaît pas le résultat du traitement. Utilisez un broker quand le producteur n'a pas besoin de la réponse tout de suite.</p></div>
+      <div class="msg warning"><p><strong>Coût.</strong> Un broker ajoute un composant à exploiter. Il ajoute aussi de la cohérence à terme : les données des services ne sont pas à jour au même instant. Les messages peuvent arriver deux fois ou dans un ordre différent.</p></div>
+    </section>
+
+    <section id="glossaire" class="stack">
+      <h2>Glossaire</h2>
+      <p class="intro">Cette page utilise ces termes avec ce sens uniquement.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+        <tbody>
+          <tr><td><b>Broker</b></td><td class="secondary">Serveur qui reçoit, garde et distribue les messages. Ici : RabbitMQ.</td></tr>
+          <tr><td><b>AMQP 0-9-1</b></td><td class="secondary">Protocole principal de RabbitMQ. Il définit les exchanges, les files, les bindings et l'acquittement.</td></tr>
+          <tr><td><b>Producteur</b></td><td class="secondary">Application qui publie un message. Elle publie toujours vers un exchange, jamais directement vers une file.</td></tr>
+          <tr><td><b>Exchange</b></td><td class="secondary">Routeur du broker. Il reçoit les messages et les copie vers zéro, une ou plusieurs files. Il ne garde pas les messages.</td></tr>
+          <tr><td><b>File (queue)</b></td><td class="secondary">Stockage ordonné des messages. Les consommateurs lisent les messages dans une file.</td></tr>
+          <tr><td><b>Binding</b></td><td class="secondary">Règle qui relie un exchange à une file. Elle contient une clé de binding ou des headers.</td></tr>
+          <tr><td><b>Routing key</b></td><td class="secondary">Chaîne que le producteur met sur le message. L'exchange compare cette chaîne aux clés de binding.</td></tr>
+          <tr><td><b>Consommateur</b></td><td class="secondary">Abonnement d'une application à une file. Le broker pousse les messages vers le consommateur.</td></tr>
+          <tr><td><b>Connexion</b></td><td class="secondary">Connexion TCP entre l'application et le broker. Elle est longue et coûteuse à créer.</td></tr>
+          <tr><td><b>Channel</b></td><td class="secondary">Connexion logique à l'intérieur d'une connexion TCP. Toutes les opérations AMQP passent par un channel.</td></tr>
+          <tr><td><b>Ack</b></td><td class="secondary">Acquittement. Le consommateur indique au broker la fin du traitement. Le broker supprime alors le message.</td></tr>
+          <tr><td><b>Nack / reject</b></td><td class="secondary">Refus d'un message. Le broker remet le message dans la file (requeue) ou l'envoie au dead letter exchange.</td></tr>
+          <tr><td><b>Unacked</b></td><td class="secondary">Message livré à un consommateur, mais pas encore acquitté. Le broker le garde jusqu'à l'ack.</td></tr>
+          <tr><td><b>Prefetch</b></td><td class="secondary">Nombre maximal de messages unacked pour un consommateur. Réglage : <code>BasicQos</code>.</td></tr>
+          <tr><td><b>DLX</b></td><td class="secondary">Dead letter exchange. Exchange qui reçoit les messages refusés, expirés ou en trop.</td></tr>
+          <tr><td><b>Vhost</b></td><td class="secondary">Espace isolé du broker. Chaque vhost a ses exchanges, ses files et ses droits.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="modele" class="stack">
+      <h2>Modèle AMQP : exchange, binding, file</h2>
+      <p class="intro">Le producteur publie vers un exchange avec une routing key. L'exchange applique ses bindings. Chaque file qui correspond reçoit une copie du message.</p>
+      <div class="route panel">
+        <div class="stack" style="gap:.5rem"><div class="node"><b>Producteur</b><span class="meta">Orders.Api</span></div><div class="node"><b>Message</b><span class="meta">routing key = order.created</span></div></div>
+        <div class="stack" style="gap:.5rem"><div class="node ex"><b>Exchange « orders » (topic)</b><span class="meta">aucun stockage</span></div><div class="binds"><div class="bind on">order.created <span class="arrow">→ billing</span></div><div class="bind on">order.# <span class="arrow">→ audit</span></div><div class="bind">order.shipped <span class="arrow">→ notifications</span></div></div></div>
+        <div class="stack" style="gap:.5rem"><div class="node hit"><b>File billing</b><span class="meta">consommateur : Billing.Worker</span></div><div class="node hit"><b>File audit</b><span class="meta">consommateur : Audit.Worker</span></div><div class="node miss"><b>File notifications</b><span class="meta">ne reçoit rien</span></div></div>
+      </div>
+      <h3 class="sub">Types d'exchange</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Type</th><th>Règle de routage</th><th>Usage typique</th></tr></thead>
+        <tbody>
+          <tr><td><b>direct</b></td><td class="secondary">La routing key est égale à la clé de binding.</td><td class="secondary">Commande vers un service précis. Répartition par type de tâche.</td></tr>
+          <tr><td><b>fanout</b></td><td class="secondary">Toutes les files liées reçoivent une copie. La routing key est ignorée.</td><td class="secondary">Diffusion d'un événement à tous les abonnés. MassTransit utilise ce type.</td></tr>
+          <tr><td><b>topic</b></td><td class="secondary">La clé de binding est un motif. Les mots sont séparés par des points. <code>*</code> remplace exactement un mot. <code>#</code> remplace zéro, un ou plusieurs mots.</td><td class="secondary">Abonnement par famille d'événements : <code>order.*.eu</code>, <code>order.#</code>.</td></tr>
+          <tr><td><b>headers</b></td><td class="secondary">Le broker compare les headers du message aux arguments du binding. <code>x-match = all</code> : tous les headers. <code>x-match = any</code> : au moins un.</td><td class="secondary">Routage sur plusieurs critères. Usage rare.</td></tr>
+          <tr><td><b>default (« »)</b></td><td class="secondary">Exchange direct prédéfini. Chaque file y est liée avec son nom comme clé.</td><td class="secondary">Publier « vers une file » : <code>exchange = ""</code>, <code>routingKey = "billing"</code>.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg info"><p><strong>Message sans file.</strong> Aucun binding ne correspond : le broker supprime le message sans erreur. Avec <code>mandatory: true</code>, le broker retourne le message au producteur (<code>basic.return</code>). Une autre solution : un <code>alternate-exchange</code> sur l'exchange.</p></div>
+    </section>
+
+    <section id="routage" class="stack">
+      <h2>Simulateur : routage par type d'exchange</h2>
+      <p class="intro">Choisissez le type d'exchange. Saisissez une routing key ou choisissez des headers. Le simulateur indique les bindings qui correspondent et les files qui reçoivent une copie.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><span class="label">Type d'exchange</span><span class="segmented segwrap" role="group" aria-label="Type d'exchange" id="rtType"><button type="button" data-m="direct" aria-pressed="false">direct</button><button type="button" data-m="topic" aria-pressed="true">topic</button><button type="button" data-m="fanout" aria-pressed="false">fanout</button><button type="button" data-m="headers" aria-pressed="false">headers</button></span></div>
+          <div class="field" id="rtKeyWrap" style="flex:1"><label for="rtKey">Routing key du message</label><input class="input" id="rtKey" value="order.created.eu" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="presets" id="rtPresets"></div>
+        <div class="headers-pick" id="rtHeaders" hidden></div>
+        <div class="route">
+          <div class="stack" style="gap:.5rem"><div class="node"><b>Producteur</b><span class="meta" id="rtMsg"></span></div></div>
+          <div class="stack" style="gap:.5rem"><div class="node ex"><b id="rtExName"></b><span class="meta" id="rtExRule"></span></div><div class="binds" id="rtBinds"></div></div>
+          <div class="stack" style="gap:.5rem" id="rtQueues"></div>
+        </div>
+        <div class="msg" id="rtNote"></div>
+      </div>
+      <div class="msg info"><p><strong>Essais utiles.</strong> En topic, comparez <code>order.created</code> et <code>order.created.eu</code>. Le motif <code>order.#</code> accepte les deux. Le motif <code>order.*.eu</code> accepte seulement le second. Saisissez ensuite <code>order</code> seul : <code>#</code> accepte zéro mot.</p></div>
+    </section>
+
+    <section id="client" class="stack">
+      <h2>Connexion, channel et client .NET</h2>
+      <p class="intro">Le package <code>RabbitMQ.Client</code> version 7 a une API entièrement async. Les exemples suivants utilisent cette version.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Connexion</h3>
+          <ul class="bul">
+            <li>Une connexion TCP, avec TLS et authentification. La création prend plusieurs allers-retours réseau.</li>
+            <li>Créez <b>une connexion par application</b> (ou une pour publier et une pour consommer). Gardez-la pendant toute la vie du process.</li>
+            <li>Le broker affiche le nom donné par <code>ClientProvidedName</code>. Ce nom aide au diagnostic.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Channel</h3>
+          <ul class="bul">
+            <li>Une connexion logique dans la connexion TCP. Une connexion porte beaucoup de channels.</li>
+            <li>Un channel n'est pas fait pour un usage concurrent. Ne partagez pas un channel entre plusieurs publications simultanées.</li>
+            <li>Une erreur de protocole ferme le channel, pas la connexion. Exemple : déclarer une file existante avec d'autres arguments.</li>
+          </ul>
+        </div>
+      </div>
+      <h3 class="sub">Publier un message</h3>
+<script type="text/x-csharp">
+var factory = new ConnectionFactory { HostName = "rabbitmq", ClientProvidedName = "orders-api" };
+await using IConnection connection = await factory.CreateConnectionAsync(ct);   // une fois, au démarrage
+await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: ct);
+
+await channel.ExchangeDeclareAsync("orders", ExchangeType.Topic, durable: true, cancellationToken: ct);
+
+var body = JsonSerializer.SerializeToUtf8Bytes(new OrderCreated(order.Id, order.Total));
+var props = new BasicProperties
+{
+    Persistent = true,                       // écrit sur disque si la file est durable
+    ContentType = "application/json",
+    MessageId = Guid.NewGuid().ToString()    // utile pour l'idempotence côté consommateur
+};
+await channel.BasicPublishAsync("orders", "order.created", mandatory: true, basicProperties: props, body: body, cancellationToken: ct);
+</script>
+      <h3 class="sub">Consommer des messages</h3>
+<script type="text/x-csharp">
+await channel.QueueDeclareAsync("billing", durable: true, exclusive: false, autoDelete: false,
+    arguments: new Dictionary<string, object?> { ["x-queue-type"] = "quorum" }, cancellationToken: ct);
+await channel.QueueBindAsync("billing", "orders", "order.created", cancellationToken: ct);
+await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: ct);
+
+var consumer = new AsyncEventingBasicConsumer(channel);
+consumer.ReceivedAsync += async (_, ea) =>
+{
+    var evt = JsonSerializer.Deserialize<OrderCreated>(ea.Body.Span)!;
+    await _billing.CreateInvoiceAsync(evt, ct);
+    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, ct);   // après le traitement
+};
+await channel.BasicConsumeAsync("billing", autoAck: false, consumer: consumer, cancellationToken: ct);
+</script>
+      <div class="msg info"><p><strong>Déclaration idempotente.</strong> <code>ExchangeDeclareAsync</code> et <code>QueueDeclareAsync</code> ne créent rien si l'objet existe avec les mêmes arguments. Avec des arguments différents, le broker ferme le channel avec l'erreur <code>406 PRECONDITION_FAILED</code>.</p></div>
+      <div class="msg"><p><strong>Version 6 et version 7.</strong> La version 6 utilise <code>IModel</code>, <code>CreateModel()</code> et <code>EventingBasicConsumer</code>. La version 7 utilise <code>IChannel</code>, <code>CreateChannelAsync()</code> et <code>AsyncEventingBasicConsumer</code> avec l'événement <code>ReceivedAsync</code>. Une migration demande de changer toutes les signatures.</p></div>
+    </section>
+
+    <section id="ack" class="stack">
+      <h2>Acquittement pas à pas : ack, nack, requeue</h2>
+      <p class="intro">Regardez l'état de chaque message : Ready dans la file, Unacked chez le consommateur, ou supprimé.</p>
+      <div class="panel stack">
+        <div class="split">
+          <div class="codelines" id="akCode"></div>
+          <div class="board" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
+            <div class="column"><div class="column-head"><h3>File : Ready</h3></div><div id="akReady"></div></div>
+            <div class="column"><div class="column-head"><h3>Unacked</h3></div><div id="akUnack"></div></div>
+            <div class="column"><div class="column-head"><h3>Résultat</h3></div><div id="akOut"></div></div>
+          </div>
+        </div>
+        <div data-stepbar="ak"></div>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Mode</th><th>Moment de la suppression</th><th>Risque</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td><code>autoAck: true</code></td><td class="secondary">Dès l'envoi au consommateur.</td><td class="secondary">Un crash pendant le traitement perd le message. Le broker ne limite pas les envois : le prefetch ne s'applique pas.</td></tr>
+          <tr><td><code>autoAck: false</code> + <code>BasicAckAsync</code></td><td class="secondary">À la réception de l'ack.</td><td class="secondary">Un crash avant l'ack remet le message en file. Le message arrive deux fois : le traitement doit être idempotent.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="prefetch" class="stack">
+      <h2>Simulateur : consommateurs concurrents et prefetch</h2>
+      <p class="intro">Plusieurs consommateurs lisent la même file. Le broker distribue les messages à tour de rôle, dans la limite du prefetch. Un consommateur est lent : 1 000 ms par message. Les autres traitent un message en 100 ms.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="pfCons">Consommateurs : <span class="val" id="pfConsO"></span></label><input type="range" id="pfCons" min="1" max="6" value="3"></div>
+          <div class="field"><label for="pfPre">Prefetch : <span class="val" id="pfPreO"></span></label><input type="range" id="pfPre" min="1" max="60" value="30"></div>
+          <div class="field"><label for="pfN">Messages : <span class="val" id="pfNO"></span></label><input type="range" id="pfN" min="20" max="120" step="10" value="60"></div>
+          <div class="field"><label for="pfSpeed">Vitesse : <span class="val" id="pfSpeedO"></span></label><input type="range" id="pfSpeed" min="1" max="20" value="6"></div>
+        </div>
+        <div class="row"><button class="btn" type="button" id="pfRun">Démarrer</button><button class="btn ghost" type="button" id="pfReset">Réinitialiser</button></div>
+        <div class="legend"><span><i style="background:var(--surface-sunk);border:1px solid var(--rule)"></i>Ready dans la file</span><span><i style="background:var(--blue-wash);border:1px solid var(--blue)"></i>Unacked, en attente chez le consommateur</span><span><i style="background:var(--blue)"></i>En traitement</span></div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Temps simulé</p><p class="value" id="pfT">0 ms</p></div>
+          <div class="tile neutral"><p class="eyebrow">Ready</p><p class="value" id="pfReady">0</p></div>
+          <div class="tile neutral"><p class="eyebrow">Unacked</p><p class="value" id="pfUnack">0</p></div>
+          <div class="tile neutral"><p class="eyebrow">Traités</p><p class="value" id="pfDone">0</p></div>
+        </div>
+        <div class="zone"><h3>File « billing »</h3><div class="msgs" id="pfQueue"></div></div>
+        <div class="zone"><h3>Consommateurs</h3><div id="pfRows"></div></div>
+        <div class="msg" id="pfVerdict" hidden></div>
+        <div class="table-wrap"><table class="table dense" id="pfRes"><thead><tr><th class="num">Consommateurs</th><th class="num">Prefetch</th><th class="num">Messages</th><th class="num">Reçus par le lent</th><th class="num">Temps total</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="msg info"><p><strong>Comparaison.</strong> Lancez avec un prefetch de 30, puis de 1. Avec 30, le consommateur lent reçoit autant de messages que les autres. Ses messages attendent dans son tampon. Les consommateurs rapides finissent puis restent sans travail. Avec 1, le broker envoie un message au consommateur lent seulement après son ack.</p></div>
+      <div class="msg"><p><strong>Prefetch trop petit.</strong> Le simulateur ne compte pas le réseau. En réalité, avec un prefetch de 1, le consommateur attend un aller-retour réseau entre deux messages. Le calcul du bon prefetch est dans l'onglet <a href="#prefetch-calc">Notions profondes</a>.</p></div>
+    </section>
+
+    <section id="durable" class="stack">
+      <h2>Durabilité : file durable et message persistant</h2>
+      <p class="intro">Le broker redémarre. Deux réglages décident de la survie des messages : la durabilité de la file et la persistance du message.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>File</th><th>Message</th><th>Après un redémarrage du broker</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td>non durable</td><td>quelconque</td><td class="secondary">La file n'existe plus. Tous les messages sont perdus.</td></tr>
+          <tr class="is-alert"><td>durable (classic)</td><td>non persistant</td><td class="secondary">La file existe. Les messages sont perdus.</td></tr>
+          <tr><td>durable (classic)</td><td><code>Persistent = true</code></td><td class="secondary">La file et les messages sont conservés.</td></tr>
+          <tr><td>quorum</td><td>quelconque</td><td class="secondary">Une quorum queue est toujours durable. Elle écrit tous les messages sur disque et les réplique.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Persistant ne veut pas dire reçu.</strong> <code>BasicPublishAsync</code> sans publisher confirms ne garantit pas l'écriture. Le message peut être perdu entre le client et le disque du broker. Les confirms sont dans l'onglet <a href="#confirms">Notions avancées</a>.</p></div>
+    </section>
+
+    <section id="kafka" class="stack">
+      <h2>RabbitMQ et Kafka</h2>
+      <p class="intro">Les deux outils transportent des messages. Leur modèle est différent.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Critère</th><th>RabbitMQ (files)</th><th>Kafka</th></tr></thead>
+        <tbody>
+          <tr><td><b>Modèle</b></td><td class="secondary">File de travail. Le broker pousse les messages et les supprime après l'ack.</td><td class="secondary">Journal append-only. Le consommateur lit à son offset. Les messages restent pendant la rétention.</td></tr>
+          <tr><td><b>Routage</b></td><td class="secondary">Riche : exchanges, motifs, headers.</td><td class="secondary">Simple : topic et partition (par clé).</td></tr>
+          <tr><td><b>Relecture</b></td><td class="secondary">Impossible avec une file. Possible avec un stream RabbitMQ.</td><td class="secondary">Possible : changez l'offset.</td></tr>
+          <tr><td><b>Ordre</b></td><td class="secondary">Par file, perdu avec des consommateurs concurrents.</td><td class="secondary">Par partition. Un consommateur par partition dans un groupe.</td></tr>
+          <tr><td><b>Échelle</b></td><td class="secondary">Des dizaines de milliers de messages par seconde par file.</td><td class="secondary">Des millions de messages par seconde par cluster.</td></tr>
+          <tr><td><b>Cas d'usage</b></td><td class="secondary">Tâches, commandes, intégration entre services, nouvel essai par message.</td><td class="secondary">Flux d'événements, historique, analytique, event sourcing.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="anti" class="stack">
+      <h2>Mauvaises pratiques : description, cause, correction</h2>
+      <p class="intro">Cliquez sur un titre pour afficher le détail.</p>
+      <div class="stack" id="antiList"></div>
+    </section>
+
+    <section id="qcm-base" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 1</p>
+        <h2>QCM : notions de base</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="b"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS AVANCÉES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="avance" aria-labelledby="tab-btn-avance" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 2</p>
+      <h2>Notions avancées</h2>
+      <p class="lede">Ces notions rendent la messagerie fiable : confirmation de publication, livraison au moins une fois, nouvel essai, cohérence avec la base de données, hébergement du consommateur et traces.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="confirms" class="stack">
+      <h2>Publisher confirms</h2>
+      <p class="intro">Sans confirmation, le producteur ne sait pas si le broker a reçu le message. Avec les publisher confirms, le broker envoie un ack quand le message est en sécurité.</p>
+<script type="text/x-csharp">
+var options = new CreateChannelOptions(
+    publisherConfirmationsEnabled: true,
+    publisherConfirmationTrackingEnabled: true);
+await using IChannel channel = await connection.CreateChannelAsync(options, ct);
+
+try
+{
+    // La Task se termine à la réception de l'ack du broker
+    await channel.BasicPublishAsync("orders", "order.created", mandatory: true, basicProperties: props, body: body, cancellationToken: ct);
+}
+catch (PublishException ex)
+{
+    // nack du broker, ou message retourné (mandatory sans file) : à republier ou à signaler
+    _logger.LogError(ex, "Publication refusée pour {MessageId}", props.MessageId);
+    throw;
+}
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Type de file</th><th>Moment de l'ack du broker</th></tr></thead>
+        <tbody>
+          <tr><td>Message non routable, sans <code>mandatory</code></td><td class="secondary">Immédiatement. Le message est perdu, mais le broker confirme quand même.</td></tr>
+          <tr><td>Classic durable, message persistant</td><td class="secondary">Après l'écriture sur disque (fsync groupé).</td></tr>
+          <tr><td>Quorum queue</td><td class="secondary">Après l'écriture sur une majorité de nœuds.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Débit.</strong> Attendre chaque confirmation un par un limite le débit à un message par aller-retour. Pour un lot, lancez plusieurs publications, puis attendez les Tasks avec <code>Task.WhenAll</code>. Limitez le nombre de publications en cours (par exemple 100 à 1 000).</p></div>
+      <div class="msg info"><p><strong>Piège : <code>mandatory</code>.</strong> Un ack signifie « le broker a pris le message ». Il ne signifie pas « une file a reçu le message ». Sans <code>mandatory: true</code> ni <code>alternate-exchange</code>, un message sans binding est confirmé, puis supprimé.</p></div>
+    </section>
+
+    <section id="garanties" class="stack">
+      <h2>Garanties de livraison et idempotence</h2>
+      <p class="intro">Un réseau peut couper une connexion à tout moment. Le broker ne peut donc pas garantir « exactement une fois ». Il garantit « au plus une fois » ou « au moins une fois ».</p>
+      <div class="tiles">
+        <div class="tile red"><p class="eyebrow">At-most-once</p><h3>Au plus une fois</h3><p><code>autoAck: true</code>, pas de confirms. Le message peut être perdu. Il n'arrive jamais deux fois. Acceptable pour une métrique ou un cache à rafraîchir.</p></div>
+        <div class="tile green"><p class="eyebrow">At-least-once</p><h3>Au moins une fois</h3><p>Confirms côté producteur, ack manuel après le traitement. Aucun message n'est perdu. Un message peut arriver deux fois. C'est le choix par défaut.</p></div>
+        <div class="tile blue"><p class="eyebrow">Effectively-once</p><h3>Effet unique</h3><p>At-least-once + consommateur idempotent. Le message arrive deux fois, mais l'effet a lieu une fois. Vous construisez cette garantie dans l'application.</p></div>
+      </div>
+      <h3 class="sub">Causes d'un doublon</h3>
+      <ul class="bul">
+        <li>Le consommateur traite le message. La connexion coupe avant l'ack. Le broker livre de nouveau le message (<code>Redelivered = true</code>).</li>
+        <li>Le producteur publie. L'ack du broker est perdu. Le producteur publie de nouveau.</li>
+        <li>Le relais d'outbox publie, puis s'arrête avant de marquer la ligne comme publiée.</li>
+      </ul>
+      <h3 class="sub">Consommateur idempotent avec EF Core</h3>
+<script type="text/x-csharp">
+public async Task HandleAsync(OrderCreated evt, string messageId, CancellationToken ct)
+{
+    await using var tx = await _db.Database.BeginTransactionAsync(ct);
+    // Clé primaire (MessageId, Consumer) : un doublon provoque une violation de contrainte
+    _db.ProcessedMessages.Add(new ProcessedMessage(messageId, "billing", DateTime.UtcNow));
+    _db.Invoices.Add(Invoice.For(evt));
+    try
+    {
+        await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+    }
+    catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+    {
+        _logger.LogInformation("Message {Id} déjà traité : ignoré", messageId);
+        // pas d'erreur : le consommateur fera l'ack
+    }
+}
+</script>
+      <div class="msg info"><p><strong>Autres techniques.</strong> Une opération naturellement idempotente : <code>UPDATE ... SET Status = 'Paid'</code>. Un upsert sur une clé métier. Une version optimiste sur l'agrégat. La table des messages traités est la solution générale.</p></div>
+    </section>
+
+    <section id="dlq" class="stack">
+      <h2>Nouvel essai et dead letter : message empoisonné pas à pas</h2>
+      <p class="intro">Le consommateur échoue sur un message. Un requeue immédiat crée une boucle. La topologie suivante attend 5 s entre deux essais. Après 3 échecs, le message part dans une file de rebut (parking lot).</p>
+<h3 class="sub">Trois files, deux règles de dead letter</h3>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>File</th><th>Rôle</th><th>Règle de dead letter</th></tr></thead>
+        <tbody>
+          <tr><td><code>billing</code></td><td class="secondary">File principale, liée à l'exchange <code>orders</code>. Le consommateur la lit.</td><td class="secondary">Un message refusé part dans <code>billing.wait</code>.</td></tr>
+          <tr><td><code>billing.wait</code></td><td class="secondary">Salle d'attente. Aucun consommateur ne la lit.</td><td class="secondary">Après 5 s, un message expiré retourne dans <code>billing</code>, et dans aucune autre file.</td></tr>
+          <tr><td><code>billing.parking</code></td><td class="secondary">File de rebut. Une personne analyse son contenu.</td><td class="secondary">Aucune. Les messages y restent.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+// 1. File principale. Un message refusé (nack, requeue: false) part dans "billing.wait".
+await ch.QueueDeclareAsync("billing", true, false, false, new Dictionary<string, object?>
+{
+    ["x-queue-type"] = "quorum",
+    ["x-dead-letter-exchange"] = "",                 // exchange par défaut : il route vers la file du même nom que la clé
+    ["x-dead-letter-routing-key"] = "billing.wait"   // nom de la file cible
+});
+await ch.QueueBindAsync("billing", "orders", "order.created");
+
+// 2. Salle d'attente sans consommateur. Après 5 s, le message expire et retourne dans "billing" seulement.
+await ch.QueueDeclareAsync("billing.wait", true, false, false, new Dictionary<string, object?>
+{
+    ["x-message-ttl"] = 5000,
+    ["x-dead-letter-exchange"] = "",
+    ["x-dead-letter-routing-key"] = "billing"
+});
+
+// 3. File de rebut : les messages abandonnés y restent jusqu'à une analyse.
+await ch.QueueDeclareAsync("billing.parking", true, false, false);
+
+// 4. Dans le catch du consommateur
+long attempts = CountRejections(ea.BasicProperties.Headers) + 1;   // "count" de x-death pour billing + essai en cours
+if (attempts >= 3)
+{
+    // Abandon : exchange par défaut "" + clé "billing.parking" = directement dans la file billing.parking
+    await ch.BasicPublishAsync("", "billing.parking", mandatory: true,
+        new BasicProperties(ea.BasicProperties), ea.Body, ct);       // copie des headers, x-death compris
+    await ch.BasicAckAsync(ea.DeliveryTag, false, ct);               // retire l'original de billing
+}
+else
+{
+    // Le code ne cite pas "billing.wait" : le broker applique la règle de dead letter de "billing"
+    await ch.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, ct);
+}
+
+// Lit le compteur de l'entrée x-death { queue: billing, reason: rejected }
+static long CountRejections(IDictionary<string, object?>? headers)
+{
+    if (headers is null || !headers.TryGetValue("x-death", out var raw) || raw is not IList<object> deaths) return 0;
+    foreach (var death in deaths.OfType<IDictionary<string, object>>())
+    {
+        // Le client .NET reçoit les chaînes des headers sous forme de byte[]
+        var queue  = Encoding.UTF8.GetString((byte[])death["queue"]);
+        var reason = Encoding.UTF8.GetString((byte[])death["reason"]);
+        if (queue == "billing" && reason == "rejected") return Convert.ToInt64(death["count"]);
+    }
+    return 0;
+}
+</script>
+      <h3 class="sub">Qui déplace le message ?</h3>
+      <p>Le consommateur ne cite jamais <code>billing.wait</code>. Il refuse le message, et c'est tout. Le broker lit ensuite la règle de dead letter de la file, puis déplace le message. Une règle de dead letter est comme une redirection de courrier : « tout ce qui est refusé ici part là-bas ».</p>
+      <ol class="steps">
+        <li><h3>Le consommateur refuse le message</h3><p><code>BasicNackAsync(requeue: false)</code> retire le message de <code>billing</code>.</p></li>
+        <li><h3>Le broker applique la règle de <code>billing</code></h3><p>Il publie le message sur l'exchange par défaut <code>""</code> avec la clé <code>billing.wait</code>. L'exchange par défaut envoie un message à la file dont le nom est égal à la clé. Le broker ajoute aussi une entrée dans le header <code>x-death</code>.</p></li>
+        <li><h3>Le message attend</h3><p>Aucun consommateur ne lit <code>billing.wait</code>. Après 5 s, le TTL expire.</p></li>
+        <li><h3>Le broker applique la règle de <code>billing.wait</code></h3><p>Il publie le message sur <code>""</code> avec la clé <code>billing</code>. Le message retourne dans <code>billing</code>, et dans aucune autre file.</p></li>
+        <li><h3>Le consommateur fait un nouvel essai</h3><p>Au 3e échec, le code ne fait pas de nack. Il publie lui-même le message dans <code>billing.parking</code>, puis fait l'ack de l'original.</p></li>
+      </ol>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Appel dans le catch</th><th>Résultat</th></tr></thead>
+        <tbody>
+          <tr><td><code>BasicNackAsync(requeue: true)</code></td><td class="secondary">Le message retourne tout de suite dans <code>billing</code>. La règle de dead letter ne s'applique pas. Il n'y a pas d'attente : risque de boucle rapide.</td></tr>
+          <tr><td><code>BasicNackAsync(requeue: false)</code></td><td class="secondary">La règle de dead letter de la file s'applique. Le message part dans <code>billing.wait</code>.</td></tr>
+          <tr class="is-alert"><td><code>requeue: false</code> sans <code>x-dead-letter-exchange</code></td><td class="secondary">Le broker supprime le message. Il est perdu, sans erreur.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg info"><p><strong>L'exchange par défaut <code>""</code>.</strong> Chaque file est liée automatiquement à cet exchange, avec son nom comme clé. Publier sur <code>""</code> avec la clé <code>billing.parking</code> envoie donc le message dans la file <code>billing.parking</code>, et seulement dans celle-ci. Aucune déclaration d'exchange ni de binding n'est nécessaire. C'est le moyen le plus simple de viser une seule file.</p></div>
+      <div class="panel stack">
+        <div class="board">
+          <div class="column"><div class="column-head"><h3>billing</h3></div><div id="dlMain"></div></div>
+          <div class="column"><div class="column-head"><h3>Consommateur</h3></div><div id="dlCons"></div></div>
+          <div class="column"><div class="column-head"><h3>billing.wait (TTL 5 s)</h3></div><div id="dlWait"></div></div>
+          <div class="column"><div class="column-head"><h3>billing.parking</h3></div><div id="dlPark"></div></div>
+        </div>
+        <ul class="list kv"><li><span>Header <code>x-death</code></span><span id="dlDeath"></span></li><li><span>Temps</span><span id="dlTime"></span></li></ul>
+        <div data-stepbar="dl"></div>
+      </div>
+      <div class="msg warning"><p><strong>Piège : retour par l'exchange principal.</strong> Une autre topologie met <code>x-dead-letter-exchange = "orders"</code> sur <code>billing.wait</code>, sans routing key. À l'expiration, le message garde sa clé d'origine <code>order.created</code>. L'exchange <code>orders</code> le copie alors dans toutes les files liées à cette clé. Seul le service de facturation a échoué, mais tous les services reçoivent un doublon.</p></div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>DLX de <code>billing.wait</code></th><th>Files qui reçoivent le message après 5 s</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td><code>"orders"</code>, sans routing key</td><td class="secondary"><code>billing</code>, mais aussi <code>email</code> et <code>stats</code> : un 2e mail au client, une commande comptée deux fois.</td></tr>
+          <tr><td><code>""</code> + <code>x-dead-letter-routing-key = "billing"</code></td><td class="secondary"><code>billing</code> seulement.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg info"><p><strong>DLX nommé.</strong> Un exchange dédié, par exemple <code>billing.retry</code>, fonctionne aussi. Il faut alors déclarer cet exchange et un binding vers <code>billing.wait</code>. Sans ce binding, le broker supprime le message refusé, sans erreur. L'exchange par défaut évite ces deux déclarations. Un exchange dédié est utile pour router vers plusieurs délais (5 s, 30 s, 5 min).</p></div>
+      <div class="msg"><p><strong>Erreur transitoire ou permanente.</strong> Un timeout HTTP est transitoire : un nouvel essai a un sens. Un JSON invalide est permanent : envoyez le message directement dans la file de rebut. Un nouvel essai ne le corrige pas.</p></div>
+    </section>
+
+    <section id="outbox" class="stack">
+      <h2>Pattern Outbox et pattern Inbox</h2>
+      <p class="intro">Un service écrit en base de données et publie un événement. La base et le broker sont deux systèmes. Une transaction ne couvre pas les deux. Choisissez une stratégie et un incident. Le tableau indique l'état final.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><span class="label">Stratégie</span><span class="segmented segwrap" role="group" aria-label="Stratégie" id="obStrat"><button type="button" data-m="after" aria-pressed="true">SaveChanges puis Publish</button><button type="button" data-m="before" aria-pressed="false">Publish puis SaveChanges</button><button type="button" data-m="outbox" aria-pressed="false">Outbox</button></span></div>
+          <div class="field"><span class="label">Incident</span><span class="segmented segwrap" role="group" aria-label="Incident" id="obCrash"><button type="button" data-m="none" aria-pressed="true">Aucun</button><button type="button" data-m="between" aria-pressed="false">Crash entre les deux</button><button type="button" data-m="broker" aria-pressed="false">Broker indisponible</button><button type="button" data-m="db" aria-pressed="false">Erreur SQL</button></span></div>
+        </div>
+        <div id="obCode"></div>
+        <div class="table-wrap"><table class="table dense" id="obOut"></table></div>
+        <div class="msg" id="obNote"></div>
+      </div>
+      <h3 class="sub">Outbox avec EF Core</h3>
+<script type="text/x-csharp">
+// 1. Dans la requête : une seule transaction pour la commande et le message
+_db.Orders.Add(order);
+_db.OutboxMessages.Add(new OutboxMessage
+{
+    Id = Guid.NewGuid(),                         // devient le MessageId
+    Type = "order.created",
+    Payload = JsonSerializer.Serialize(new OrderCreated(order.Id, order.Total)),
+    OccurredAt = DateTime.UtcNow
+});
+await _db.SaveChangesAsync(ct);                  // SaveChanges est transactionnel
+
+// 2. Relais : un BackgroundService lit les lignes non publiées
+var batch = await _db.OutboxMessages
+    .FromSql($"SELECT * FROM outbox_messages WHERE published_at IS NULL ORDER BY occurred_at LIMIT 100 FOR UPDATE SKIP LOCKED")
+    .ToListAsync(ct);                            // dans une transaction : SKIP LOCKED pour plusieurs instances
+foreach (var m in batch)
+{
+    await channel.BasicPublishAsync("orders", m.Type, true, PropsFor(m), Encoding.UTF8.GetBytes(m.Payload), ct);   // confirms activés
+    m.PublishedAt = DateTime.UtcNow;
+}
+await _db.SaveChangesAsync(ct);
+</script>
+      <div class="grid2">
+        <div class="tile green"><h3>Outbox (côté producteur)</h3><p>Le message est écrit dans la même transaction que les données. Un relais le publie ensuite. Résultat : aucun événement perdu, aucun événement fantôme. Les doublons sont possibles : le relais peut publier deux fois.</p></div>
+        <div class="tile blue"><h3>Inbox (côté consommateur)</h3><p>Le consommateur enregistre le <code>MessageId</code> dans la même transaction que son traitement. Il ignore un message déjà enregistré. Outbox + Inbox donnent un effet unique de bout en bout.</p></div>
+      </div>
+    </section>
+
+    <section id="worker" class="stack">
+      <h2>Consommateur hébergé : BackgroundService et scope DI</h2>
+      <p class="intro">Un consommateur vit pendant toute la vie de l'application. Un <code>DbContext</code> est scoped. Créez donc un scope DI par message.</p>
+<script type="text/x-csharp">
+public sealed class BillingConsumer(IConnection connection, IServiceScopeFactory scopes, ILogger<BillingConsumer> logger) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        IChannel channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
+        await channel.BasicQosAsync(0, prefetchCount: 20, global: false, stoppingToken);
+
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        consumer.ReceivedAsync += async (_, ea) =>
+        {
+            await using var scope = scopes.CreateAsyncScope();               // un scope par message
+            var handler = scope.ServiceProvider.GetRequiredService<InvoiceHandler>();
+            try
+            {
+                await handler.HandleAsync(ea.Body, ea.BasicProperties.MessageId, stoppingToken);
+                await channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Échec du message {Tag}", ea.DeliveryTag);
+                await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false, stoppingToken);   // vers le DLX
+            }
+        };
+        await channel.BasicConsumeAsync("billing", autoAck: false, consumer, stoppingToken);
+        await Task.Delay(Timeout.Infinite, stoppingToken);                   // garde le service actif
+    }
+}
+// Program.cs
+builder.Services.AddSingleton<IConnection>(_ => new ConnectionFactory { HostName = "rabbitmq" }.CreateConnectionAsync().GetAwaiter().GetResult());
+builder.Services.AddHostedService<BillingConsumer>();
+</script>
+      <div class="msg warning"><p><strong>Erreurs fréquentes.</strong> Injecter un <code>DbContext</code> dans le constructeur d'un service singleton : le contexte vit pour toujours et grossit. Oublier le <code>try/catch</code> : le message reste unacked jusqu'à la fermeture du channel. Faire un ack avant le traitement : un crash perd le message.</p></div>
+      <div class="msg info"><p><strong>Arrêt propre.</strong> À l'arrêt, <code>stoppingToken</code> est annulé. Les messages unacked reviennent dans la file à la fermeture du channel. Un autre pod les traite. Le traitement doit donc rester idempotent.</p></div>
+    </section>
+
+    <section id="masstransit" class="stack">
+      <h2>MassTransit</h2>
+      <p class="intro">MassTransit est une couche au-dessus de RabbitMQ. Il crée la topologie, gère la sérialisation, le nouvel essai, l'outbox et les scopes DI. Wolverine fait le même travail avec une autre approche. Changez de bibliothèque pour comparer le même cas : un consommateur de <code>OrderCreated</code> qui crée une facture.</p>
+      <div class="toolbar"><div class="field"><span class="label">Bibliothèque</span><span class="segmented" role="group" aria-label="Bibliothèque" id="busLib"><button type="button" data-m="mt" aria-pressed="true">MassTransit</button><button type="button" data-m="wolv" aria-pressed="false">Wolverine</button></span></div></div>
+      <div data-bus="mt">
+<script type="text/x-csharp">
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<OrderCreatedConsumer>();
+    x.AddEntityFrameworkOutbox<AppDbContext>(o =>
+    {
+        o.UseSqlServer();          // ou UsePostgres()
+        o.UseBusOutbox();          // IPublishEndpoint écrit dans l'outbox, dans la transaction du DbContext
+    });
+    x.AddConfigureEndpointsCallback((context, name, cfg) =>
+    {
+        cfg.UseMessageRetry(r => r.Intervals(100, 500, 2000));       // nouvel essai en mémoire
+        cfg.UseEntityFrameworkOutbox<AppDbContext>(context);          // inbox : déduplication côté consommateur
+    });
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("rabbitmq", "/", h => { h.Username("app"); h.Password(secret); });
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+public sealed class OrderCreatedConsumer(AppDbContext db) : IConsumer<OrderCreated>
+{
+    public async Task Consume(ConsumeContext<OrderCreated> context)
+    {
+        db.Invoices.Add(Invoice.For(context.Message));
+        await db.SaveChangesAsync(context.CancellationToken);   // ack automatique si aucune exception
+    }
+}
+</script>
+      </div>
+      <div data-bus="wolv" hidden>
+<script type="text/x-csharp">
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseRabbitMq(f => { f.HostName = "rabbitmq"; f.UserName = "app"; f.Password = secret; })
+        .AutoProvision()                 // crée exchanges, files et bindings au démarrage
+        .UseConventionalRouting();       // un exchange par type de message, une file par type consommé
+
+    opts.PersistMessagesWithSqlServer(connectionString);   // ou PersistMessagesWithPostgresql() : tables outbox et inbox
+    opts.UseEntityFrameworkCoreTransactions();
+    opts.Policies.AutoApplyTransactions();                 // Wolverine appelle SaveChangesAsync et commit
+    opts.Policies.UseDurableInboxOnAllListeners();         // inbox : déduplication côté consommateur
+    opts.Policies.UseDurableOutboxOnAllSendingEndpoints(); // outbox : publication dans la transaction
+
+    opts.OnException<TimeoutException>()
+        .RetryWithCooldown(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(2))
+        .Then.MoveToErrorQueue();        // nouvel essai en mémoire, puis dead letter queue
+});
+builder.Services.AddDbContextWithWolverineIntegration<AppDbContext>(o => o.UseSqlServer(connectionString));
+
+// Pas d'interface : Wolverine trouve la classe *Handler et la méthode Handle par convention
+public static class OrderCreatedHandler
+{
+    public static InvoiceCreated Handle(OrderCreated message, AppDbContext db)   // dépendances injectées en paramètres
+    {
+        var invoice = Invoice.For(message);
+        db.Invoices.Add(invoice);
+        return new InvoiceCreated(invoice.Id);   // message en cascade : publié par l'outbox, après le commit
+    }
+}
+</script>
+      </div>
+      <div class="msg note" id="busNote"></div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Élément</th><th>Topologie créée par MassTransit</th></tr></thead>
+        <tbody>
+          <tr><td>Type de message <code>OrderCreated</code></td><td class="secondary">Un exchange fanout nommé d'après le type, par exemple <code>Contracts:OrderCreated</code>.</td></tr>
+          <tr><td>Endpoint <code>order-created</code></td><td class="secondary">Une file et un exchange du même nom. L'exchange du type est lié à l'exchange de l'endpoint.</td></tr>
+          <tr><td>Échec après tous les essais</td><td class="secondary">Le message part dans <code>order-created_error</code>, avec l'exception dans les headers.</td></tr>
+          <tr><td>Message sans consommateur pour son type</td><td class="secondary">Le message part dans <code>order-created_skipped</code>.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg info"><p><strong>Client natif ou MassTransit.</strong> Le client natif donne un contrôle total et aucune dépendance. MassTransit fait gagner du temps sur l'outbox, le nouvel essai, les sagas et les tests (<code>ITestHarness</code>). La topologie MassTransit est plus difficile à lire pour un autre langage.</p></div>
+      <div class="msg"><p><strong>Licence.</strong> MassTransit 8 est open source (Apache 2.0). Les versions suivantes passent sous licence commerciale. Vérifiez la version et la licence avant de démarrer un projet.</p></div>
+    </section>
+
+    <section id="quorum" class="stack">
+      <h2>Quorum queues et classic queues</h2>
+      <p class="intro">RabbitMQ 4 a supprimé la réplication des classic queues (mirroring). Pour une file répliquée, utilisez une quorum queue : <code>x-queue-type = quorum</code>.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Critère</th><th>Classic</th><th>Quorum</th></tr></thead>
+        <tbody>
+          <tr><td><b>Réplication</b></td><td class="secondary">Aucune (un seul nœud).</td><td class="secondary">Sur plusieurs nœuds, avec l'algorithme Raft.</td></tr>
+          <tr><td><b>Durabilité</b></td><td class="secondary">Durable ou non. Messages persistants ou non.</td><td class="secondary">Toujours durable. Tous les messages sur disque.</td></tr>
+          <tr><td><b>Perte d'un nœud</b></td><td class="secondary">File indisponible. Messages perdus si le disque est perdu.</td><td class="secondary">File disponible si une majorité de nœuds fonctionne.</td></tr>
+          <tr><td><b>Messages empoisonnés</b></td><td class="secondary">Aucune limite de livraisons.</td><td class="secondary"><code>x-delivery-limit</code> (20 par défaut dans RabbitMQ 4).</td></tr>
+          <tr><td><b>Files exclusives ou temporaires</b></td><td class="secondary">Oui.</td><td class="secondary">Non.</td></tr>
+          <tr><td><b>Usage</b></td><td class="secondary">Files temporaires, réponses RPC, données jetables.</td><td class="secondary">Toutes les files de données métier.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Le type ne change pas.</strong> Vous ne pouvez pas convertir une file existante. Créez une nouvelle file, déplacez les consommateurs, puis videz l'ancienne file. Prévoyez cette migration avant de passer à RabbitMQ 4.</p></div>
+    </section>
+
+    <section id="ordre" class="stack">
+      <h2>Ordre des messages et consommateurs concurrents</h2>
+      <p class="intro">Une file livre les messages dans l'ordre. Mais plusieurs consommateurs traitent les messages en même temps. Les traitements se terminent donc dans un ordre différent. Les 8 messages concernent la même commande.</p>
+      <div class="panel stack">
+        <div class="row"><button class="btn secondary sm" type="button" id="orOne">1 consommateur</button><button class="btn sm" type="button" id="orThree">3 consommateurs</button><button class="btn secondary sm" type="button" id="orRetry">3 consommateurs + nouvel essai</button></div>
+        <div class="gantt" id="orGantt"></div>
+        <div class="zone"><h3>Ordre de fin des traitements</h3><div class="seq" id="orSeq"></div></div>
+        <div class="msg" id="orNote"></div>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Besoin</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>Ordre global strict</td><td class="secondary">Un seul consommateur, prefetch 1 ou petit. Avec plusieurs instances : <a href="#partition">single active consumer</a>. Le débit est limité.</td></tr>
+          <tr><td>Ordre par entité (commande, client)</td><td class="secondary">Partitionnement par clé : <a href="#partition">consistent hash exchange</a>, un consommateur par file.</td></tr>
+          <tr><td>Ordre peu important</td><td class="secondary">Messages commutatifs ou version sur l'entité. Le consommateur ignore une version plus ancienne que la version en base.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="trace" class="stack">
+      <h2>Traces distribuées : <code>traceparent</code> dans les headers</h2>
+      <p class="intro">Une requête HTTP publie un message. Un worker le consomme. Pour voir une seule trace, le contexte de trace doit voyager dans les headers du message.</p>
+<script type="text/x-csharp">
+// RabbitMQ.Client 7 crée des Activity et ajoute traceparent dans les headers.
+// Package RabbitMQ.Client.OpenTelemetry :
+builder.Services.AddOpenTelemetry().WithTracing(t => t
+    .AddAspNetCoreInstrumentation()
+    .AddRabbitMQInstrumentation()
+    .AddOtlpExporter());
+
+// Sans instrumentation : propagation manuelle
+var headers = new Dictionary<string, object?>();
+Propagators.DefaultTextMapPropagator.Inject(
+    new PropagationContext(Activity.Current?.Context ?? default, Baggage.Current),
+    headers, (h, key, value) => h[key] = value);
+var props = new BasicProperties { Headers = headers, Persistent = true };
+</script>
+      <div class="msg info"><p><strong>Côté consommateur.</strong> Le consommateur lit <code>traceparent</code> dans <code>ea.BasicProperties.Headers</code>. Il démarre une Activity de type <code>Consumer</code> avec ce parent. Les logs du worker ont alors le même <code>TraceId</code> que la requête HTTP. Avec une outbox, enregistrez aussi <code>traceparent</code> dans la ligne d'outbox.</p></div>
+    </section>
+
+    <section id="qcm-avance" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 2</p>
+        <h2>QCM : notions avancées</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="a"></div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════════════ NOTIONS PROFONDES ═══════════════════════════ -->
+  <div class="tabpanel" role="tabpanel" id="profond" aria-labelledby="tab-btn-profond" tabindex="-1" hidden>
+    <div class="part">
+      <p class="eyebrow">Niveau 3</p>
+      <h2>Notions profondes</h2>
+      <p class="lede">Ces notions expliquent le fonctionnement interne du broker et du client : réplication Raft, streams, contrôle de flux, prefetch, channels, reconnexion et partitionnement.</p>
+      <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <section id="raft" class="stack">
+      <h2>Quorum queues et Raft pas à pas</h2>
+      <p class="intro">Une quorum queue a un leader et des followers, sur trois nœuds dans cet exemple. Le leader écrit chaque opération dans un journal. Une opération est validée quand une majorité de nœuds l'a écrite.</p>
+      <div class="panel stack">
+        <div class="board">
+          <div class="column"><div class="column-head"><h3>Producteur</h3></div><div id="rfPub"></div></div>
+          <div class="column"><div class="column-head"><h3>Nœud 1</h3></div><div id="rfN1"></div></div>
+          <div class="column"><div class="column-head"><h3>Nœud 2</h3></div><div id="rfN2"></div></div>
+          <div class="column"><div class="column-head"><h3>Nœud 3</h3></div><div id="rfN3"></div></div>
+        </div>
+        <ul class="list kv"><li><span>Nœuds actifs</span><span id="rfLive"></span></li><li><span>État de la file</span><span id="rfState"></span></li></ul>
+        <div data-stepbar="rf"></div>
+      </div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th class="num">Réplicas</th><th class="num">Majorité</th><th class="num">Pannes tolérées</th><th>Remarque</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="secondary">Aucune protection. Seulement pour le développement.</td></tr>
+          <tr><td class="num">3</td><td class="num">2</td><td class="num">1</td><td class="secondary">Choix courant.</td></tr>
+          <tr><td class="num">4</td><td class="num">3</td><td class="num">1</td><td class="secondary">Pas mieux que 3 : un nombre pair n'ajoute pas de tolérance.</td></tr>
+          <tr><td class="num">5</td><td class="num">3</td><td class="num">2</td><td class="secondary">Plus sûr. Chaque écriture attend 3 nœuds : la latence augmente.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg info"><p><strong>Coût.</strong> Chaque message est écrit sur disque sur plusieurs nœuds. Une quorum queue utilise plus de disque et de réseau qu'une classic queue. Une file très longue ralentit la récupération d'un nœud. Gardez les files courtes : un consommateur doit suivre le rythme du producteur.</p></div>
+    </section>
+
+    <section id="streams" class="stack">
+      <h2>Streams</h2>
+      <p class="intro">Un stream est un journal append-only répliqué, comme une partition Kafka. Un consommateur lit à partir d'un offset. Les messages ne sont pas supprimés après la lecture.</p>
+<script type="text/x-csharp">
+await ch.QueueDeclareAsync("order-events", durable: true, exclusive: false, autoDelete: false,
+    arguments: new Dictionary<string, object?>
+    {
+        ["x-queue-type"] = "stream",
+        ["x-max-age"] = "7D",                    // rétention par âge
+        ["x-max-length-bytes"] = 20_000_000_000  // rétention par taille
+    });
+
+await ch.BasicQosAsync(0, prefetchCount: 100, global: false);   // obligatoire pour un stream
+await ch.BasicConsumeAsync("order-events", autoAck: false, consumerTag: "", noLocal: false, exclusive: false,
+    arguments: new Dictionary<string, object?> { ["x-stream-offset"] = "first" },   // first, last, next, offset, timestamp
+    consumer: consumer);
+</script>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Critère</th><th>File (classic ou quorum)</th><th>Stream</th></tr></thead>
+        <tbody>
+          <tr><td><b>Après l'ack</b></td><td class="secondary">Le message est supprimé.</td><td class="secondary">Le message reste. L'ack sert seulement au contrôle de flux.</td></tr>
+          <tr><td><b>Plusieurs lecteurs</b></td><td class="secondary">Une file par lecteur (fanout).</td><td class="secondary">Un stream, chaque lecteur a son offset.</td></tr>
+          <tr><td><b>Relecture</b></td><td class="secondary">Impossible.</td><td class="secondary">Possible depuis un offset ou une date.</td></tr>
+          <tr><td><b>Protocole</b></td><td class="secondary">AMQP.</td><td class="secondary">AMQP ou protocole stream natif (port 5552, package <code>RabbitMQ.Stream.Client</code>), beaucoup plus rapide.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="flow" class="stack">
+      <h2>Flow control et alarmes mémoire ou disque</h2>
+      <p class="intro">Le broker protège sa mémoire et son disque. Quand une ressource manque, il ralentit ou bloque les producteurs.</p>
+      <div class="tiles">
+        <div class="tile blue"><p class="eyebrow">Interne</p><h3>Credit flow</h3><p>Chaque processus interne du broker donne un crédit au processus précédent. Une file lente ne donne plus de crédit. Le broker arrête de lire le socket du producteur. La connexion passe à l'état <code>flow</code>. Le producteur ralentit sans erreur.</p></div>
+        <div class="tile red"><p class="eyebrow">Mémoire</p><h3>Alarme mémoire</h3><p>Seuil : <code>vm_memory_high_watermark</code>, une fraction de la RAM disponible. Au-dessus, le broker bloque <b>toutes</b> les connexions qui publient, sur tout le cluster.</p></div>
+        <div class="tile red"><p class="eyebrow">Disque</p><h3>Alarme disque</h3><p>Seuil : <code>disk_free_limit</code>. Sous ce seuil d'espace libre, le broker bloque les publications. Les consommateurs continuent à lire et à acquitter.</p></div>
+      </div>
+<script type="text/x-csharp">
+connection.ConnectionBlockedAsync += (_, e) =>
+{
+    _logger.LogWarning("Broker bloqué : {Reason}", e.Reason);   // "low on memory", "low on disk space"
+    _health.MarkDegraded();
+    return Task.CompletedTask;
+};
+connection.ConnectionUnblockedAsync += (_, _) => { _health.MarkHealthy(); return Task.CompletedTask; };
+</script>
+      <div class="msg warning"><p><strong>Effet dans une API.</strong> Pendant une alarme, <code>BasicPublishAsync</code> attend. Une requête HTTP qui publie attend aussi. Passez un <code>CancellationToken</code> avec un délai. Une outbox évite ce problème : la requête écrit seulement en base.</p></div>
+      <div class="msg"><p><strong>Partager une connexion.</strong> Le broker bloque une connexion entière. Une connexion qui publie et consomme est bloquée aussi pour les acks. Les consommateurs ne peuvent plus vider les files. Séparez la connexion de publication et la connexion de consommation.</p></div>
+    </section>
+
+    <section id="prefetch-calc" class="stack">
+      <h2>Calcul du prefetch</h2>
+      <p class="intro">Le consommateur doit toujours avoir un message prêt. Entre l'ack et l'arrivée du message suivant, il y a un aller-retour réseau. Le prefetch doit couvrir ce temps.</p>
+      <div class="panel stack">
+        <div class="toolbar">
+          <div class="field"><label for="pcRtt">Aller-retour réseau (ms) : <span class="val" id="pcRttO"></span></label><input type="range" id="pcRtt" min="1" max="200" value="20"></div>
+          <div class="field"><label for="pcProc">Traitement d'un message (ms) : <span class="val" id="pcProcO"></span></label><input type="range" id="pcProc" min="1" max="500" value="10"></div>
+          <div class="field"><label for="pcConc">ConsumerDispatchConcurrency : <span class="val" id="pcConcO"></span></label><input type="range" id="pcConc" min="1" max="16" value="4"></div>
+        </div>
+        <div class="tiles">
+          <div class="tile neutral"><p class="eyebrow">Prefetch minimal conseillé</p><p class="value" id="pcRec"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Débit maximal</p><p class="value" id="pcMax"></p></div>
+          <div class="tile neutral"><p class="eyebrow">Débit avec prefetch 1</p><p class="value" id="pcOne"></p></div>
+        </div>
+        <div class="chart" id="pcChart"></div>
+        <div class="msg" id="pcNote"></div>
+      </div>
+      <p class="prose">Modèle simplifié : débit = min(concurrence / traitement, prefetch / (traitement + aller-retour)). Prefetch conseillé = concurrence × (1 + aller-retour / traitement), arrondi au-dessus.</p>
+      <div class="msg info"><p><strong>Règles pratiques.</strong> Traitement rapide et réseau lent : grand prefetch (100 à 300). Traitement long (plusieurs secondes) : petit prefetch (1 à concurrence). Un prefetch trop grand garde les messages chez un seul consommateur et augmente la mémoire. Sans <code>BasicQos</code>, le prefetch est illimité.</p></div>
+    </section>
+
+    <section id="channels" class="stack">
+      <h2>Channels, concurrence et delivery tags</h2>
+      <p class="intro">Le client .NET exécute les callbacks des consommateurs dans un dispatcher. Par défaut, un channel traite un message à la fois.</p>
+<script type="text/x-csharp">
+var factory = new ConnectionFactory
+{
+    HostName = "rabbitmq",
+    ConsumerDispatchConcurrency = 4   // 4 callbacks ReceivedAsync en parallèle par channel (défaut : 1)
+};
+// Ou par channel :
+IChannel ch = await connection.CreateChannelAsync(new CreateChannelOptions(
+    publisherConfirmationsEnabled: false, publisherConfirmationTrackingEnabled: false,
+    consumerDispatchConcurrency: 8));
+</script>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Delivery tag</h3>
+          <ul class="bul">
+            <li>Le broker numérote les livraisons <b>par channel</b> : 1, 2, 3…</li>
+            <li>Un ack doit utiliser le channel qui a reçu le message. Sur un autre channel, le tag est inconnu. Le broker ferme ce channel avec <code>406 PRECONDITION_FAILED - unknown delivery tag</code>.</li>
+            <li>Un double ack du même tag provoque la même erreur.</li>
+            <li><code>multiple: true</code> acquitte tous les tags inférieurs ou égaux. Avec une concurrence supérieure à 1, ce réglage acquitte des messages encore en traitement.</li>
+          </ul>
+        </div>
+        <div class="panel stack">
+          <h3>Concurrence et ordre</h3>
+          <ul class="bul">
+            <li>Avec <code>ConsumerDispatchConcurrency = 1</code>, les messages d'un channel sont traités l'un après l'autre.</li>
+            <li>Avec une valeur supérieure, l'ordre de fin des traitements change.</li>
+            <li>Le prefetch doit être au moins égal à la concurrence. Sinon, des slots restent vides.</li>
+            <li>Publication : n'utilisez pas un channel pour plusieurs publications concurrentes. Utilisez un channel par publieur ou un pool de channels.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="msg warning"><p><strong>Code bloquant dans le callback.</strong> Le callback <code>ReceivedAsync</code> doit être async de bout en bout. Un <code>.Result</code> dans le callback bloque le dispatcher et un worker du ThreadPool. Voir la page <a href="async-dotnet.html">Async et threads .NET</a>.</p></div>
+    </section>
+
+    <section id="recovery" class="stack">
+      <h2>Heartbeats et reconnexion automatique</h2>
+      <p class="intro">Une connexion TCP peut mourir sans fermeture visible : pare-feu, NAT, nœud arrêté. Les heartbeats détectent ce cas. La reconnexion automatique recrée ensuite la connexion.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Réglage <code>ConnectionFactory</code></th><th>Défaut</th><th>Effet</th></tr></thead>
+        <tbody>
+          <tr><td><code>RequestedHeartbeat</code></td><td>60 s</td><td class="secondary">Le client et le broker envoient une trame vide si la connexion est inactive. Après environ deux intervalles sans trame, la connexion est considérée comme morte.</td></tr>
+          <tr><td><code>AutomaticRecoveryEnabled</code></td><td>true</td><td class="secondary">Le client recrée la connexion et les channels après une coupure réseau.</td></tr>
+          <tr><td><code>TopologyRecoveryEnabled</code></td><td>true</td><td class="secondary">Le client déclare de nouveau les exchanges, files, bindings et consommateurs créés par cette connexion.</td></tr>
+          <tr><td><code>NetworkRecoveryInterval</code></td><td>5 s</td><td class="secondary">Délai entre deux tentatives de reconnexion.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="msg warning"><p><strong>Cas non couverts.</strong> La première connexion au démarrage n'a pas de reconnexion automatique : prévoyez une boucle avec délai (ou Polly). Une fermeture volontaire par le broker (erreur de protocole, channel fermé par un 406) n'est pas reprise. Les messages unacked au moment de la coupure reviennent en file avec <code>Redelivered = true</code>.</p></div>
+<script type="text/x-csharp">
+connection.ConnectionShutdownAsync += (_, e) => { _logger.LogWarning("Connexion fermée : {Cause}", e.ReplyText); return Task.CompletedTask; };
+connection.RecoverySucceededAsync += (_, _) => { _logger.LogInformation("Connexion rétablie"); return Task.CompletedTask; };
+channel.ChannelShutdownAsync += (_, e) => { _logger.LogError("Channel fermé : {Code} {Text}", e.ReplyCode, e.ReplyText); return Task.CompletedTask; };
+</script>
+    </section>
+
+    <section id="partition" class="stack">
+      <h2>Single active consumer et consistent hash exchange</h2>
+      <p class="intro">Deux outils gardent l'ordre avec plusieurs instances de l'application.</p>
+      <div class="grid2">
+        <div class="panel stack">
+          <h3>Single active consumer</h3>
+          <p class="prose">Argument de file <code>x-single-active-consumer = true</code>. Plusieurs consommateurs s'abonnent. Le broker livre les messages à un seul consommateur. Si ce consommateur s'arrête, le broker active le suivant.</p>
+          <p class="prose muted">Résultat : ordre strict et haute disponibilité. Mais une seule instance travaille.</p>
+        </div>
+        <div class="panel stack">
+          <h3>Consistent hash exchange</h3>
+          <p class="prose">Plugin <code>rabbitmq_consistent_hash_exchange</code>, type <code>x-consistent-hash</code>. L'exchange calcule un hash de la routing key (par exemple l'identifiant de commande). Il envoie toujours la même clé vers la même file.</p>
+          <p class="prose muted">Résultat : ordre par clé, et une file par consommateur. La clé de binding est un poids, pas un motif.</p>
+        </div>
+      </div>
+<script type="text/x-csharp">
+await ch.ExchangeDeclareAsync("orders.hash", "x-consistent-hash", durable: true);
+for (int i = 0; i < 4; i++)
+{
+    await ch.QueueDeclareAsync($"orders.p{i}", true, false, false, new Dictionary<string, object?>
+    {
+        ["x-queue-type"] = "quorum",
+        ["x-single-active-consumer"] = true      // ordre garanti même avec plusieurs pods
+    });
+    await ch.QueueBindAsync($"orders.p{i}", "orders.hash", routingKey: "1");   // poids 1
+}
+await ch.BasicPublishAsync("orders.hash", routingKey: order.Id.ToString(), true, props, body);
+</script>
+      <div class="msg info"><p><strong>Limite.</strong> Ajouter une file déplace une partie des clés vers la nouvelle file. Pendant ce changement, deux messages d'une même clé peuvent être dans deux files. Choisissez le nombre de partitions au départ.</p></div>
+    </section>
+
+    <section id="poison" class="stack">
+      <h2>Messages empoisonnés et <code>x-delivery-limit</code></h2>
+      <p class="intro">Un message fait planter le consommateur à chaque essai. Avec un requeue, il revient en tête de file. Il bloque alors les autres messages et utilise le CPU sans fin.</p>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>File</th><th>Comportement</th></tr></thead>
+        <tbody>
+          <tr class="is-alert"><td>Classic</td><td class="secondary">Aucun compteur. <code>BasicNack(requeue: true)</code> crée une boucle infinie. Seul indice : <code>Redelivered = true</code>, sans nombre d'essais.</td></tr>
+          <tr><td>Quorum</td><td class="secondary">Le broker compte les retours en file dans le header <code>x-delivery-count</code>. Au-delà de <code>x-delivery-limit</code>, il supprime le message ou l'envoie au DLX. RabbitMQ 4 fixe cette limite à 20 par défaut.</td></tr>
+        </tbody>
+      </table></div>
+<script type="text/x-csharp">
+await ch.QueueDeclareAsync("billing", true, false, false, new Dictionary<string, object?>
+{
+    ["x-queue-type"] = "quorum",
+    ["x-delivery-limit"] = 5,
+    ["x-dead-letter-exchange"] = "billing.dlx",
+    ["x-dead-letter-strategy"] = "at-least-once",   // dead lettering sans perte (demande x-overflow = reject-publish)
+    ["x-overflow"] = "reject-publish"
+});
+</script>
+      <div class="msg"><p><strong>Dead lettering at-least-once.</strong> Par défaut, le transfert vers le DLX est at-most-once : une perte est possible si la file cible est indisponible. La stratégie <code>at-least-once</code> des quorum queues garde le message jusqu'à la confirmation de la file cible.</p></div>
+      <div class="msg info"><p><strong>Exploitation.</strong> Surveillez la taille des files de rebut avec une alerte. Prévoyez un outil pour relire, corriger et republier les messages. Une file de rebut sans suivi est une perte de données lente.</p></div>
+    </section>
+
+    <section id="qcm-profond" class="stack">
+      <div class="part">
+        <p class="eyebrow">Évaluation · Niveau 3</p>
+        <h2>QCM : notions profondes</h2>
+        <div class="accent-rule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="qroot stack" data-level="p"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-brand">
+      <svg class="hexmark" viewBox="0 0 768 840" aria-hidden="true"><use href="#carbon-hex"/></svg>
+      Carbon IT · Formation .NET
+    </span>
+    <span class="ste">Rédaction : règles ASD-STE100 appliquées au français. Références : documentation RabbitMQ (rabbitmq.com/docs), documentation et dépôt RabbitMQ.Client (.NET), documentation MassTransit.</span>
+  </footer>
+</main>
+
+<script>
+/* ───────── Utilitaires ───────── */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const HL = /(\/\/.*)|(\$?"(?:[^"\\]|\\.)*")|\b(async|await|var|public|private|protected|return|new|using|static|void|lock|for|foreach|while|do|if|else|true|false|null|try|finally|catch|when|throw|class|struct|readonly|sealed|override|switch|case)\b|\b(Task|ValueTask|int|long|ulong|string|bool|object|CancellationToken|IConnection|IChannel|ConnectionFactory|AsyncEventingBasicConsumer|BasicDeliverEventArgs|BasicProperties|ExchangeType|CreateChannelOptions|PublishException|IBus|IConsumer|ConsumeContext|IPublishEndpoint|BackgroundService|IServiceScopeFactory|IServiceProvider|Dictionary|JsonSerializer|Guid|DateTime|TimeSpan|Timeout|Encoding|ILogger|Exception|TransientException|DbUpdateException|OutboxMessage|ProcessedMessage|Invoice|InvoiceHandler|OrderCreated|AppDbContext|BillingConsumer|OrderCreatedConsumer|Activity|Propagators|PropagationContext|Baggage|HttpClient)\b/g;
+function hl(src){
+  let out='',last=0,m; HL.lastIndex=0;
+  while((m=HL.exec(src))){
+    out+=esc(src.slice(last,m.index));
+    const cls=m[1]?'c':m[2]?'s':m[3]?'k':'t';
+    out+=`<span class="${cls}">${esc(m[0])}</span>`; last=HL.lastIndex;
+  }
+  return out+esc(src.slice(last));
+}
+document.querySelectorAll('script[type="text/x-csharp"]').forEach(s=>{
+  const pre=document.createElement('pre');
+  pre.innerHTML=hl(s.textContent.replace(/^\s*\n/,'').replace(/\s+$/,''));
+  s.replaceWith(pre);
+});
+const HEX='<svg viewBox="0 0 32 32" aria-hidden="true"><path class="fill" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/><path class="edge" d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z"/></svg>';
+const st=(state,label)=>`<span class="status" data-state="${state}">${HEX}<span class="label">${label}</span></span>`;
+document.querySelectorAll('.status[data-label]').forEach(el=>{el.innerHTML=HEX+`<span class="label">${el.dataset.label}</span>`;});
+document.querySelectorAll('[data-stepbar]').forEach(el=>{
+  const p=el.dataset.stepbar;
+  el.outerHTML=`<div class="msg note" id="${p}Note"></div><div class="stepbar"><button class="btn secondary sm" type="button" id="${p}Prev">Précédent</button><button class="btn sm" type="button" id="${p}Next">Suivant</button><button class="btn ghost sm" type="button" id="${p}Reset">Recommencer</button><span class="count" id="${p}Cnt"></span></div>`;
+});
+function bindRange(id){const r=$('#'+id),o=$('#'+id+'O');const f=()=>{if(o)o.textContent=r.value;};r.addEventListener('input',f);f();return r;}
+function seg(id,cb){const el=$('#'+id);el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');cb(b.dataset.m);}));}
+const TONE={good:'msg success note',warn:'msg warning note',mid:'msg info note','':'msg note'};
+function setMsg(el,tone,html){const keep=el.classList.contains('note');el.className=(TONE[tone]||'msg note').replace(' note',keep?' note':'');el.innerHTML=html;}
+
+/* Démonstration pas à pas : préfixe p → #pCode #pNote #pCnt #pPrev #pNext #pReset */
+function stepper(p,cfg){
+  let i=0;
+  const lines=cfg.code?cfg.code.split('\n'):null;
+  function draw(){
+    const s=cfg.steps[i];
+    if(lines) $('#'+p+'Code').innerHTML=lines.map((l,n)=>{
+      const cls=s.line===n?'cur':(s.paused||[]).includes(n)?'paused':'';
+      return `<div class="${cls}"><span class="ln">${n+1}</span>${hl(l)||' '}</div>`;
+    }).join('');
+    cfg.render(s,i);
+    const note=$('#'+p+'Note'); note.className=TONE[s.tone||'']; note.innerHTML=`<p>${s.note}</p>`;
+    $('#'+p+'Cnt').textContent=`Étape ${i+1} sur ${cfg.steps.length}`;
+    $('#'+p+'Prev').disabled=i===0; $('#'+p+'Next').disabled=i===cfg.steps.length-1;
+  }
+  $('#'+p+'Prev').onclick=()=>{if(i>0){i--;draw();}};
+  $('#'+p+'Next').onclick=()=>{if(i<cfg.steps.length-1){i++;draw();}};
+  $('#'+p+'Reset').onclick=()=>{i=0;draw();};
+  draw();
+}
+
+/* ───────── Thème (repris du design system) ───────── */
+(()=>{
+  const root=document.documentElement;
+  const apply=v=>{
+    if(v==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
+    document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===v)));
+  };
+  let saved='auto';
+  try{saved=localStorage.getItem('cds-theme')||'auto';}catch(_){}
+  apply(saved);
+  document.querySelectorAll('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>{
+    apply(b.dataset.themeSet);
+    try{localStorage.setItem('cds-theme',b.dataset.themeSet);}catch(_){}
+  }));
+})();
+
+/* ───────── Onglets de niveau ───────── */
+const syncHeights=()=>{
+  const r=document.documentElement.style;
+  r.setProperty('--topbar-h',$('.topbar').offsetHeight+'px');
+  r.setProperty('--tabs-h',$('.tabs').offsetHeight+'px');
+};
+syncHeights(); window.addEventListener('resize',syncHeights);
+const Tabs=(()=>{
+  const IDS=['base','avance','profond'];
+  let current='base';
+  const panelOf=el=>el&&el.closest('.tabpanel');
+  function show(id){
+    current=id;
+    IDS.forEach(t=>{
+      $('#'+t).hidden=t!==id;
+      $('#tab-btn-'+t).setAttribute('aria-selected',String(t===id));
+      const nav=document.querySelector(`[data-nav="${t}"]`); if(nav){ if(t===id) nav.setAttribute('aria-current','page'); else nav.removeAttribute('aria-current'); }
+    });
+    $('#ctaQcm').setAttribute('href','#qcm-'+id);
+    try{localStorage.setItem('rmq-tab',id);}catch(_){}
+  }
+  function go(hash,push){
+    const id=hash.replace(/^#/,'');
+    if(!id||id==='haut'){ window.scrollTo({top:0}); return; }
+    let target;
+    if(IDS.includes(id)){ show(id); target=document.querySelector('.tabs'); }
+    else{
+      target=document.getElementById(id); if(!target) return;
+      const p=panelOf(target); if(p) show(p.id);
+    }
+    if(push) history.replaceState(null,'','#'+id);
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  }
+  IDS.forEach(t=>$('#tab-btn-'+t).addEventListener('click',()=>{show(t);history.replaceState(null,'','#'+t);}));
+  $('.tabs').addEventListener('keydown',e=>{
+    if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return;
+    const i=IDS.indexOf(current), n=IDS[(i+(e.key==='ArrowRight'?1:IDS.length-1))%IDS.length];
+    show(n); $('#tab-btn-'+n).focus();
+  });
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#"]'); if(!a) return;
+    e.preventDefault(); go(a.getAttribute('href'),true);
+  });
+  window.addEventListener('hashchange',()=>go(location.hash,false));
+  let start='base';
+  try{start=localStorage.getItem('rmq-tab')||'base';}catch(_){}
+  show(IDS.includes(start)?start:'base');
+  if(location.hash) go(location.hash,false);
+  return {show};
+})();
+
+
+/* ───────── Routage ───────── */
+(function(){
+  const QUEUES=['billing','shipping','audit','alerts'];
+  const tm=(p,k)=>{const P=p.split('.'),K=k.split('.');
+    const f=(i,j)=>{ if(i===P.length) return j===K.length;
+      if(P[i]==='#'){ for(let x=j;x<=K.length;x++) if(f(i+1,x)) return true; return false; }
+      if(j===K.length) return false;
+      return (P[i]==='*'||P[i]===K[j]) && f(i+1,j+1); };
+    return f(0,0);};
+  const TOPO={
+    direct:{name:'Exchange « orders.direct » (direct)',rule:'routing key = clé de binding',
+      binds:[{k:'order.created',q:'billing'},{k:'order.paid',q:'shipping'},{k:'order.created',q:'audit'},{k:'order.paid',q:'audit'},{k:'order.cancelled',q:'audit'}],
+      presets:['order.created','order.paid','order.cancelled','order.created.eu','Order.Created']},
+    topic:{name:'Exchange « orders.topic » (topic)',rule:'* = un mot, # = zéro ou plusieurs mots',
+      binds:[{k:'order.*.eu',q:'billing'},{k:'order.paid.*',q:'shipping'},{k:'order.#',q:'audit'},{k:'*.cancelled.#',q:'alerts'}],
+      presets:['order.created.eu','order.created','order.paid.us','order.paid','order','order.cancelled','invoice.cancelled.fr','order.created.eu.paris']},
+    fanout:{name:'Exchange « orders.fanout » (fanout)',rule:'routing key ignorée',
+      binds:QUEUES.map(q=>({k:'(aucune clé)',q})),presets:['order.created','n.importe.quoi','']},
+    headers:{name:'Exchange « orders.headers » (headers)',rule:'comparaison des headers du message',
+      binds:[{h:{type:'order',region:'eu'},m:'all',q:'billing'},{h:{priority:'high',region:'us'},m:'any',q:'shipping'},{h:{type:'order'},m:'all',q:'audit'},{h:{type:'alert',priority:'high'},m:'any',q:'alerts'}],presets:[]}
+  };
+  const HOPT={type:['','order','alert'],region:['','eu','us'],priority:['','high','low']};
+  let type='topic';
+  const key=$('#rtKey');
+  $('#rtHeaders').innerHTML=Object.entries(HOPT).map(([h,vals])=>`<label>${h} = <select class="select" style="width:auto;padding:.25rem 2rem .25rem .5rem;font-size:.85rem" data-h="${h}">${vals.map(v=>`<option value="${v}">${v||'(absent)'}</option>`).join('')}</select></label>`).join('');
+  $('#rtHeaders').querySelector('[data-h="type"]').value='order';
+  $('#rtHeaders').querySelector('[data-h="region"]').value='eu';
+  function headers(){const o={};$('#rtHeaders').querySelectorAll('select').forEach(s=>{if(s.value)o[s.dataset.h]=s.value;});return o;}
+  function draw(){
+    const T=TOPO[type], k=key.value.trim(), H=headers();
+    $('#rtKeyWrap').hidden=type==='headers';
+    $('#rtHeaders').hidden=type!=='headers';
+    $('#rtPresets').innerHTML=T.presets.map(p=>`<button class="btn secondary sm" type="button" data-p="${esc(p)}">${p===''?'(clé vide)':esc(p)}</button>`).join('');
+    $('#rtPresets').querySelectorAll('button').forEach(b=>b.onclick=()=>{key.value=b.dataset.p;draw();});
+    $('#rtExName').textContent=T.name; $('#rtExRule').textContent=T.rule;
+    $('#rtMsg').textContent=type==='headers'?'headers = '+(Object.entries(H).map(([a,b])=>a+'='+b).join(', ')||'(aucun)'):'routing key = '+(k===''?'(vide)':k);
+    const hit=new Set();
+    $('#rtBinds').innerHTML=T.binds.map(b=>{
+      let on, label;
+      if(type==='direct'){on=b.k===k;label=b.k;}
+      else if(type==='topic'){on=tm(b.k,k);label=b.k;}
+      else if(type==='fanout'){on=true;label=b.k;}
+      else{const ents=Object.entries(b.h);const ok=ents.map(([h,v])=>H[h]===v);on=b.m==='all'?ok.every(Boolean):ok.some(Boolean);label=`x-match=${b.m} `+ents.map(([h,v])=>h+'='+v).join(', ');}
+      if(on) hit.add(b.q);
+      return `<div class="bind${on?' on':''}">${esc(label)}<span class="arrow">→ ${b.q}</span></div>`;
+    }).join('');
+    $('#rtQueues').innerHTML=hit.size
+      ? QUEUES.filter(q=>T.binds.some(b=>b.q===q)).map(q=>`<div class="node ${hit.has(q)?'hit':'miss'}"><b>File ${q}</b><span class="meta">${hit.has(q)?'reçoit une copie':'ne reçoit rien'}</span></div>`).join('')
+      : `<div class="node drop"><b>Aucune file</b><span class="meta">message supprimé, ou retourné avec mandatory</span></div>`;
+    const n=$('#rtNote');
+    if(!hit.size) setMsg(n,'warn',`<p><strong>Message non routé.</strong> Aucun binding ne correspond. Le broker supprime le message sans erreur. Avec <code>mandatory: true</code>, le producteur reçoit un <code>basic.return</code>. Avec les confirms, <code>BasicPublishAsync</code> lève une <code>PublishException</code>.</p>`);
+    else{
+      let extra='';
+      if(type==='direct'&&k==='order.created') extra=' Deux bindings ont la même clé : billing et audit reçoivent chacun une copie.';
+      if(type==='direct'&&/[A-Z]/.test(k)) extra=' La comparaison respecte la casse.';
+      if(type==='topic'&&k==='order') extra=' <code>order.#</code> accepte « order » seul : <code>#</code> remplace zéro mot.';
+      if(type==='topic'&&k==='order.created') extra=' <code>order.*.eu</code> demande exactement trois mots : billing ne reçoit rien.';
+      if(type==='topic'&&k==='order.created.eu.paris') extra=' Quatre mots : <code>order.*.eu</code> ne correspond plus. Seul <code>#</code> accepte un nombre variable de mots.';
+      if(type==='fanout') extra=' Le fanout ignore la clé. Toutes les files liées reçoivent le message.';
+      if(type==='headers') extra=' <code>x-match = all</code> demande tous les headers du binding. <code>x-match = any</code> en demande un seul.';
+      setMsg(n,'good',`<p><strong>${hit.size} file(s) reçoivent une copie :</strong> ${[...hit].join(', ')}. Chaque file a sa propre copie et ses propres consommateurs.${extra}</p>`);
+    }
+  }
+  seg('rtType',m=>{type=m; if(m!=='headers') key.value=TOPO[m].presets[0]||''; draw();});
+  key.addEventListener('input',draw);
+  $('#rtHeaders').addEventListener('change',draw);
+  draw();
+})();
+
+/* ───────── Acquittement pas à pas ───────── */
+(function(){
+  const C=(t,c)=>`<div class="card mono${c?' '+c:''}">${t}</div>`;
+  const E=t=>`<div class="empty-note">${t}</div>`;
+  stepper('ak',{
+    code:`consumer.ReceivedAsync += async (_, ea) =>
+{
+    try
+    {
+        await HandleAsync(ea.Body, ct);
+        await channel.BasicAckAsync(ea.DeliveryTag, false, ct);
+    }
+    catch (TransientException)
+    {
+        await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: true, ct);
+    }
+    catch (Exception)
+    {
+        await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false, ct);
+    }
+};`,
+    steps:[
+      {line:-1,r:[C('m1'),C('m2'),C('m3')],u:[E('Aucun')],o:[E('–')],note:`La file contient trois messages à l'état <b>Ready</b>. Le consommateur a un prefetch de 1. Le broker peut donc livrer un seul message à la fois.`},
+      {line:0,r:[C('m2'),C('m3')],u:[C('m1 · tag 1','hot')],o:[E('–')],note:`Le broker livre m1 avec le delivery tag 1. m1 passe à l'état <b>Unacked</b>. Le broker garde m1 : il ne le supprime pas encore.`},
+      {line:4,r:[C('m2'),C('m3')],u:[C('m1 · tag 1','hot')],o:[E('–')],note:`Le consommateur traite m1. Pendant ce temps, m1 reste Unacked. Si le consommateur s'arrête maintenant, le broker remet m1 dans la file.`},
+      {line:5,r:[C('m2'),C('m3')],u:[E('Aucun')],o:[C('m1 : ack, supprimé','dead')],tone:'good',note:`Le consommateur envoie l'ack <b>après</b> le traitement. Le broker supprime m1. Le slot de prefetch est libre.`},
+      {line:0,r:[C('m3')],u:[C('m2 · tag 2','hot')],o:[C('m1 : ack, supprimé','dead')],note:`Le broker livre m2 avec le tag 2.`},
+      {line:9,r:[C('m2 · Redelivered','hot'),C('m3')],u:[E('Aucun')],o:[C('m1 : ack, supprimé','dead')],tone:'warn',paused:[4],note:`Le traitement lève une erreur transitoire. <code>BasicNackAsync(requeue: true)</code> remet m2 dans la file, à sa position d'origine. Attention : une erreur permanente avec requeue crée une boucle infinie.`},
+      {line:0,r:[C('m3')],u:[C('m2 · tag 3 · Redelivered','hot')],o:[C('m1 : ack, supprimé','dead')],note:`Le broker livre m2 de nouveau. Le delivery tag est <b>3</b> : chaque livraison a un nouveau tag. <code>ea.Redelivered</code> vaut <code>true</code>.`},
+      {line:13,r:[C('m3')],u:[E('Aucun')],o:[C('m1 : ack, supprimé','dead'),C('m2 : nack, vers le DLX','is-alert')],note:`Cette fois, l'erreur est permanente. <code>requeue: false</code> retire m2 de la file. Avec un dead letter exchange, m2 part vers ce DLX. Sans DLX, m2 est supprimé.`},
+      {line:4,r:[E('Vide')],u:[C('m3 · tag 4','hot')],o:[C('m1 : ack, supprimé','dead'),C('m2 : nack, vers le DLX','is-alert')],note:`Le broker livre m3. Pendant le traitement, le pod s'arrête brutalement. Le code n'envoie ni ack ni nack.`},
+      {line:-1,r:[C('m3 · Redelivered','hot')],u:[E('Aucun')],o:[C('m1 : ack, supprimé','dead'),C('m2 : nack, vers le DLX','is-alert')],tone:'good',note:`La connexion se ferme. Le broker remet tous les messages unacked de ce channel dans la file. Un autre consommateur traite m3. <b>Aucun message n'est perdu</b>, mais m3 peut être traité deux fois : le traitement doit être idempotent.`}
+    ],
+    render(s){ $('#akReady').innerHTML=s.r.join(''); $('#akUnack').innerHTML=s.u.join(''); $('#akOut').innerHTML=s.o.join(''); }
+  });
+})();
+
+/* ───────── Prefetch et consommateurs concurrents ───────── */
+(function(){
+  const cons=bindRange('pfCons'),pre=bindRange('pfPre'),num=bindRange('pfN'),speed=bindRange('pfSpeed');
+  const FAST=100, SLOW=1000, DT=10;
+  let S=null, raf=null;
+  function reset(){
+    cancelAnimationFrame(raf); raf=null;
+    const N=+num.value;
+    S={t:0,N,queue:[...Array(N).keys()].map(i=>i+1),done:0,rr:0,finished:false,
+      cs:Array.from({length:+cons.value},(_,i)=>({slow:i===0,buf:[],cur:null,rem:0,done:0,got:0}))};
+    $('#pfVerdict').hidden=true;
+    render();
+  }
+  function dispatch(){
+    const P=+pre.value, n=S.cs.length;
+    let guard=0;
+    while(S.queue.length && guard<n){
+      const c=S.cs[S.rr%n]; S.rr++;
+      if(c.buf.length+(c.cur!=null?1:0)<P){ c.buf.push(S.queue.shift()); c.got++; guard=0; }
+      else guard++;
+    }
+  }
+  function startNext(){ for(const c of S.cs) if(c.cur==null && c.buf.length){ c.cur=c.buf.shift(); c.rem=c.slow?SLOW:FAST; } }
+  function tick(){
+    S.t+=DT;
+    for(const c of S.cs){ if(c.cur==null) continue; c.rem-=DT; if(c.rem<=0){ c.cur=null; c.done++; S.done++; } }
+    dispatch(); startNext();
+    if(S.done===S.N) S.finished=true;
+  }
+  const M=(n,c)=>`<span class="m${c?' '+c:''}">${n}</span>`;
+  function render(){
+    const unack=S.cs.reduce((a,c)=>a+c.buf.length+(c.cur!=null?1:0),0);
+    $('#pfT').textContent=S.t+' ms';
+    $('#pfReady').textContent=S.queue.length;
+    $('#pfUnack').textContent=unack;
+    $('#pfDone').textContent=S.done+' / '+S.N;
+    $('#pfQueue').innerHTML=S.queue.length?S.queue.map(n=>M(n)).join(''):'<span class="muted" style="font-size:.85rem">File vide</span>';
+    $('#pfRows').innerHTML=S.cs.map((c,i)=>`<div class="crow"><div class="lbl">C${i+1}<span>${c.slow?'lent · 1 000 ms':'rapide · 100 ms'}</span></div><div class="msgs">${c.cur!=null?M(c.cur,'work'):''}${c.buf.map(n=>M(n,'unack')).join('')}${c.cur==null&&!c.buf.length?'<span class="muted" style="font-size:.8rem">sans travail</span>':''}</div><div class="done">${c.done} traité(s)</div></div>`).join('');
+  }
+  function loop(){
+    for(let i=0;i<+speed.value && !S.finished;i++) tick();
+    render();
+    if(S.finished){
+      raf=null;
+      const slow=S.cs[0], n=S.cs.length;
+      const row=document.createElement('tr');
+      row.innerHTML=`<td class="num">${n}</td><td class="num">${pre.value}</td><td class="num">${S.N}</td><td class="num">${slow.got}</td><td class="num">${S.t} ms</td>`;
+      $('#pfRes tbody').prepend(row);
+      const v=$('#pfVerdict'); v.hidden=false;
+      const share=Math.round(S.N/n);
+      if(n===1) setMsg(v,'mid',`<p><strong>Un seul consommateur.</strong> Il traite les ${S.N} messages en ${S.t} ms. Ajoutez des consommateurs pour comparer.</p>`);
+      else if(slow.got>S.N/(n*3)){ row.className='is-alert'; setMsg(v,'warn',`<p><strong>Répartition déséquilibrée.</strong> Le consommateur lent a reçu ${slow.got} messages (une part égale : ${share}). Ses messages attendaient dans son tampon pendant que les autres consommateurs n'avaient plus de travail. Temps total : ${S.t} ms. Réduisez le prefetch.</p>`); }
+      else setMsg(v,'good',`<p><strong>Répartition selon la capacité.</strong> Le consommateur lent a reçu seulement ${slow.got} messages. Les consommateurs rapides ont pris le reste. Temps total : ${S.t} ms.</p>`);
+      return;
+    }
+    raf=requestAnimationFrame(loop);
+  }
+  $('#pfRun').onclick=()=>{ if(S.finished||S.t>0) reset(); if(!raf) raf=requestAnimationFrame(loop); };
+  $('#pfReset').onclick=reset;
+  [cons,pre,num].forEach(r=>r.addEventListener('change',reset));
+  reset();
+})();
+
+/* ───────── Dead letter pas à pas ───────── */
+(function(){
+  const C=(t,c)=>`<div class="card mono${c?' '+c:''}">${t}</div>`;
+  const E=t=>`<div class="empty-note">${t}</div>`;
+  const d1='[{ queue: billing, reason: rejected, count: 1 }]';
+  const d2a='[{ queue: billing.wait, reason: expired, count: 1 }, { queue: billing, reason: rejected, count: 1 }]';
+  const d2='[{ queue: billing, reason: rejected, count: 2 }, { queue: billing.wait, reason: expired, count: 1 }]';
+  const d3a='[{ queue: billing.wait, reason: expired, count: 2 }, { queue: billing, reason: rejected, count: 2 }]';
+  stepper('dl',{
+    steps:[
+      {main:[C('M42 · commande 42'),C('M43 · commande 43')],cons:[E('Attente')],wait:[E('Vide')],park:[E('Vide')],death:'absent',time:'0 s',note:`Deux messages attendent dans <code>billing</code>. Le service de facturation du partenaire ne répond pas pour la commande 42.`},
+      {main:[C('M43 · commande 43')],cons:[C('M42 · essai 1 : TimeoutException','is-alert')],wait:[E('Vide')],park:[E('Vide')],death:'absent',time:'0 s',note:`Le consommateur reçoit M42. L'appel au partenaire échoue. Le header <code>x-death</code> est absent : c'est le premier essai.`},
+      {main:[E('Vide')],cons:[C('M43 · traité, ack','dead')],wait:[C('M42 · expire dans 5 s','hot')],park:[E('Vide')],death:d1,time:'0 s',tone:'good',note:`Le consommateur fait <code>BasicNackAsync(requeue: false)</code>. Le broker applique la règle de <code>billing</code> : exchange par défaut, clé <code>billing.wait</code>. M42 arrive dans <code>billing.wait</code>. Le broker ajoute le header <code>x-death</code>. <b>M43 n'est pas bloqué</b> : le consommateur le traite tout de suite.`},
+      {main:[C('M42 · retour','hot')],cons:[E('Attente')],wait:[E('Vide')],park:[E('Vide')],death:d2a,time:'5 s',note:`Après 5 s, M42 expire dans <code>billing.wait</code>. Le broker applique la règle de <code>billing.wait</code> : exchange par défaut, clé <code>billing</code>. M42 revient dans <code>billing</code>, et seulement dans <code>billing</code>. Les autres services ne reçoivent rien.`},
+      {main:[E('Vide')],cons:[E('Attente')],wait:[C('M42 · expire dans 5 s','hot')],park:[E('Vide')],death:d2,time:'5 s',note:`Essai 2 : nouvel échec. Le compteur <code>count</code> de l'entrée « billing, rejected » passe à 2. M42 repart dans <code>billing.wait</code>.`},
+      {main:[E('Vide')],cons:[C('M42 · essai 3 : échec, attempts = 3','is-alert')],wait:[E('Vide')],park:[E('Vide')],death:d3a,time:'10 s',note:`Essai 3 : nouvel échec. Le code calcule <code>attempts = 2 + 1 = 3</code>. La limite est atteinte.`},
+      {main:[E('Vide')],cons:[E('Attente')],wait:[E('Vide')],park:[C('M42 · headers x-death conservés','is-alert')],death:d3a,time:'10 s',tone:'warn',note:`Le consommateur publie M42 sur l'exchange par défaut avec la clé <code>billing.parking</code> : M42 arrive dans cette file, avec ses headers. Il fait ensuite l'ack de l'original. Une alerte signale la file de rebut. Une personne analyse M42, corrige la cause, puis republie le message.`}
+    ],
+    render(s){ $('#dlMain').innerHTML=s.main.join(''); $('#dlCons').innerHTML=s.cons.join(''); $('#dlWait').innerHTML=s.wait.join(''); $('#dlPark').innerHTML=s.park.join(''); $('#dlDeath').innerHTML=`<code>${esc(s.death)}</code>`; $('#dlTime').textContent=s.time; }
+  });
+})();
+
+/* ───────── MassTransit / Wolverine ───────── */
+(function(){
+  const N={
+    mt:`<strong>MassTransit.</strong> Le consumer implémente <code>IConsumer&lt;T&gt;</code> et reçoit un <code>ConsumeContext</code>. Le code appelle <code>SaveChangesAsync</code> lui-même. Pour publier un autre événement : <code>context.Publish(...)</code>. Après tous les essais, le message part dans la file <code>order-created_error</code>. Licence : Apache 2.0 jusqu'à la version 8, commerciale ensuite.`,
+    wolv:`<strong>Wolverine.</strong> Le handler est une méthode <code>Handle</code> sans interface, souvent statique. Les dépendances arrivent en paramètres. Avec <code>AutoApplyTransactions</code>, Wolverine appelle <code>SaveChangesAsync</code> et publie le message retourné par l'outbox. Après tous les essais, le message part dans la file <code>wolverine-dead-letter-queue</code>. Licence : MIT.`
+  };
+  const show=m=>{document.querySelectorAll('[data-bus]').forEach(d=>{d.hidden=d.dataset.bus!==m;}); $('#busNote').innerHTML=N[m];};
+  seg('busLib',show); show('mt');
+})();
+
+/* ───────── Outbox ───────── */
+(function(){
+  let strat='after', crash='none';
+  const CODE={
+    after:`_db.Orders.Add(order);
+await _db.SaveChangesAsync(ct);               // 1. commit en base
+await _bus.PublishAsync(new OrderCreated(order.Id), ct);   // 2. publication`,
+    before:`await _bus.PublishAsync(new OrderCreated(order.Id), ct);   // 1. publication
+_db.Orders.Add(order);
+await _db.SaveChangesAsync(ct);               // 2. commit en base`,
+    outbox:`_db.Orders.Add(order);
+_db.OutboxMessages.Add(OutboxMessage.From(new OrderCreated(order.Id)));
+await _db.SaveChangesAsync(ct);               // 1. une transaction pour les deux
+// 2. plus tard : le relais publie la ligne, puis la marque comme publiée`
+  };
+  const R={
+    after:{
+      none:['Créée','Publié','good','Cas nominal. Aucun problème visible.'],
+      between:['Créée','Jamais publié','warn','<strong>Événement perdu.</strong> La commande existe. La facturation ne reçoit jamais l\'événement. Personne ne voit l\'erreur.'],
+      broker:['Créée','Non publié, exception','warn','<strong>Incohérence.</strong> La commande est enregistrée, mais la requête retourne une erreur 500. Le client réessaie et crée peut-être une deuxième commande. L\'événement est perdu.'],
+      db:['Absente','Non publié','good','La transaction échoue avant la publication. L\'état est cohérent. Le client reçoit une erreur.']},
+    before:{
+      none:['Créée','Publié','good','Cas nominal. Le consommateur peut lire l\'événement avant le commit : la commande n\'est pas encore visible pour lui.'],
+      between:['Absente','Publié','warn','<strong>Événement fantôme.</strong> La facturation crée une facture pour une commande qui n\'existe pas.'],
+      broker:['Absente','Non publié, exception','mid','L\'état est cohérent. Mais l\'API ne peut plus créer de commande quand le broker est indisponible : la disponibilité de l\'API dépend du broker.'],
+      db:['Absente','Publié','warn','<strong>Événement fantôme.</strong> L\'insertion échoue (contrainte, timeout). L\'événement est déjà parti.']},
+    outbox:{
+      none:['Créée','Publié par le relais','good','Le relais publie l\'événement quelques millisecondes ou secondes plus tard. La cohérence est à terme.'],
+      between:['Créée','Ligne en attente, publiée au redémarrage','good','Le crash a lieu après le commit. La ligne d\'outbox reste dans la base. Le relais la publie au redémarrage. Si le relais s\'arrête après la publication et avant la mise à jour de la ligne, il publie de nouveau : le consommateur doit être idempotent.'],
+      broker:['Créée','Ligne en attente, nouvel essai','good','La requête HTTP réussit sans le broker. Le relais fait de nouveaux essais jusqu\'au retour du broker.'],
+      db:['Absente','Aucune ligne','good','La transaction est annulée. Ni commande ni message. L\'état est cohérent.']}
+  };
+  function draw(){
+    $('#obCode').innerHTML=`<pre>${hl(CODE[strat])}</pre>`;
+    const [db,msg,tone,note]=R[strat][crash];
+    const ko=tone==='warn';
+    $('#obOut').innerHTML=`<thead><tr><th>Commande en base</th><th>Événement OrderCreated</th><th>État global</th></tr></thead><tbody><tr${ko?' class="is-alert"':''}><td>${db}</td><td>${msg}</td><td>${ko?'Incohérent':tone==='mid'?'Cohérent, disponibilité réduite':'Cohérent'}</td></tr></tbody>`;
+    setMsg($('#obNote'),tone,`<p>${note}</p>`);
+  }
+  seg('obStrat',m=>{strat=m;draw();});
+  seg('obCrash',m=>{crash=m;draw();});
+  draw();
+})();
+
+/* ───────── Ordre des messages ───────── */
+(function(){
+  const DUR=[120,300,80,90,200,60,150,70];
+  function run(k,retry){
+    const free=Array(k).fill(0), jobs=[], q=DUR.map((d,i)=>({n:i+1,d,ready:0,fail:retry&&i===2}));
+    while(q.length){
+      q.sort((a,b)=>a.ready-b.ready);
+      const it=q.shift();
+      let c=0; for(let i=1;i<k;i++) if(free[i]<free[c]) c=i;
+      const s=Math.max(free[c],it.ready), e=s+it.d; free[c]=e;
+      jobs.push({c,n:it.n,s,e,bad:it.fail});
+      if(it.fail) q.push({n:it.n,d:it.d,ready:e+400,fail:false});
+    }
+    return jobs;
+  }
+  function draw(k,retry){
+    const jobs=run(k,retry), T=Math.max(...jobs.map(j=>j.e));
+    let g='';
+    for(let c=0;c<k;c++) g+=`<div class="grow"><span class="lbl">Consommateur ${c+1}</span><div class="jtrack">${jobs.filter(j=>j.c===c).map(j=>`<div class="jseg${j.bad?' bad':''}" style="left:${j.s/T*100}%;width:${j.d/T*100}%">${j.n}</div>`).join('')}</div></div>`;
+    g+=`<div class="grow"><span class="lbl">Durée totale</span><span class="num muted">${T} ms</span></div>`;
+    $('#orGantt').innerHTML=g;
+    const ok=jobs.filter(j=>!j.bad).sort((a,b)=>a.e-b.e);
+    let max=0, swaps=0;
+    $('#orSeq').innerHTML=ok.map(j=>{const late=j.n<max; if(late) swaps++; max=Math.max(max,j.n); return `<span class="m ${late?'bad':'ok'}">${j.n}</span>`;}).join('');
+    const n=$('#orNote');
+    if(k===1) setMsg(n,'good',`<p><strong>Ordre respecté.</strong> Un consommateur traite les messages l'un après l'autre. La durée totale est la somme des traitements : ${T} ms.</p>`);
+    else if(!retry) setMsg(n,'warn',`<p><strong>${swaps} message(s) terminés avant un message plus ancien.</strong> La file livre bien 1, 2, 3… Mais le message 2 est long. Les messages suivants se terminent avant lui. La durée totale baisse à ${T} ms. Pour une même commande, « payée » peut être traité avant « créée ».</p>`);
+    else setMsg(n,'warn',`<p><strong>Le nouvel essai casse aussi l'ordre.</strong> Le message 3 échoue (rouge). Il revient 400 ms plus tard, après les messages 4 à 8. Un nouvel essai avec délai change toujours l'ordre, même avec un seul consommateur.</p>`);
+  }
+  $('#orOne').onclick=()=>draw(1,false);
+  $('#orThree').onclick=()=>draw(3,false);
+  $('#orRetry').onclick=()=>draw(3,true);
+  draw(3,false);
+})();
+
+/* ───────── Raft ───────── */
+(function(){
+  const C=(t,c)=>`<div class="card mono${c?' '+c:''}">${t}</div>`;
+  const ROLE={L:st('done','Leader'),F:st('todo','Follower'),D:st('alert','Arrêté')};
+  const N=(role,log)=>[`<div>${ROLE[role]}</div>`,...log];
+  const base='1…41 validés';
+  stepper('rf',{
+    steps:[
+      {pub:[C('Publie M42 (confirms)')],n1:N('L',[C(base)]),n2:N('F',[C(base)]),n3:N('F',[C(base)]),live:'3 / 3',state:st('done','disponible'),note:`La quorum queue a trois réplicas. Le nœud 1 est le leader. Les producteurs et les consommateurs passent par le leader, quel que soit le nœud de leur connexion.`},
+      {pub:[C('M42 en attente de confirmation','hot')],n1:N('L',[C(base),C('42 écrit, non validé','hot')]),n2:N('F',[C(base)]),n3:N('F',[C(base)]),live:'3 / 3',state:st('done','disponible'),note:`Le leader écrit M42 dans son journal sur disque. Il envoie l'entrée aux followers. Le producteur n'a pas encore de confirmation.`},
+      {pub:[C('M42 confirmé (ack)','hot')],n1:N('L',[C(base),C('42 validé')]),n2:N('F',[C(base),C('42 écrit','hot')]),n3:N('F',[C(base),C('42 en cours de réception')]),live:'3 / 3',state:st('done','disponible'),tone:'good',note:`Le nœud 2 écrit M42 et répond. Deux nœuds sur trois ont l'entrée : c'est la majorité. Le leader valide M42 et envoie la confirmation au producteur. Il n'attend pas le nœud 3.`},
+      {pub:[C('Publie M43 : confirmé')],n1:N('L',[C(base),C('42, 43 validés')]),n2:N('F',[C(base),C('42, 43 écrits')]),n3:N('D',[C('Arrêté : 42 manquant','is-alert')]),live:'2 / 3',state:st('done','disponible'),note:`Le nœud 3 s'arrête. Il reste deux nœuds : la majorité est toujours possible. La file reste disponible. Les publications sont confirmées.`},
+      {pub:[C('Publie M44 : confirmé')],n1:N('L',[C(base),C('42, 43, 44 validés')]),n2:N('F',[C(base),C('42, 43, 44 écrits')]),n3:N('F',[C(base),C('42, 43, 44 rattrapés','hot')]),live:'3 / 3',state:st('done','disponible'),note:`Le nœud 3 redémarre. Le leader lui envoie les entrées manquantes. Une file très longue rend ce rattrapage long.`},
+      {pub:[C('Connexion vers le nouveau leader')],n1:N('D',[C('Arrêté','is-alert')]),n2:N('L',[C(base),C('42, 43, 44 validés','hot')]),n3:N('F',[C(base),C('42, 43, 44')]),live:'2 / 3',state:st('progress','élection, puis disponible'),note:`Le leader s'arrête. Les followers ne reçoivent plus de heartbeat Raft. Ils élisent un nouveau leader : le nœud 2. Toutes les entrées validées sont sur le nœud 2, car une entrée validée est toujours sur une majorité. Aucun message confirmé n'est perdu.`},
+      {pub:[C('M45 : pas de confirmation','is-alert')],n1:N('D',[C('Arrêté','is-alert')]),n2:N('L',[C(base),C('45 écrit, non validé','is-alert')]),n3:N('D',[C('Arrêté','is-alert')]),live:'1 / 3',state:st('alert','indisponible'),tone:'warn',note:`Le nœud 3 s'arrête aussi. Il reste un seul nœud sur trois : pas de majorité. La file refuse de valider les écritures. Les publications ne sont pas confirmées. Les consommateurs ne reçoivent plus rien. Raft choisit la cohérence plutôt que la disponibilité.`}
+    ],
+    render(s){ $('#rfPub').innerHTML=s.pub.join(''); $('#rfN1').innerHTML=s.n1.join(''); $('#rfN2').innerHTML=s.n2.join(''); $('#rfN3').innerHTML=s.n3.join(''); $('#rfLive').textContent=s.live; $('#rfState').innerHTML=s.state; }
+  });
+})();
+
+/* ───────── Calcul du prefetch ───────── */
+(function(){
+  const rtt=bindRange('pcRtt'),proc=bindRange('pcProc'),conc=bindRange('pcConc');
+  const thr=(p,R,P,K)=>Math.min(K*1000/P, p*1000/(P+R));
+  const fmt=v=>v>=100?Math.round(v).toLocaleString('fr-FR'):v.toFixed(1).replace('.',',');
+  function draw(){
+    const R=+rtt.value,P=+proc.value,K=+conc.value;
+    const rec=Math.ceil(K*(1+R/P)), max=K*1000/P;
+    $('#pcRec').textContent=rec;
+    $('#pcMax').textContent=fmt(max)+' msg/s';
+    $('#pcOne').textContent=fmt(thr(1,R,P,K))+' msg/s';
+    const X=Math.max(20,Math.ceil(rec*1.6)), W=640,H=200,L=56,B=30,T=12;
+    const px=p=>L+(p-1)/(X-1)*(W-L-12), py=v=>T+(1-v/max)*(H-T-B);
+    let pts=''; for(let p=1;p<=X;p+=Math.max(1,Math.floor(X/120))) pts+=`${px(p).toFixed(1)},${py(thr(p,R,P,K)).toFixed(1)} `;
+    pts+=`${px(X).toFixed(1)},${py(thr(X,R,P,K)).toFixed(1)}`;
+    const rx=px(Math.min(rec,X));
+    $('#pcChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Débit selon le prefetch">
+      <line x1="${L}" y1="${H-B}" x2="${W-12}" y2="${H-B}" style="stroke:var(--rule)"/>
+      <line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" style="stroke:var(--rule)"/>
+      <line x1="${L}" y1="${py(max)}" x2="${W-12}" y2="${py(max)}" style="stroke:var(--green);stroke-dasharray:4 4"/>
+      <line x1="${rx}" y1="${T}" x2="${rx}" y2="${H-B}" style="stroke:var(--red);stroke-dasharray:4 4"/>
+      <polyline points="${pts}" fill="none" style="stroke:var(--blue);stroke-width:2.5"/>
+      <text x="${L-6}" y="${py(max)+4}" text-anchor="end">${fmt(max)}</text>
+      <text x="${L-6}" y="${H-B+4}" text-anchor="end">0</text>
+      <text x="${L}" y="${H-8}">1</text>
+      <text x="${W-12}" y="${H-8}" text-anchor="end">prefetch ${X}</text>
+      <text x="${rx+4}" y="${T+12}">conseillé : ${rec}</text>
+    </svg>`;
+    const lost=Math.round((1-thr(1,R,P,K)/max)*100);
+    setMsg($('#pcNote'),lost>50?'warn':'mid',`<p>Avec un prefetch de 1, le consommateur attend ${R} ms de réseau pour ${P} ms de travail. Il perd ${lost} % du débit possible. À partir d'un prefetch de ${rec}, les ${K} slots de traitement ont toujours un message prêt. Au-dessus, le débit ne monte plus : seule la mémoire du client augmente.</p>`);
+  }
+  [rtt,proc,conc].forEach(r=>r.addEventListener('input',draw));
+  draw();
+})();
+
+/* ───────── Mauvaises pratiques ───────── */
+const ANTI=[
+  {t:`Une connexion par message publié`,why:`Une connexion demande plusieurs allers-retours réseau, TLS et authentification. Le broker garde un processus par connexion. Une connexion par message limite le débit à quelques dizaines de messages par seconde et surcharge le broker.`,bad:`public async Task PublishAsync(OrderCreated evt)
+{
+    await using var conn = await factory.CreateConnectionAsync();
+    await using var ch = await conn.CreateChannelAsync();
+    await ch.BasicPublishAsync("orders", "order.created", Serialize(evt));
+}`,good:`// IConnection enregistrée en singleton, créée au démarrage.
+// Un channel par publieur, réutilisé.
+await _channel.BasicPublishAsync("orders", "order.created", true, props, body, ct);`},
+  {t:`autoAck: true pour des données métier`,why:`Le broker supprime le message dès l'envoi. Un crash ou une exception pendant le traitement perd le message. Le prefetch ne s'applique pas : le broker envoie autant de messages que le réseau accepte.`,bad:`await ch.BasicConsumeAsync("billing", autoAck: true, consumer);`,good:`await ch.BasicQosAsync(0, 20, false);
+await ch.BasicConsumeAsync("billing", autoAck: false, consumer);
+// BasicAckAsync après le traitement`},
+  {t:`Ack avant le traitement`,why:`Le code envoie l'ack, puis traite le message. Un crash après l'ack perd le message. Le résultat est le même qu'avec autoAck.`,bad:`await ch.BasicAckAsync(ea.DeliveryTag, false);
+await HandleAsync(ea.Body);`,good:`await HandleAsync(ea.Body);
+await ch.BasicAckAsync(ea.DeliveryTag, false);`},
+  {t:`BasicNack avec requeue: true pour toutes les erreurs`,why:`Le message revient tout de suite dans la file. Une erreur permanente (JSON invalide, bug) crée une boucle infinie. Le CPU monte, les logs se remplissent, les autres messages attendent.`,bad:`catch (Exception)
+{
+    await ch.BasicNackAsync(ea.DeliveryTag, false, requeue: true);
+}`,good:`catch (Exception)
+{
+    // DLX + file d'attente avec TTL, ou x-delivery-limit sur une quorum queue
+    await ch.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+}`},
+  {t:`Retry qui revient par l'exchange principal`,why:`La file d'attente renvoie le message expiré sur l'exchange de publication, avec sa clé d'origine. L'exchange le copie dans toutes les files liées. Un seul service a échoué, mais tous les services reçoivent un doublon.`,bad:`await ch.QueueDeclareAsync("billing.wait", true, false, false, new Dictionary<string, object?>
+{
+    ["x-message-ttl"] = 5000,
+    ["x-dead-letter-exchange"] = "orders"     // retour vers email, stats...
+});`,good:`await ch.QueueDeclareAsync("billing.wait", true, false, false, new Dictionary<string, object?>
+{
+    ["x-message-ttl"] = 5000,
+    ["x-dead-letter-exchange"] = "",          // exchange par défaut
+    ["x-dead-letter-routing-key"] = "billing" // retour dans billing seulement
+});`},
+  {t:`Pas de BasicQos : prefetch illimité`,why:`Le broker envoie toute la file au premier consommateur connecté. La mémoire du client augmente. Les autres consommateurs ne reçoivent rien. Un redémarrage remet tous ces messages en file.`,bad:`var consumer = new AsyncEventingBasicConsumer(ch);
+await ch.BasicConsumeAsync("billing", false, consumer);`,good:`await ch.BasicQosAsync(prefetchSize: 0, prefetchCount: 20, global: false);
+await ch.BasicConsumeAsync("billing", false, consumer);`},
+  {t:`Publier sans confirms ni mandatory`,why:`BasicPublishAsync se termine quand le client a écrit sur le socket. Le message peut être perdu dans le réseau, refusé par le broker ou supprimé faute de binding. Le producteur ne le sait pas.`,bad:`await ch.BasicPublishAsync("orders", "order.created", body);`,good:`// Channel créé avec CreateChannelOptions(publisherConfirmationsEnabled: true, publisherConfirmationTrackingEnabled: true)
+await ch.BasicPublishAsync("orders", "order.created", mandatory: true, props, body, ct);
+// PublishException en cas de nack ou de retour`},
+  {t:`Écrire en base puis publier, sans outbox`,why:`Deux systèmes, deux opérations, pas de transaction commune. Un crash entre les deux perd l'événement. Un broker indisponible fait échouer une requête dont les données sont déjà enregistrées.`,bad:`await _db.SaveChangesAsync(ct);
+await _publisher.PublishAsync(new OrderCreated(order.Id), ct);`,good:`_db.OutboxMessages.Add(OutboxMessage.From(new OrderCreated(order.Id)));
+await _db.SaveChangesAsync(ct);   // même transaction
+// un relais publie ensuite les lignes d'outbox`},
+  {t:`DbContext injecté dans un consommateur singleton`,why:`Un BackgroundService est singleton. Un DbContext injecté dans son constructeur vit pendant toute la vie du process. Son change tracker grossit. Ses données deviennent anciennes. Il n'est pas thread-safe avec une concurrence supérieure à 1.`,bad:`public class BillingConsumer(AppDbContext db) : BackgroundService { ... }`,good:`public class BillingConsumer(IServiceScopeFactory scopes) : BackgroundService
+{
+    // dans ReceivedAsync :
+    // await using var scope = scopes.CreateAsyncScope();
+}`},
+  {t:`Code bloquant dans ReceivedAsync`,why:`Le callback s'exécute sur un worker du ThreadPool. Un .Result ou un Thread.Sleep bloque ce worker et le dispatcher du channel. Avec plusieurs consommateurs, le ThreadPool manque de workers.`,bad:`consumer.ReceivedAsync += (_, ea) =>
+{
+    _http.PostAsync(url, content).Result.EnsureSuccessStatusCode();
+    return Task.CompletedTask;
+};`,good:`consumer.ReceivedAsync += async (_, ea) =>
+{
+    var res = await _http.PostAsync(url, content, ct);
+    res.EnsureSuccessStatusCode();
+};`},
+  {t:`Une seule file partagée par plusieurs services`,why:`Deux services consomment la même file. Le broker répartit les messages entre eux : chaque service reçoit une partie des messages seulement. Ce comportement est voulu pour des instances d'un même service, pas pour des services différents.`,bad:`// Billing et Shipping consomment tous les deux "orders"
+await ch.BasicConsumeAsync("orders", false, consumer);`,good:`// Une file par service, liée au même exchange
+await ch.QueueBindAsync("billing", "orders", "order.created");
+await ch.QueueBindAsync("shipping", "orders", "order.created");`}
+];
+$('#antiList').innerHTML=ANTI.map((a,i)=>`<details class="disclosure"><summary>${i+1}. ${esc(a.t)}</summary><div class="disclosure-body stack" style="padding-top:.8rem"><p style="margin:0">${esc(a.why)}</p><div class="tiles"><div class="tile red"><h3>À éviter</h3><pre>${hl(a.bad)}</pre></div><div class="tile green"><h3>À faire</h3><pre>${hl(a.good)}</pre></div></div></div></details>`).join('');
+
+/* ───────── QCM (un par niveau : b = base, a = avancé, p = profond) ───────── */
+const QCM=[
+  {lv:'b',th:'Modèle',q:`Vers quel objet un producteur AMQP publie-t-il un message ?`,o:[`Directement vers une file`,`Vers un binding`,`Vers un exchange`,`Vers un consommateur`],a:2,e:`Le producteur publie toujours vers un exchange. Publier « vers une file » utilise l'exchange par défaut (nom vide), avec le nom de la file comme routing key.`},
+  {lv:'b',th:'Modèle',q:`Un exchange topic a le binding « order.*.eu ». Quelle routing key correspond ?`,o:[`order.created.eu`,`order.eu`,`order.created.eu.paris`,`invoice.created.eu`],a:0,e:`* remplace exactement un mot. « order.eu » a un mot de moins. « order.created.eu.paris » a un mot de plus. Pour un nombre variable de mots, utilisez #.`},
+  {lv:'b',th:'Modèle',q:`Un message n'a aucun binding correspondant. Que fait le broker par défaut ?`,o:[`Il le garde dans l'exchange`,`Il le supprime sans erreur`,`Il lève une exception chez le producteur`,`Il l'envoie dans toutes les files`],a:1,e:`Un exchange ne stocke rien. Sans binding, le message est supprimé. Utilisez mandatory: true ou un alternate-exchange pour détecter ce cas.`},
+  {lv:'b',th:'Modèle',q:`Quel type d'exchange ignore la routing key ?`,o:[`direct`,`topic`,`headers`,`fanout`],a:3,e:`Le fanout copie le message dans toutes les files liées. Le type headers ignore aussi la routing key, mais il compare les headers : il ne copie pas dans toutes les files.`},
+  {lv:'b',th:'Client',q:`Combien de connexions RabbitMQ une API doit-elle ouvrir ?`,o:[`Une par requête HTTP`,`Une par message publié`,`Une ou deux pour toute la vie du process, avec des channels`,`Une par thread du ThreadPool`],a:2,e:`Une connexion est coûteuse. Gardez une connexion longue (souvent une pour publier et une pour consommer). Les channels sont légers.`},
+  {lv:'b',th:'Client',q:`Dans RabbitMQ.Client 7, quel événement du consommateur reçoit les messages ?`,o:[`Received sur EventingBasicConsumer`,`ReceivedAsync sur AsyncEventingBasicConsumer`,`OnMessage sur IChannel`,`Consume sur IConsumer`],a:1,e:`La version 7 est entièrement async. EventingBasicConsumer et IModel appartiennent à la version 6. IConsumer est une interface MassTransit.`},
+  {lv:'b',th:'Acquittement',q:`Le consommateur s'arrête brutalement pendant le traitement d'un message, avec autoAck: false. Que devient le message ?`,o:[`Il est perdu`,`Il revient dans la file et sera livré de nouveau`,`Il part dans la dead letter queue`,`Il reste bloqué jusqu'à une action manuelle`],a:1,e:`Un message unacked revient dans la file à la fermeture du channel. Il arrive de nouveau avec Redelivered = true. C'est la garantie au moins une fois.`},
+  {lv:'b',th:'Acquittement',q:`Quand faut-il envoyer l'ack ?`,o:[`À la réception, avant le traitement`,`Après la fin du traitement`,`Jamais : le broker le fait seul`,`Après la publication suivante`],a:1,e:`Un ack avant le traitement équivaut à autoAck : un crash perd le message. Faites l'ack après le traitement, y compris l'écriture en base.`},
+  {lv:'b',th:'Acquittement',q:`Un JSON invalide fait échouer le traitement. Quelle réponse choisir ?`,o:[`BasicNack avec requeue: true`,`Ne rien faire`,`BasicNack avec requeue: false, vers un DLX`,`Fermer la connexion`],a:2,e:`L'erreur est permanente. Un requeue crée une boucle infinie. Envoyez le message vers un dead letter exchange pour l'analyser.`},
+  {lv:'b',th:'Prefetch',q:`À quoi sert BasicQos(prefetchCount: 10) ?`,o:[`À limiter à 10 le nombre de messages unacked livrés au consommateur`,`À limiter la file à 10 messages`,`À lire 10 messages par seconde au maximum`,`À créer 10 threads de traitement`],a:0,e:`Le broker n'envoie pas de nouveau message tant que le consommateur a 10 messages unacked. Le prefetch ne crée pas de thread : c'est ConsumerDispatchConcurrency.`},
+  {lv:'b',th:'Prefetch',q:`Trois consommateurs, dont un très lent, avec un prefetch de 500. Quel est le problème ?`,o:[`Le broker refuse la connexion`,`Le consommateur lent garde beaucoup de messages pendant que les autres n'ont plus de travail`,`Les messages sont livrés deux fois`,`Aucun problème`],a:1,e:`Le broker distribue à tour de rôle jusqu'à la limite du prefetch. Le consommateur lent accumule les messages dans son tampon. Un petit prefetch répartit le travail selon la capacité réelle.`},
+  {lv:'b',th:'Durabilité',q:`Une classic queue durable reçoit des messages non persistants. Le broker redémarre. Quel est le résultat ?`,o:[`La file et les messages sont conservés`,`La file est conservée, les messages sont perdus`,`La file est perdue, les messages sont conservés`,`Tout est perdu`],a:1,e:`Il faut une file durable et des messages persistants (Persistent = true). Une quorum queue écrit toujours les messages sur disque.`},
+  {lv:'b',th:'Modèle',q:`Billing et Shipping doivent recevoir tous les événements OrderCreated. Quelle topologie choisir ?`,o:[`Une file partagée par les deux services`,`Une file par service, liée au même exchange`,`Deux connexions sur la même file`,`Un exchange par service`],a:1,e:`Une file partagée répartit les messages entre les consommateurs. Chaque service reçoit alors une partie des messages seulement. Une file par service reçoit chacune une copie.`},
+  {lv:'b',th:'Modèle',q:`Quel besoin oriente plutôt vers Kafka que vers une file RabbitMQ ?`,o:[`Un nouvel essai par message avec délai`,`Un routage par motif sur la routing key`,`Relire l'historique des événements depuis une date`,`Une file de tâches avec un petit volume`],a:2,e:`Kafka garde les messages pendant la rétention et permet de relire depuis un offset. Une file supprime le message après l'ack. Un stream RabbitMQ couvre aussi ce besoin.`},
+
+  {lv:'a',th:'Confirms',q:`Avec les publisher confirms, quand le broker confirme-t-il un message vers une quorum queue ?`,o:[`À la réception sur le socket`,`Après l'écriture sur une majorité de réplicas`,`Après l'ack du consommateur`,`Après l'écriture sur tous les réplicas`],a:1,e:`Une quorum queue valide une écriture quand une majorité de nœuds l'a écrite. La confirmation ne dépend pas du consommateur.`},
+  {lv:'a',th:'Confirms',q:`Un message confirmé par le broker est-il forcément dans une file ?`,o:[`Oui, toujours`,`Non : sans mandatory, un message non routable est confirmé puis supprimé`,`Oui, sauf avec une quorum queue`,`Non : la confirmation ne concerne que la connexion TCP`],a:1,e:`L'ack signifie « le broker a pris en charge le message ». Combinez confirms et mandatory: true (ou un alternate-exchange) pour détecter un message sans file.`},
+  {lv:'a',th:'Garanties',q:`Quelle garantie RabbitMQ offre-t-il avec ack manuel et confirms ?`,o:[`Exactement une fois`,`Au plus une fois`,`Au moins une fois`,`Aucune`],a:2,e:`Aucun message n'est perdu, mais un message peut arriver deux fois. L'effet unique demande un consommateur idempotent.`},
+  {lv:'a',th:'Garanties',q:`Comment rendre un consommateur idempotent de façon générale ?`,o:[`Utiliser autoAck: true`,`Enregistrer le MessageId dans une table à clé unique, dans la transaction du traitement`,`Mettre un prefetch de 1`,`Utiliser une quorum queue`],a:1,e:`Un doublon provoque une violation de contrainte. Le consommateur ignore alors le message et fait l'ack. C'est le pattern Inbox.`},
+  {lv:'a',th:'Retry',q:`Comment attendre 5 s avant un nouvel essai, sans plugin ?`,o:[`Thread.Sleep(5000) dans le consommateur`,`BasicNack requeue: true`,`Nack vers un DLX, file d'attente avec x-message-ttl et DLX de retour`,`Fermer le channel pendant 5 s`],a:2,e:`Le message attend dans une file sans consommateur. À l'expiration, le DLX de cette file (exchange par défaut + clé de la file principale) le renvoie dans la file principale seulement. Le consommateur ne bloque rien pendant l'attente.`},
+  {lv:'a',th:'Retry',q:`La file billing.wait a x-dead-letter-exchange = "orders", sans routing key. Les files billing et email sont liées à orders avec la clé order.created. Un message de billing.wait expire. Que se passe-t-il ?`,o:[`Le message revient dans billing seulement`,`Le message revient dans billing et dans email`,`Le broker supprime le message`,`Le broker refuse la déclaration de la file`],a:1,e:`Le message garde sa routing key d'origine, order.created. L'exchange orders le copie dans toutes les files liées à cette clé : email reçoit un doublon. Utilisez l'exchange par défaut "" et x-dead-letter-routing-key = "billing".`},
+  {lv:'a',th:'Retry',q:`Que fait await ch.BasicPublishAsync("", "billing.parking", true, props, body) ?`,o:[`Il publie sur tous les exchanges`,`Il publie sur l'exchange par défaut, qui envoie le message dans la file billing.parking`,`Il crée la file billing.parking`,`Il publie sur l'exchange billing.parking`],a:1,e:`"" est l'exchange par défaut. Chaque file y est liée avec son nom comme clé. Le message arrive donc dans la file billing.parking. Avec mandatory: true, le broker retourne le message si cette file n'existe pas.`},
+  {lv:'a',th:'Retry',q:`Quel header indique le nombre de passages par dead lettering ?`,o:[`x-retry`,`x-death`,`x-redelivered`,`x-first-death-reason seul`],a:1,e:`x-death contient une entrée par couple (file, raison), avec un compteur count. x-first-death-* indique seulement le premier passage.`},
+  {lv:'a',th:'Outbox',q:`Quel problème le pattern Outbox résout-il ?`,o:[`La lenteur du broker`,`La perte ou l'invention d'événements entre la base et le broker (dual write)`,`L'ordre des messages`,`Les doublons côté consommateur`],a:1,e:`Le message est écrit dans la même transaction que les données. Un relais le publie ensuite. Les doublons restent possibles : l'Inbox les traite côté consommateur.`},
+  {lv:'a',th:'Outbox',q:`Plusieurs instances exécutent le relais d'outbox. Comment éviter qu'elles publient les mêmes lignes en même temps ?`,o:[`SELECT ... FOR UPDATE SKIP LOCKED dans une transaction`,`Un lock C# statique`,`Un prefetch de 1`,`Rien : les doublons sont impossibles`],a:0,e:`Chaque instance verrouille ses lignes. Les autres instances sautent les lignes verrouillées. Un lock C# ne protège qu'un seul process.`},
+  {lv:'a',th:'Hébergement',q:`Un BackgroundService consomme des messages et utilise EF Core. Comment obtenir le DbContext ?`,o:[`Par injection dans le constructeur du BackgroundService`,`En créant un scope DI par message avec IServiceScopeFactory`,`Avec un DbContext statique`,`Avec new AppDbContext() une fois au démarrage`],a:1,e:`Le BackgroundService est singleton. Un DbContext est scoped et non thread-safe. Un scope par message donne un DbContext neuf et le libère à la fin.`},
+  {lv:'a',th:'MassTransit',q:`Avec MassTransit, où va un message après l'échec de tous les nouveaux essais ?`,o:[`Il est supprimé`,`Dans la file <endpoint>_error`,`Dans la file <endpoint>_skipped`,`Il reste en tête de file`],a:1,e:`La file _error contient le message et les détails de l'exception dans les headers. La file _skipped reçoit les messages sans consommateur pour leur type.`},
+  {lv:'a',th:'Files',q:`Quel type de file choisir pour des données métier sur RabbitMQ 4 ?`,o:[`Classic mirrored`,`Classic non durable`,`Quorum`,`Exclusive`],a:2,e:`RabbitMQ 4 a supprimé le mirroring des classic queues. La quorum queue est répliquée avec Raft, toujours durable, et a une limite de livraisons.`},
+  {lv:'a',th:'Ordre',q:`Trois consommateurs lisent une file. Les messages 1 et 2 concernent la même commande. Que se passe-t-il ?`,o:[`Le message 2 attend toujours la fin du message 1`,`Le message 2 peut se terminer avant le message 1`,`Le broker refuse la livraison`,`Les deux messages vont au même consommateur`],a:1,e:`La file livre dans l'ordre, mais les traitements sont parallèles. Pour un ordre par entité, partitionnez par clé ou utilisez single active consumer.`},
+  {lv:'a',th:'Traces',q:`Comment relier la trace du worker à la requête HTTP qui a publié le message ?`,o:[`Utiliser le même DeliveryTag`,`Transmettre traceparent dans les headers du message`,`Utiliser le même nom de connexion`,`C'est impossible avec un broker`],a:1,e:`Le producteur injecte le contexte W3C (traceparent) dans les headers. Le consommateur l'extrait et démarre une Activity enfant. RabbitMQ.Client 7 le fait avec son instrumentation.`},
+
+  {lv:'p',th:'Raft',q:`Une quorum queue a 3 réplicas. Combien de nœuds peuvent s'arrêter sans rendre la file indisponible ?`,o:[`0`,`1`,`2`,`3`],a:1,e:`La majorité de 3 est 2. Un nœud peut s'arrêter. Avec 5 réplicas, 2 nœuds peuvent s'arrêter.`},
+  {lv:'p',th:'Raft',q:`Pourquoi 4 réplicas ne sont-ils pas mieux que 3 ?`,o:[`RabbitMQ refuse 4 réplicas`,`La majorité de 4 est 3 : la tolérance reste d'une panne, avec plus d'écritures`,`4 réplicas créent deux leaders`,`Ils sont mieux : 2 pannes tolérées`],a:1,e:`Un nombre pair augmente le coût sans augmenter la tolérance. Choisissez 3 ou 5.`},
+  {lv:'p',th:'Raft',q:`Le leader d'une quorum queue s'arrête. Un message déjà confirmé peut-il être perdu ?`,o:[`Oui, toujours`,`Non : une entrée validée est sur une majorité, et le nouveau leader a toutes les entrées validées`,`Oui, si le message est persistant`,`Non, car le producteur le republie automatiquement`],a:1,e:`Raft élit seulement un nœud qui a toutes les entrées validées. Une confirmation n'est envoyée qu'après l'écriture sur une majorité.`},
+  {lv:'p',th:'Streams',q:`Quelle différence principale existe entre un stream et une file ?`,o:[`Le stream supprime le message à l'ack`,`Le stream garde les messages et chaque consommateur lit depuis son offset`,`Le stream n'est pas répliqué`,`Le stream ne supporte pas AMQP`],a:1,e:`Un stream est un journal append-only avec rétention. Plusieurs consommateurs lisent le même stream à des offsets différents.`},
+  {lv:'p',th:'Flux',q:`L'alarme mémoire du broker est active. Quel est l'effet ?`,o:[`Les consommateurs sont arrêtés`,`Le broker bloque les connexions qui publient, sur tout le cluster`,`Le broker supprime les anciens messages`,`Le broker redémarre`],a:1,e:`Les publications attendent. Les consommateurs continuent pour vider les files. Le client reçoit l'événement ConnectionBlockedAsync.`},
+  {lv:'p',th:'Flux',q:`Pourquoi séparer la connexion de publication et la connexion de consommation ?`,o:[`Pour doubler le débit réseau`,`Un blocage par alarme bloque la connexion entière, y compris les acks des consommateurs`,`Parce que RabbitMQ l'impose`,`Pour éviter les doublons`],a:1,e:`Si les consommateurs ne peuvent plus envoyer leurs acks, les files ne se vident plus. L'alarme dure alors plus longtemps.`},
+  {lv:'p',th:'Prefetch',q:`Traitement : 5 ms. Aller-retour réseau : 45 ms. Concurrence : 1. Quel prefetch minimal garde le consommateur occupé ?`,o:[`1`,`5`,`10`,`100`],a:2,e:`Prefetch ≈ concurrence × (1 + aller-retour / traitement) = 1 × (1 + 45/5) = 10. Avec 1, le consommateur attend 45 ms pour 5 ms de travail.`},
+  {lv:'p',th:'Channels',q:`Un message est reçu sur le channel A. Le code fait l'ack sur le channel B. Quel est le résultat ?`,o:[`L'ack fonctionne`,`Le broker ferme le channel B : 406 PRECONDITION_FAILED, unknown delivery tag`,`Le message est livré deux fois sans erreur`,`Le broker ferme la connexion`],a:1,e:`Les delivery tags sont propres à chaque channel. Un tag inconnu ou déjà acquitté est une erreur de protocole qui ferme le channel.`},
+  {lv:'p',th:'Channels',q:`Que règle ConsumerDispatchConcurrency ?`,o:[`Le nombre de messages unacked`,`Le nombre de callbacks ReceivedAsync exécutés en parallèle par channel`,`Le nombre de connexions`,`Le nombre de réplicas`],a:1,e:`La valeur par défaut est 1 : traitement séquentiel. Une valeur plus grande augmente le débit mais change l'ordre de fin. Le prefetch doit être au moins égal à cette valeur.`},
+  {lv:'p',th:'Channels',q:`Avec ConsumerDispatchConcurrency = 4, pourquoi éviter BasicAck(multiple: true) ?`,o:[`Ce paramètre n'existe pas`,`Il acquitte aussi des messages de tag inférieur encore en traitement`,`Il ferme le channel`,`Il désactive le prefetch`],a:1,e:`multiple: true acquitte tous les tags inférieurs ou égaux. Avec un traitement parallèle, un message plus ancien peut être encore en cours. Un crash le perdrait.`},
+  {lv:'p',th:'Recovery',q:`Quel cas la reconnexion automatique du client .NET ne couvre-t-elle pas ?`,o:[`Une coupure réseau pendant le fonctionnement`,`Le redémarrage d'un nœud`,`L'échec de la toute première connexion au démarrage`,`La perte de heartbeats`],a:2,e:`La reconnexion automatique s'applique à une connexion déjà établie. Au démarrage, prévoyez une boucle de nouvel essai.`},
+  {lv:'p',th:'Partition',q:`Quel outil garde l'ordre par commande tout en répartissant la charge sur plusieurs files ?`,o:[`Exchange fanout`,`Consistent hash exchange avec la clé de commande comme routing key`,`Prefetch de 1 sur une file`,`Plusieurs consommateurs sur une file`],a:1,e:`Le hash de la routing key envoie toujours la même commande vers la même file. Avec un consommateur actif par file, l'ordre par commande est garanti.`},
+  {lv:'p',th:'Poison',q:`Sur RabbitMQ 4, une quorum queue n'a pas d'argument x-delivery-limit. Un message revient en file à chaque essai. Que se passe-t-il ?`,o:[`Une boucle infinie`,`Après 20 retours, le message est supprimé ou envoyé au DLX`,`Après 3 retours, le message va dans _error`,`Le broker ferme le channel`],a:1,e:`RabbitMQ 4 fixe une limite de livraisons de 20 par défaut pour les quorum queues. Configurez un DLX pour ne pas perdre ces messages.`}
+];
+/* Position de la bonne réponse : répartie sur A, B, C et D (échange de deux options, sauf réponses numériques). */
+QCM.forEach((q,i)=>{
+  if(q.o.every(x=>/^\d+$/.test(x))) return;
+  const target=[0,2,1,3,2,0,3,1,3,2][i%10]; if(target===q.a) return;
+  const o=q.o.slice(); [o[q.a],o[target]]=[o[target],o[q.a]]; q.o=o; q.a=target;
+});
+document.querySelectorAll('.qroot').forEach(root=>{
+  const lv=root.dataset.level, key={b:'base',a:'avance',p:'profond'}[lv];
+  const items=QCM.filter(q=>q.lv===lv);
+  let answered=0, good=0, theme='';
+  root.innerHTML=`<div class="panel qhead"><div class="row">
+      <span class="pill count" data-r="score">0 / 0</span><span class="muted" data-r="total"></span>
+      <div class="meter" aria-hidden="true"><i data-r="prog"></i></div>
+      <div class="field" style="min-width:12rem"><label for="qt-${key}" class="muted" style="font-weight:400">Thème</label><select class="select" id="qt-${key}" data-r="sel"><option value="">Tous les thèmes</option>${[...new Set(items.map(q=>q.th))].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <button class="btn ghost sm" type="button" data-r="reset">Recommencer</button></div></div>
+    <div class="stack" data-r="list"></div><div class="msg" data-r="final" hidden></div>`;
+  const R=n=>root.querySelector(`[data-r="${n}"]`);
+  const list=()=>items.filter(q=>!theme||q.th===theme);
+  function render(){
+    answered=0; good=0;
+    R('list').innerHTML=list().map((q,n)=>`<div class="panel stack q" data-i="${QCM.indexOf(q)}">
+      <div class="row"><span class="pill">${q.th}</span><span class="muted num" style="font-size:.85rem">Question ${n+1}</span></div>
+      <h3 style="margin:0">${esc(q.q)}</h3>
+      <div class="stack" style="gap:.4rem">${q.o.map((o,j)=>`<button class="choice" type="button" data-j="${j}">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join('')}</div>
+      <p class="msg info expl"></p></div>`).join('');
+    R('list').querySelectorAll('.q').forEach(el=>{
+      el.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+        if(el.classList.contains('answered')) return;
+        const q=QCM[+el.dataset.i], j=+b.dataset.j;
+        el.classList.add('answered'); answered++;
+        el.querySelectorAll('.choice')[q.a].classList.add('right');
+        const ok=j===q.a; if(ok) good++; else b.classList.add('wrong');
+        const ex=el.querySelector('.expl'); ex.className='msg expl '+(ok?'success':'warning');
+        ex.innerHTML=`<strong>${ok?'Bonne réponse.':'Réponse incorrecte.'}</strong> ${esc(q.e)}`;
+        score();
+      });
+    });
+    score();
+  }
+  function score(){
+    const total=list().length;
+    R('score').textContent=`${good} / ${answered}`;
+    R('total').textContent=`${answered} réponse(s) sur ${total} question(s)`;
+    R('prog').style.width=(answered/total*100)+'%';
+    const f=R('final');
+    if(answered===total){
+      const p=good/total; f.hidden=false;
+      f.className='msg '+(p>=.8?'success':p<.5?'warning':'info');
+      f.innerHTML=`<p><strong>Score final : ${good} sur ${total}.</strong> `+(p>=.8?(lv==='p'?`Ce résultat est solide. Vous maîtrisez les mécanismes internes.`:`Ce résultat est solide. Passez au niveau suivant.`):p>=.5?`La base est correcte. Lisez les explications des erreurs. Refaites les simulateurs de ces thèmes.`:`Refaites les sections de cet onglet. Ensuite, recommencez le QCM.`)+'</p>';
+    } else f.hidden=true;
+  }
+  R('sel').addEventListener('change',e=>{theme=e.target.value;render();});
+  R('reset').onclick=()=>{render(); root.scrollIntoView();};
+  render();
+});
+</script>
+</body>
+</html>
